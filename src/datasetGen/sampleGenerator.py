@@ -12,11 +12,13 @@ import pylab as pl
 sys.path.insert(0, "../")
 import functions.filesystem as fs
 
-# TODO: Criar o repositorio github e fazer commit. Verificar como configurar a execucao automatica dos testes no github
-# TODO: Se o consumo de memoria com os mosaicos ficar muito alto, rotacionar a imagem na hora de
-# coletar as amostras e em seguida descartar.
-# TODO: The number of samples passed as parameter should be the total number or the number of samples
-# per each rotation angle?
+# TODO: Verificar como configurar a execucao automatica dos testes no github
+""" 
+TODO: Se o consumo de memoria com os mosaicos ficar muito alto, rotacionar a imagem na hora de
+      coletar as amostras e em seguida descartar.
+TODO: The number of samples passed as parameter should be the total number or the number of samples
+      per each rotation angle?
+"""
 
 class SampleGenerator(object):
     m_rotationAngles = []
