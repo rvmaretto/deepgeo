@@ -44,3 +44,33 @@ def rasterize_vector_file(filename, label_column="class"):
         class_names.append(name)
 
     return layer, class_names
+
+# TODO: Verify why it is breaking in this method. Solution is probably in the metnod "rasterizePolygons"
+def rasterize_layer(vector_layer, model_raster, class_column="class", nodata_val=255):
+    print("--- Rasterizing Vector Layer ---")
+    mem_drv = gdal.GetDriverByName('MEM')
+    mem_raster = mem_drv.Create(
+        '',
+        model_raster.RasterXSize,
+        model_raster.RasterYSize,
+        1,
+        gdal.GDT_Int16
+    )
+    mem_raster.SetProjection(model_raster.GetProjection())
+    mem_raster.SetGeoTransform(model_raster.GetGeoTransform())
+    mem_band = mem_raster.GetRasterBand(1)
+    mem_band.Fill(nodata_val)
+    mem_band.SetNoDataValue(nodata_val)
+
+    err = gdal.RasterizeLayer(
+        mem_raster,
+        [1],
+        vector_layer,
+        None,
+        None,
+        [1],
+        options=[class_column]
+    )
+
+    assert(err == gdal.CE_None)
+    return mem_raster.ReadAsArray()

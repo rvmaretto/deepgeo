@@ -1,0 +1,5 @@
+language: python
+rvm:
+ - 3.5
+ - tensorflow
+ - gdal
