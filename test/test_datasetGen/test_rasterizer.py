@@ -16,6 +16,9 @@ class test_rasterizer():
         self.output_dir = path.join(self.data_dir, "tests_gen")
         fs.mkdir(self.output_dir)
 
+    def teardown(self):
+        fs.delete_dir(self.output_dir)
+
     def test_collect_class_names(self):
         self.rasterizer.collect_class_names()
         class_names = self.rasterizer.get_class_names()
