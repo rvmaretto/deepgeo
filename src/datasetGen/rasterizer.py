@@ -4,8 +4,8 @@ import sys
 from osgeo import gdal
 from osgeo import ogr
 
-sys.path.insert(0, path.join(path.dirname(__file__),"../"))
-import utils.geofunctions as gf
+#sys.path.insert(0, path.join(path.dirname(__file__),"../"))
+#import utils.geofunctions as gf
 
 
 class Rasterizer(object):
