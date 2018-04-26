@@ -9,7 +9,7 @@ from osgeo import ogr
 
 
 class Rasterizer(object):
-    def __init__(self, vector_file, in_raster_file, class_column="class", nodata_val=255):
+    def __init__(self, vector_file, in_raster_file, class_column="class", nodata_val=255):        
         self.vector_path = vector_file
         self.raster_path = in_raster_file
         self.class_column = class_column
