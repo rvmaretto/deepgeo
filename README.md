@@ -2,6 +2,13 @@
 
 Functionalities to Deep Learning based classification of Remote Sensing Images
 
+## Dependencies
+* numpy
+* gdal
+* ogr
+* tensorflow
+* nose
+* scipy
 
 ## Code Status
 
