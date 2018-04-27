@@ -9,8 +9,8 @@ import utils.filesystem as fs
 class test_preprocessor():
     def setup(self):
         self.data_dir = path.join(path.dirname(__file__), "../../data")
-        self.pathVector = path.join(self.data_dir, "PRODES2016_225-64_REP.shp")
-        self.pathRaster = path.join(self.data_dir, "Landsat8_225-64_17-07-2016-B1-7.tif")
+        self.pathVector = path.join(self.data_dir, "prodes_shp_crop.shp")
+        self.pathRaster = path.join(self.data_dir, "raster_B1_B7.tif")
         self.class_column = "agregClass"
         self.output_dir = path.join(self.data_dir, "tests_gen")
         self.preproc = prep.Preprocessor(self.pathRaster, self.pathVector)
@@ -25,6 +25,7 @@ class test_preprocessor():
         }
         ndvi_raster = self.preproc.compute_indexes(["ndvi"], parameters)
         assert_equal(8, ndvi_raster.shape[2])
+        assert_equal(7, self.preproc.get_position_index_band("ndvi"))
 
     def test_compute_two_indexes(self):
         parameters = {
@@ -40,6 +41,8 @@ class test_preprocessor():
         }
         new_raster = self.preproc.compute_indexes(["ndvi", "evi"], parameters)
         assert_equal(9, new_raster.shape[2])
+        assert_equal(7, self.preproc.get_position_index_band("ndvi"))
+        assert_equal(8, self.preproc.get_position_index_band("evi"))
 
     def test_register_new_function(self):
         def subtraction(raster, param):
@@ -55,3 +58,4 @@ class test_preprocessor():
         self.preproc.register_new_func("func", subtraction)
         new_raster = self.preproc.compute_indexes(["func"], parameters)
         assert_equal(8, new_raster.shape[2])
+        assert_equal(7, self.preproc.get_position_index_band("func"))

@@ -104,4 +104,4 @@ ENV/
 .idea/
 
 # Data directory
-data/
+data_real/

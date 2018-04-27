@@ -1,22 +1,22 @@
 from nose.tools import *
-import os
+from os import path
 import sys
 # import gdal
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__),"../../src"))
+sys.path.insert(0, path.join(path.dirname(__file__),"../../src"))
 import utils.geofunctions as gf
 
 class test_geofunctions():
 
     def setup(self):
-        self.data_dir = os.path.join(os.path.dirname(__file__), "../../data")
-        self.pathVector = os.path.join(self.data_dir, "PRODES2016_225-64_REP.shp")
-        self.pathRaster = os.path.join(self.data_dir, "Landsat8_225-64_17-07-2016-R6G5B4.tif")
+        self.data_dir = path.join(path.dirname(__file__), "../../data")
+        self.pathVector = path.join(self.data_dir, "prodes_shp_crop.shp")
+        self.pathRaster = path.join(self.data_dir, "raster_R6G5B4.tif")
 
     def test_load_image(self):
         img = gf.load_image(self.pathRaster)
-        assert_equal(7741, img.shape[0])
-        assert_equal(7591, img.shape[1])
+        assert_equal(851, img.shape[0])
+        assert_equal(926, img.shape[1])
         assert_equal(3, img.shape[2])
 
     # def test_load_vector_layer(self):

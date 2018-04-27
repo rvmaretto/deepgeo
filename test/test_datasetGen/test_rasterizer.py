@@ -9,8 +9,8 @@ import utils.filesystem as fs
 class test_rasterizer():
     def setup(self):
         self.data_dir = path.join(path.dirname(__file__), "../../data")
-        self.pathVector = path.join(self.data_dir, "PRODES2016_225-64_REP.shp")
-        self.pathRaster = path.join(self.data_dir, "Landsat8_225-64_17-07-2016-R6G5B4.tif")
+        self.pathVector = path.join(self.data_dir, "prodes_shp_crop.shp")
+        self.pathRaster = path.join(self.data_dir, "raster_R6G5B4.tif")
         self.class_column = "agregClass"
         self.rasterizer = rasterizer.Rasterizer(self.pathVector, self.pathRaster, self.class_column)
         self.output_dir = path.join(self.data_dir, "tests_gen")
@@ -32,8 +32,8 @@ class test_rasterizer():
         self.rasterizer.collect_class_names()
         self.rasterizer.rasterize_layer()
         rasterized_layer = self.rasterizer.get_labeled_raster()
-        assert_equal(7741, rasterized_layer.shape[0])
-        assert_equal(7591, rasterized_layer.shape[1])
+        assert_equal(851, rasterized_layer.shape[0])
+        assert_equal(926, rasterized_layer.shape[1])
 
     def test_save_to_tiff(self):
         output_file = path.join(self.output_dir, "generatedTIFF.tiff")
