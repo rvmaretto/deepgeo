@@ -92,6 +92,3 @@ class SampleGenerator(object):
                 scipy.misc.imsave(os.path.join(labelsDir, fileName), self.m_samplesLabels[pos])
             else:
                 pl.imsave(fname=os.path.join(labelsDir, fileName), arr=self.m_samplesLabels[pos], cmap=colorMap)
-
-# @TODO(Raian): Implement here a way to compute NDVI and another indexes. Allowing that the user passes its own function
-# to compute desired different indexes.

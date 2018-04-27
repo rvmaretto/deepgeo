@@ -6,20 +6,25 @@ from os import path
 sys.path.insert(0, path.join(path.dirname(__file__),"../"))
 import utils.geofunctions as gf
 
-def computeNDVI(np_raster, idx_b_red, idx_b_nir):
+def computeNDVI(np_raster, parameters):
     print("Computing NDVI")
-    red = np_raster[:,:,idx_b_red]
-    nir = np_raster[:,:,idx_b_nir]
+    red = np_raster[:,:,parameters["idx_b_red"]]
+    nir = np_raster[:,:,parameters["idx_b_nir"]]
     ndvi = np.divide((nir-red),(nir+red))
     return ndvi
 
-# def computeEVI(np_raster, idx_b_red, idx_b_nir):
-#     print("Computing EVI")
+def computeEVI(np_raster, parameters):
+    print("Computing EVI")
+    red = np_raster[:,:,parameters["idx_b_red"]]
+    nir = np_raster[:,:,parameters["idx_b_nir"]]
+    blue = np_raster[:,:,parameters["idx_b_blue"]]
+    evi = 2.5 * (np.divide((nir - red), (nir + (6.0 * red) - (7.5 * blue) + 1.0)))
+    return evi
 
 class Preprocessor(object):
     predefIndexes = {
-        "ndvi": computeNDVI
-        # "evi": computeEVI
+        "ndvi": computeNDVI,
+        "evi": computeEVI
     }
 
     def __init__(self, raster_path, vector_path):
@@ -33,14 +38,11 @@ class Preprocessor(object):
 
     def compute_indexes(self, indexes, parameters):
         for idx in indexes:
-            if(idx == "ndvi"):
-                ndvi = self.predefIndexes[idx](self.raster_array,
-                                        parameters[idx]["idx_b_red"],
-                                        parameters[idx]["idx_b_nir"])
+            result = self.predefIndexes[idx](self.raster_array, parameters[idx])
+            num_bands = self.raster_array.shape[2]
+            self.raster_array = np.dstack((self.raster_array[:,:,:num_bands], result))
 
-        num_bands = self.raster_array.shape[2]
-        print(num_bands) #TODO: Remove
-        print(self.raster_array.shape) #TODO: Remove
-        self.raster_array = np.dstack((self.raster_array[:,:,:num_bands], ndvi))
-        print(self.raster_array.shape) #TODO: Remove
         return self.raster_array
+
+    def register_new_func(self, name, function):
+        self.predefIndexes[name] = function
