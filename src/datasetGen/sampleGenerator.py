@@ -12,7 +12,6 @@ import pylab as pl
 sys.path.insert(0, "../")
 import functions.filesystem as fs
 
-# TODO: Verificar como configurar a execucao automatica dos testes no github
 """ 
 TODO: Se o consumo de memoria com os mosaicos ficar muito alto, rotacionar a imagem na hora de
       coletar as amostras e em seguida descartar.
@@ -54,19 +53,16 @@ class SampleGenerator(object):
         assert not np.any(y == 255), "Unlabeled points"
         return y
 
-    # @TODO(Raian): Put in this class the data augmentation functionalities
     def extractWindows(self, win_size, saveOnDisk=False, path="./"):
         self.m_samplesImg = []
         self.m_samplesLabels = []
+        self.win_size = win_size
 
         # count = 0
         for coord in self.m_ijSamples:
-            upperX = coord[0] - math.floor(win_size / 2)
-            lowerX = coord[0] + math.ceil(win_size / 2)
-            rightY = coord[1] - math.floor(win_size / 2)
-            leftY = coord[1] + math.ceil(win_size / 2)
-            sampleImg = self.m_imgDataset[upperX:lowerX, rightY:leftY]
-            sampleLabel = self.m_labeledImg[upperX:lowerX, rightY:leftY]
+            window = self.compute_window_coords(coord)
+            sampleImg = self.m_imgDataset[window["upperX"]:window["lowerX"], window["rightY"]:window["leftY"]]
+            sampleLabel = self.m_labeledImg[window["upperX"]:window["lowerX"], window["rightY"]:window["leftY"]]
             self.m_samplesImg.append(sampleImg)
             self.m_samplesLabels.append(sampleLabel)
 
@@ -92,3 +88,36 @@ class SampleGenerator(object):
                 scipy.misc.imsave(os.path.join(labelsDir, fileName), self.m_samplesLabels[pos])
             else:
                 pl.imsave(fname=os.path.join(labelsDir, fileName), arr=self.m_samplesLabels[pos], cmap=colorMap)
+
+    def saveSamplesToGeoTiff(self, path):
+        transform = self.m_imgDataset.GetGeoTransform()
+
+        xOrigin = transform[0]
+        yOrigin = transform[3]
+        pixelWidth = transform[1]
+        pixelHeight = transform[5]
+
+        for pos in range(len(self.m_ijSamples)):
+            samplesDir = os.path.join(path, "sample_imgs")
+            labelsDir = os.path.join(path, "sample_labels")
+            fs.mkdir(samplesDir)
+            fs.mkdir(labelsDir)
+            fileName = "sample" + str(pos) + ".tiff"
+
+            coord = self.m_ijSamples[pos]
+            window = self.compute_window_coords(coord)
+
+            upperX = window["upperX"] / pixelWidth + xOrigin
+            leftY = window["leftY"] / pixelHeight + yOrigin
+            lowerX = window["lowerX"] / pixelWidth + xOrigin
+            leftY = window["leftY"] / pixelHeight + yOrigin
+            # TODO: Finish this method
+
+    def compute_window_coords(self, coord):
+        window_coords = {}
+        window_coords["upperX"] = coord[0] - math.floor(self.win_size / 2)
+        window_coords["lowerX"] = coord[0] + math.ceil(self.win_size / 2)
+        window_coords["rightY"] = coord[1] - math.floor(self.win_size / 2)
+        window_coords["leftY"] = coord[1] + math.ceil(self.win_size / 2)
+
+        return window_coords

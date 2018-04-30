@@ -7,7 +7,6 @@ from osgeo import ogr
 #sys.path.insert(0, path.join(path.dirname(__file__),"../"))
 #import utils.geofunctions as gf
 
-
 class Rasterizer(object):
     def __init__(self, vector_file, in_raster_file, class_column="class", nodata_val=255):        
         self.vector_path = vector_file
@@ -35,7 +34,9 @@ class Rasterizer(object):
             name = feature.GetField(self.class_column)
             # unique_labels.add(np.string_(name))  # TODO: Verify why I needed this. Is it needed to put in a npz file?
             unique_labels.add(name)
-    
+
+        # Close DataSource Connection
+        vector_ds.Destroy()
         print("Labels loaded:")
         self.class_names = []
         for name in sorted(unique_labels):
@@ -57,9 +58,6 @@ class Rasterizer(object):
         mem_band = mem_raster.GetRasterBand(1)
         mem_band.Fill(self.nodata_val)
         mem_band.SetNoDataValue(self.nodata_val)
-
-        # vector_ds = ogr.Open(self.vector_path)
-        # vector_layer = vector_ds.GetLayer()
 
         err = gdal.RasterizeLayer(
             mem_raster,
@@ -85,8 +83,9 @@ class Rasterizer(object):
             vector_layer.SetAttributeFilter("%s='%s'" % (str(self.class_column), str(label)))
             limg = self.rasterize_label(vector_layer)
             self.labeled_raster[limg == 1] = lid
-        
-        #return labeled_rst
+
+        # Close DataSource Connection
+        vector_ds.Destroy()
 
     def get_labeled_raster(self):
         return self.labeled_raster
