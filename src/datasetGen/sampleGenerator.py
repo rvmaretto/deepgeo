@@ -25,14 +25,16 @@ class SampleGenerator(object):
     m_labeledImg = []
     m_classNames = []
 
-    def __init__(self, img, labeledImg, classNames, rotationAngles=None):
+    def __init__(self, img, labeledImg, classNames):
         self.m_imgDataset = img
         self.m_labeledImg = labeledImg
         self.m_classNames = classNames
-        if(rotationAngles is None):
-            self.m_rotationAngles = [0]
-        else:
-            self.m_rotationAngles = rotationAngles
+        # TODO: Rotation angles must be in the DatasetGenerator
+        # if(rotationAngles is None):
+        #     self.m_rotationAngles = [0]
+        # else:
+        #     self.m_rotationAngles = rotationAngles
+        # TODO: Put this in the DatasetGenerator class
         #if(isinstance(img, list)):
         # else:
         #     self.m_imgDataset = [img]
@@ -47,11 +49,12 @@ class SampleGenerator(object):
 
     def getSampleIndexes(self):
         return self.m_ijSamples
-        
-    def extractLabels(self):
-        y = self.m_labeledImg[self.m_ijSamples[:,0], self.m_ijSamples[:,1]].filled(255)
-        assert not np.any(y == 255), "Unlabeled points"
-        return y
+
+    # TODO: Is it really necessary?
+    # def extractLabels(self):
+    #     indexes = self.m_labeledImg[self.m_ijSamples[:,0], self.m_ijSamples[:,1]].filled(255)
+    #     assert not np.any(indexes == 255), "Unlabeled points"
+    #     return indexes
 
     def extractWindows(self, win_size, saveOnDisk=False, path="./"):
         self.m_samplesImg = []
@@ -61,8 +64,8 @@ class SampleGenerator(object):
         # count = 0
         for coord in self.m_ijSamples:
             window = self.compute_window_coords(coord)
-            sampleImg = self.m_imgDataset[window["upperX"]:window["lowerX"], window["rightY"]:window["leftY"]]
-            sampleLabel = self.m_labeledImg[window["upperX"]:window["lowerX"], window["rightY"]:window["leftY"]]
+            sampleImg = self.m_imgDataset[window["upperLin"]:window["lowerLin"], window["rightCol"]:window["leftCol"]]
+            sampleLabel = self.m_labeledImg[window["upperLin"]:window["lowerLin"], window["rightCol"]:window["leftCol"]]
             self.m_samplesImg.append(sampleImg)
             self.m_samplesLabels.append(sampleLabel)
 
@@ -95,7 +98,7 @@ class SampleGenerator(object):
         xOrigin = transform[0]
         yOrigin = transform[3]
         pixelWidth = transform[1]
-        pixelHeight = transform[5]
+        pixelHeight = -transform[5]
 
         for pos in range(len(self.m_ijSamples)):
             samplesDir = os.path.join(path, "sample_imgs")
@@ -110,14 +113,30 @@ class SampleGenerator(object):
             upperX = window["upperX"] / pixelWidth + xOrigin
             leftY = window["leftY"] / pixelHeight + yOrigin
             lowerX = window["lowerX"] / pixelWidth + xOrigin
-            leftY = window["leftY"] / pixelHeight + yOrigin
-            # TODO: Finish this method
+            rightY = window["rightY"] / pixelHeight + yOrigin
+            coordsWindow = [upperX, leftY, lowerX, rightY]
+
+            new_transform = transform
+            new_transform[0] = upperX
+            new_transform[3] = leftY
+
+            # TODO: Verify if it will work
+            out_ds = gdal.Warp(fileName, self.m_imgDataset, format="GTiff", outputBounds=coordsWindow,
+                               xRes = pixelWidth, yRes = pixelHeight, dstSRS = self.m_imgDataset.GetProjectionRef(),
+                               resampleAlg=gdal.GRA_NearestNeighbour, option=["COMPRESS=DEFLATE"])
+            out_ds = None
+            #TODO: Verify gdal.Translate function and CreateCopy
+            # driver = gdal.GetDriverByName("GTiff")
+            # driver.Create(fileName, self.win_size, self.win_size, self.m_imgDataset.RasterCount,
+            #               self.m_imgDataset.GetRasterBand(1).DataType)
+            # driver.CreateCopy(fileName, self.m_samplesImg[pos])
+
 
     def compute_window_coords(self, coord):
         window_coords = {}
-        window_coords["upperX"] = coord[0] - math.floor(self.win_size / 2)
-        window_coords["lowerX"] = coord[0] + math.ceil(self.win_size / 2)
-        window_coords["rightY"] = coord[1] - math.floor(self.win_size / 2)
-        window_coords["leftY"] = coord[1] + math.ceil(self.win_size / 2)
+        window_coords["upperLin"] = coord[0] - math.floor(self.win_size / 2)
+        window_coords["lowerLin"] = coord[0] + math.ceil(self.win_size / 2)
+        window_coords["rightCol"] = coord[1] - math.floor(self.win_size / 2)
+        window_coords["leftCol"] = coord[1] + math.ceil(self.win_size / 2)
 
         return window_coords
