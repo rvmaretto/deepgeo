@@ -105,3 +105,6 @@ ENV/
 
 # Data directory
 data_real/
+
+# Test Coverage files
+cover/

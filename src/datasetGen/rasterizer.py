@@ -22,7 +22,7 @@ class Rasterizer(object):
         return self.class_names
 
     def collect_class_names(self):
-        print("--- Collecting Labels ---")
+        # print("--- Collecting Labels ---")
         vector_ds = ogr.Open(self.vector_path)
         vector_layer = vector_ds.GetLayer()
         vector_layer.ResetReading()
@@ -37,11 +37,11 @@ class Rasterizer(object):
 
         # Close DataSource Connection
         vector_ds.Destroy()
-        print("Labels loaded:")
+        # print("Labels loaded:")
         self.class_names = []
         for name in sorted(unique_labels):
             # print("\t\"", str(name, encoding="UTF-8"), "\"")  # TODO: The same as the last
-            print("\t\"", name, "\"")
+            # print("\t\"", name, "\"")
             self.class_names.append(name)
 
     def rasterize_label(self, vector_layer):

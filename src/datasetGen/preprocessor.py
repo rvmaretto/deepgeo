@@ -7,14 +7,14 @@ sys.path.insert(0, path.join(path.dirname(__file__),"../"))
 import utils.geofunctions as gf
 
 def computeNDVI(np_raster, parameters):
-    print("Computing NDVI")
+    # print("Computing NDVI")
     red = np_raster[:,:,parameters["idx_b_red"]]
     nir = np_raster[:,:,parameters["idx_b_nir"]]
     ndvi = np.true_divide(np.subtract(nir, red), np.add(nir, red))
     return ndvi
 
 def computeEVI(np_raster, parameters):
-    print("Computing EVI")
+    # print("Computing EVI")
     red = np_raster[:,:,parameters["idx_b_red"]]
     nir = np_raster[:,:,parameters["idx_b_nir"]]
     blue = np_raster[:,:,parameters["idx_b_blue"]]
