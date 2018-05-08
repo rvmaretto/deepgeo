@@ -8,6 +8,7 @@ Functionalities to Deep Learning based classification of Remote Sensing Images
 * ogr
 * tensorflow
 * nose
+* pillow
 * scipy
 * matplotlib
 
