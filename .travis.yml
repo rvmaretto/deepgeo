@@ -24,4 +24,5 @@ install:
   - pip install tensorflow-gpu
   - conda install gdal
   - pip install nose
+  - pip install matplotlib
 script: nosetests
