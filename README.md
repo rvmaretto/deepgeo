@@ -9,6 +9,7 @@ Functionalities to Deep Learning based classification of Remote Sensing Images
 * tensorflow
 * nose
 * scipy
+* matplotlib
 
 ## Code Status
 
