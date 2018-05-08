@@ -25,5 +25,6 @@ install:
   - conda install gdal
   - pip install nose
   - pip install matplotlib
+  - pip install pillow
   - pip install scipy
 script: nosetests
