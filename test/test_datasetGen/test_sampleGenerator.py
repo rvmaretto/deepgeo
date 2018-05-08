@@ -113,3 +113,13 @@ class TestSampleGenerator():
             fileName = "sample" + str(pos) + ".png"
             assert_true(path.exists(path.join(samplesDir, fileName)))
             assert_true(path.exists(path.join(labelsDir, fileName)))
+
+    def test_save_samples_NPZ(self):
+        output_path = path.join(self.output_dir, "samples.npz")
+        smpGen = sg.SampleGenerator(self.raster_img, self.rasterized_layer, self.class_names)
+        smpGen.compute_sample_indexes(quantity=5)
+        smpGen.extract_windows(win_size=5)
+
+        smpGen.save_samples_NPZ(output_path)
+        assert_true(path.exists(output_path))
+        # TODO: Verify here the contents of the file. Compare to a reference

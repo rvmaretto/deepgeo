@@ -73,7 +73,7 @@ class SampleGenerator(object):
         return self.m_samplesImg, self.m_samplesLabels
 
     # TODO: Verify this method.
-    # TODO: Reimplement
+    # TODO: Reimplement in both SampleGenerator and DatasetGenerator
     def saveSamplesToNPZ(self, path, noDataValue=255):
         np.savez(path,
                  imgSamples = self.m_samplesImg,
