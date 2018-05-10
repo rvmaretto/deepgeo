@@ -12,7 +12,7 @@ import utils.filesystem as fs
 class test_preprocessor():
     def setup(self):
         # TODO: Verify how to remove the warnings, and then remove this filter
-        warnings.filterwarnings('ignore', category=RuntimeWarning)
+        # warnings.filterwarnings('ignore', category=RuntimeWarning)
         self.data_dir = path.join(path.dirname(__file__), "../../data")
         self.pathVector = path.join(self.data_dir, "prodes_shp_crop.shp")
         self.pathRaster = path.join(self.data_dir, "raster_B1_B7.tif")

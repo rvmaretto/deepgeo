@@ -6,27 +6,48 @@ from os import path
 sys.path.insert(0, path.join(path.dirname(__file__),"../"))
 import utils.geofunctions as gf
 
-def computeNDVI(np_raster, parameters):
+def compute_NDVI(np_raster, parameters):
     # print("Computing NDVI")
     red = np_raster[:,:,parameters["idx_b_red"]]
     nir = np_raster[:,:,parameters["idx_b_nir"]]
-    ndvi = np.true_divide(np.subtract(nir, red), np.add(nir, red))
+    with np.errstate(divide='ignore', invalid='ignore'):
+        ndvi = np.true_divide(np.subtract(nir, red), np.add(nir, red))
     return ndvi
 
-def computeEVI(np_raster, parameters):
+def compute_EVI(np_raster, parameters):
     # print("Computing EVI")
+    if ("factor" in parameters):
+        factor = parameters["factor"]
+    else:
+        factor = 1
+    red = np_raster[:,:,parameters["idx_b_red"]] * factor
+    nir = np_raster[:,:,parameters["idx_b_nir"]] * factor
+    blue = np_raster[:,:,parameters["idx_b_blue"]] * factor
+
+    with np.errstate(divide='ignore', invalid='ignore'):
+        divider = nir - red
+        dividend = nir + (6.0 * red) - (7.5 * blue) + 1.0
+        evi = 2.5 * (np.true_divide(divider, dividend))
+
+    return evi
+
+def compute_EVI2(np_raster, parameters):
+    # print("Computing EVI2")
     red = np_raster[:,:,parameters["idx_b_red"]]
     nir = np_raster[:,:,parameters["idx_b_nir"]]
-    blue = np_raster[:,:,parameters["idx_b_blue"]]
-    evi = np.multiply(2.5, np.true_divide(np.subtract(nir, red),
-                                          np.add(np.subtract(np.add(nir, np.multiply(6.0, red)),
-                                                             np.multiply(7.5, blue)), 1.0)))
-    return evi
+
+    with np.errstate(divide='ignore', invalid='ignore'):
+        divider = np.subtract(nir, red)
+        dividend = nir + (2.4 * red) + 1.0
+        evi2 = 2.5 * np.true_divide(divider, dividend)
+
+    return evi2
 
 class Preprocessor(object):
     predefIndexes = {
-        "ndvi": computeNDVI,
-        "evi": computeEVI
+        "ndvi": compute_NDVI,
+        "evi": compute_EVI,
+        "evi2": compute_EVI2
     }
 
     sint_bands = {}
@@ -40,6 +61,7 @@ class Preprocessor(object):
         # self.raster_array = np.rollaxis(self.raster_array, 0, start=3)
         
 
+    #TODO: Change this to recieve only "parameters" param. "Indexes" param is not necessary
     def compute_indexes(self, indexes, parameters):
         for idx in indexes:
             result = self.predefIndexes[idx](self.raster_array, parameters[idx])
@@ -54,6 +76,9 @@ class Preprocessor(object):
 
     def get_index_band(self, index):
         return self.raster_array[:,:,self.get_position_index_band(index)]
+
+    def get_raster_stacked_raster(self):
+        return self.raster_array
 
     def register_new_func(self, name, function):
         self.predefIndexes[name] = function
