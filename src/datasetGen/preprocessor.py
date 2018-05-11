@@ -61,10 +61,9 @@ class Preprocessor(object):
         # self.raster_array = np.rollaxis(self.raster_array, 0, start=3)
         
 
-    #TODO: Change this to recieve only "parameters" param. "Indexes" param is not necessary
-    def compute_indexes(self, indexes, parameters):
-        for idx in indexes:
-            result = self.predefIndexes[idx](self.raster_array, parameters[idx])
+    def compute_indexes(self, parameters):
+        for idx, params in parameters.items():
+            result = self.predefIndexes[idx](self.raster_array, params)
             num_bands = self.raster_array.shape[2]
             self.sint_bands[idx] = num_bands
             self.raster_array = np.dstack((self.raster_array[:,:,:num_bands], result))

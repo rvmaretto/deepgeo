@@ -22,18 +22,17 @@ class test_preprocessor():
         fs.mkdir(self.output_dir)
 
     def test_compute_indexes_NDVI(self):
-        parameters = {
+        ndvi_raster = self.preproc.compute_indexes({
             "ndvi": {
                 "idx_b_red": 3,
                 "idx_b_nir": 4
             }
-        }
-        ndvi_raster = self.preproc.compute_indexes(["ndvi"], parameters)
+        })
         assert_equal(8, ndvi_raster.shape[2])
         assert_equal(7, self.preproc.get_position_index_band("ndvi"))
 
     def test_compute_two_indexes(self):
-        parameters = {
+        new_raster = self.preproc.compute_indexes({
             "ndvi": {
                 "idx_b_red": 3,
                 "idx_b_nir": 4
@@ -43,24 +42,21 @@ class test_preprocessor():
                 "idx_b_blue": 1,
                 "idx_b_nir": 4
             }
-        }
-        new_raster = self.preproc.compute_indexes(["ndvi", "evi"], parameters)
+        })
         assert_equal(9, new_raster.shape[2])
-        assert_equal(7, self.preproc.get_position_index_band("ndvi"))
-        assert_equal(8, self.preproc.get_position_index_band("evi"))
+        assert_equal(8, self.preproc.get_position_index_band("ndvi"))
+        assert_equal(7, self.preproc.get_position_index_band("evi"))
 
     def test_register_new_function(self):
         def subtraction(raster, param):
             return raster[:,:,param["b1"]] - raster[:,:,param["b2"]]
 
-        parameters = {
+        self.preproc.register_new_func("func", subtraction)
+        new_raster = self.preproc.compute_indexes({
             "func": {
                 "b1": 4,
                 "b2": 3
             }
-        }
-
-        self.preproc.register_new_func("func", subtraction)
-        new_raster = self.preproc.compute_indexes(["func"], parameters)
+        })
         assert_equal(8, new_raster.shape[2])
         assert_equal(7, self.preproc.get_position_index_band("func"))
