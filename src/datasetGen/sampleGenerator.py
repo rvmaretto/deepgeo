@@ -1,4 +1,4 @@
-import numpy as np
+'import numpy as np
 import math
 import os
 import sys
@@ -91,13 +91,19 @@ class SampleGenerator(object):
 
         self.geo_coords = []
         for pos in range(len(self.ij_samples)):
+            geo_coord = []
             coord = self.ij_samples[pos]
             window = self.compute_window_coords(coord)
 
-            leftX = xOrigin + (window["leftCol"] * pixelWidth)
-            rightX = xOrigin + (window["rightCol"] * pixelWidth)
             upperY = yOrigin + (window["upperLin"] * pixelHeight)
             lowerY = yOrigin + (window["lowerLin"] * pixelHeight)
+            leftX = xOrigin + (window["leftCol"] * pixelWidth)
+            rightX = xOrigin + (window["rightCol"] * pixelWidth)
+
+            geo_coord.append(upperY)
+            geo_coord.append(lowerY)
+            geo_coord.append(leftX)
+            geo_coord.append(rightX)
 
         img_ds = None
 
