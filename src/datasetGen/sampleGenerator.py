@@ -1,10 +1,12 @@
-'import numpy as np
+import numpy as np
 import math
 import os
 import sys
 import scipy.misc
 import pylab as pl
-import gdal
+from osgeo import gdal
+from osgeo import ogr
+from osgeo import osr #TODO: Verify if it is really necessary? If I get the SRID from the Raster I still need this?
 
 sys.path.insert(0, "../")
 import utils.filesystem as fs
@@ -75,7 +77,7 @@ class SampleGenerator(object):
                  label_samples = np.ma.filled(self.samples_labels, noDataValue),
                  class_names=np.array(self.class_names))
 
-    # TODO: From here the methods must be reviewed. How to open the raster dataset to get the geo coordinates?
+    #TODO: This function must not be used by the user. It must be called internally
     def generate_windows_geo_coords(self):
         if(self.base_raster_path is None):
             raise RuntimeError("Base raster path is None. It must exists to generate geographic coordinates.")
@@ -104,14 +106,20 @@ class SampleGenerator(object):
             geo_coord.append(lowerY)
             geo_coord.append(leftX)
             geo_coord.append(rightX)
+            self.geo_coords.append(geo_coord)
 
         img_ds = None
 
-    def save_samples_SHP(self, path):
+    #TODO: Remove parameter layer_name. Get it from the path
+    def save_samples_SHP(self, path, layer_name):
         if (self.base_raster_path is None):
             raise RuntimeError("Base raster path is None. It must exists to generate geographic coordinates.")
         else:
             img_ds = gdal.Open(self.base_raster_path)
+
+        if os.path.exists(path):
+            os.remove(path)
+
         transform = img_ds.GetGeoTransform()
 
         xOrigin = transform[0]
@@ -119,4 +127,34 @@ class SampleGenerator(object):
         pixelWidth = transform[1]
         pixelHeight = transform[5]
 
+        driver = ogr.GetDriverByName("ESRI Shapefile")
+
+        prj = img_ds.GetProjection()
+        srs = osr.SpatialReference(wkt=prj)
+
+        # create the data source
+        output_ds = driver.CreateDataSource(path)
+        layer = output_ds.CreateLayer(layer_name, srs, ogr.wkbPolygon)
+
+        for pos in range(len(self.geo_coords)):
+            coord = self.geo_coords[pos]
+            ring = ogr.Geometry(ogr.wkbLinearRing)
+            ring.AddPoint(coord[2], coord[0])
+            ring.AddPoint(coord[2], coord[1])
+            ring.AddPoint(coord[3], coord[1])
+            ring.AddPoint(coord[3], coord[0])
+            ring.AddPoint(coord[2], coord[0])
+
+            polygon = ogr.Geometry(ogr.wkbPolygon)
+            polygon.AddGeometry(ring)
+
+            feature = ogr.Feature(layer.GetLayerDefn())
+            feature.SetGeometry(polygon)
+            layer.CreateFeature(feature)
+
+            feature.Destroy()
+            polygon.Destroy()
+            ring.Destroy()
+
+        output_ds.Destroy()
         img_ds = None

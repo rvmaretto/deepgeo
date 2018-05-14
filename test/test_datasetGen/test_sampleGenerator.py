@@ -10,6 +10,7 @@ from datasetGen import rasterizer as rstzr
 import datasetGen.sampleGenerator as sg
 import utils.filesystem as fs
 
+# TODO: Create a method rasterizer.execute, that execute the whole proccess.
 class TestSampleGenerator():
     def setup(self):
         self.data_dir = path.join(path.dirname(__file__), "../../data")
@@ -55,7 +56,7 @@ class TestSampleGenerator():
     def test_extract_windows(self):
         smpGen = sg.SampleGenerator(self.raster_img, self.rasterized_layer, self.class_names)
         smpGen.compute_sample_indexes(5)
-        smpGen.extract_windows(5)
+        smpGen.extract_windows(win_size=5)
         samples = smpGen.getSamples()
         
         for window in samples["img_samples"]:
