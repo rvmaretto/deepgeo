@@ -52,6 +52,8 @@ class SampleGenerator(object):
             self.samples_img.append(sampleImg)
             self.samples_labels.append(sampleLabel)
 
+        self.generate_windows_geo_coords()
+
     def getSamples(self):
         return {
             "img_samples": self.samples_img,
@@ -72,12 +74,13 @@ class SampleGenerator(object):
                 pl.imsave(fname=os.path.join(labelsDir, fileName), arr=self.samples_labels[pos], cmap=colorMap)
 
     def save_samples_NPZ(self, path, noDataValue=255):
+        if os.path.exists(path):
+            os.remove(path)
         np.savez(path,
                  img_samples = self.samples_img,
                  label_samples = np.ma.filled(self.samples_labels, noDataValue),
                  class_names=np.array(self.class_names))
 
-    #TODO: This function must not be used by the user. It must be called internally
     def generate_windows_geo_coords(self):
         if(self.base_raster_path is None):
             raise RuntimeError("Base raster path is None. It must exists to generate geographic coordinates.")
@@ -110,8 +113,7 @@ class SampleGenerator(object):
 
         img_ds = None
 
-    #TODO: Remove parameter layer_name. Get it from the path
-    def save_samples_SHP(self, path, layer_name):
+    def save_samples_SHP(self, path):
         if (self.base_raster_path is None):
             raise RuntimeError("Base raster path is None. It must exists to generate geographic coordinates.")
         else:
@@ -134,6 +136,7 @@ class SampleGenerator(object):
 
         # create the data source
         output_ds = driver.CreateDataSource(path)
+        layer_name = os.path.splitext(os.path.basename(path))[0]
         layer = output_ds.CreateLayer(layer_name, srs, ogr.wkbPolygon)
 
         for pos in range(len(self.geo_coords)):

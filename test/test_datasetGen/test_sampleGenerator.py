@@ -3,6 +3,7 @@ from os import path
 import sys
 import numpy as np
 from osgeo import gdal
+from osgeo import ogr
 from matplotlib.colors import ListedColormap
 
 sys.path.insert(0, path.join(path.dirname(__file__),"../../src"))
@@ -37,7 +38,7 @@ class TestSampleGenerator():
         fs.delete_dir(self.output_dir)
 
     def test_compute_index(self):
-        smpGen = sg.SampleGenerator(self.raster_img, self.rasterized_layer, self.class_names)
+        smpGen = sg.SampleGenerator(self.raster_img, self.rasterized_layer, self.class_names, self.pathRaster)
         np.random.seed(0)
         smpGen.compute_sample_indexes(5)
         smpIdxes = smpGen.get_sample_indexes()
@@ -54,7 +55,7 @@ class TestSampleGenerator():
         assert_equal(428, smpIdxes[4][1])
 
     def test_extract_windows(self):
-        smpGen = sg.SampleGenerator(self.raster_img, self.rasterized_layer, self.class_names)
+        smpGen = sg.SampleGenerator(self.raster_img, self.rasterized_layer, self.class_names, self.pathRaster)
         smpGen.compute_sample_indexes(5)
         smpGen.extract_windows(win_size=5)
         samples = smpGen.getSamples()
@@ -70,7 +71,7 @@ class TestSampleGenerator():
 
     def test_save_samples_PNG_without_cmap_and_bands(self):
         output_path = path.join(self.output_dir, "generated_samples")
-        smpGen = sg.SampleGenerator(self.raster_img, self.rasterized_layer, self.class_names)
+        smpGen = sg.SampleGenerator(self.raster_img, self.rasterized_layer, self.class_names, self.pathRaster)
         smpGen.compute_sample_indexes(quantity=5)
         smpGen.extract_windows(win_size=5)
         smpGen.save_samples_PNG(output_path)
@@ -85,7 +86,7 @@ class TestSampleGenerator():
 
     def test_save_samples_PNG_without_cmap_with_bands(self):
         output_path = path.join(self.output_dir, "generated_samples")
-        smpGen = sg.SampleGenerator(self.raster_img, self.rasterized_layer, self.class_names)
+        smpGen = sg.SampleGenerator(self.raster_img, self.rasterized_layer, self.class_names, self.pathRaster)
         smpGen.compute_sample_indexes(quantity=5)
         smpGen.extract_windows(win_size=5)
         smpGen.save_samples_PNG(output_path, r_g_b=[5,4,3])
@@ -100,7 +101,7 @@ class TestSampleGenerator():
 
     def test_save_samples_PNG_all_parameters(self):
         output_path = path.join(self.output_dir, "generated_samples")
-        smpGen = sg.SampleGenerator(self.raster_img, self.rasterized_layer, self.class_names)
+        smpGen = sg.SampleGenerator(self.raster_img, self.rasterized_layer, self.class_names, self.pathRaster)
         smpGen.compute_sample_indexes(quantity=5)
         smpGen.extract_windows(win_size=5)
 
@@ -116,11 +117,31 @@ class TestSampleGenerator():
             assert_true(path.exists(path.join(labelsDir, fileName)))
 
     def test_save_samples_NPZ(self):
-        output_path = path.join(self.output_dir, "samples.npz")
-        smpGen = sg.SampleGenerator(self.raster_img, self.rasterized_layer, self.class_names)
+        output_path = path.join(self.output_dir, "samples_dataset.npz")
+        smpGen = sg.SampleGenerator(self.raster_img, self.rasterized_layer, self.class_names, self.pathRaster)
         smpGen.compute_sample_indexes(quantity=5)
         smpGen.extract_windows(win_size=5)
 
         smpGen.save_samples_NPZ(output_path)
         assert_true(path.exists(output_path))
         # TODO: Verify here the contents of the file. Compare to a reference
+
+    def test_save_samples_SHP(self):
+        output_path = path.join(self.output_dir, "samples.shp")
+        smpGen = sg.SampleGenerator(self.raster_img, self.rasterized_layer, self.class_names, self.pathRaster)
+        smpGen.compute_sample_indexes(quantity=5)
+        smpGen.extract_windows(win_size=5)
+
+        smpGen.save_samples_SHP(output_path)
+        assert_true(path.exists(output_path))
+
+        out_ds = ogr.Open(output_path)
+        layer = out_ds.GetLayer()
+
+        assert_equal(5, layer.GetFeatureCount())
+
+        for feature in layer:
+            geom = feature.GetGeometryRef()
+            assert_equal(22500.0, geom.GetArea())
+
+        out_ds.Destroy()
