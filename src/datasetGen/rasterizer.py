@@ -76,7 +76,7 @@ class Rasterizer(object):
         vector_ds = ogr.Open(self.vector_path)
         vector_layer = vector_ds.GetLayer()
         self.labeled_raster = np.ma.masked_all((self.base_raster.RasterYSize, 
-                                self.base_raster.RasterXSize),
+                                self.base_raster.RasterXSize, 1),
                                 dtype=np.int16)
 
         for lid, label in enumerate(self.class_names):
