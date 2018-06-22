@@ -3,8 +3,8 @@ from os import path
 import sys
 
 sys.path.insert(0, path.join(path.dirname(__file__),"../../src"))
-from datasetGen import rasterizer
-import utils.filesystem as fs
+from deepleeo.dataset import rasterizer
+import deepleeo.utils.filesystem as fs
 
 # TODO: Improve these tests to compare numerically the results
 

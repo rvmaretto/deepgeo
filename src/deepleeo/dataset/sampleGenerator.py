@@ -8,7 +8,7 @@ from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr #TODO: Verify if it is really necessary? If I get the SRID from the Raster I still need this?
 
-sys.path.insert(0, "../")
+sys.path.insert(0, os.path.join(os.path.dirname(__file__),"../"))
 import utils.filesystem as fs
 
 class SampleGenerator(object):
@@ -69,9 +69,9 @@ class SampleGenerator(object):
             fileName = "sample" + str(pos) + ".png"
             scipy.misc.imsave(os.path.join(samplesDir, fileName), self.samples_img[pos][:, :, r_g_b])
             if(colorMap is None):
-                scipy.misc.imsave(os.path.join(labelsDir, fileName), self.samples_labels[pos])
+                scipy.misc.imsave(os.path.join(labelsDir, fileName), self.samples_labels[pos][:,:,0])
             else:
-                pl.imsave(fname=os.path.join(labelsDir, fileName), arr=self.samples_labels[pos], cmap=colorMap)
+                pl.imsave(fname=os.path.join(labelsDir, fileName), arr=self.samples_labels[pos][:,:,0], cmap=colorMap)
 
     def save_samples_NPZ(self, path, noDataValue=255):
         if os.path.exists(path):

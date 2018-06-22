@@ -4,8 +4,8 @@ import sys
 import warnings
 
 sys.path.insert(0, path.join(path.dirname(__file__),"../../src"))
-import datasetGen.preprocessor as prep
-import utils.filesystem as fs
+import deepleeo.dataset.preprocessor as prep
+import deepleeo.utils.filesystem as fs
 
 # TODO: Improve these tests to compare numerically the results
 

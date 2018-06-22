@@ -98,4 +98,4 @@ class Rasterizer(object):
         output_ds.SetProjection(self.base_raster.GetProjection())
         output_ds.SetGeoTransform(self.base_raster.GetGeoTransform())
         output_band = output_ds.GetRasterBand(1)
-        output_band.WriteArray(np.ma.filled(self.labeled_raster, self.nodata_val))
+        output_band.WriteArray(np.ma.filled(self.labeled_raster[:,:,0], self.nodata_val))
