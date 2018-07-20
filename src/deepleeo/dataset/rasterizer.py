@@ -8,12 +8,14 @@ from osgeo import ogr
 #import utils.geofunctions as gf
 
 class Rasterizer(object):
-    def __init__(self, vector_file, in_raster_file, class_column="class", nodata_val=255):        
+    def __init__(self, vector_file, in_raster_file, class_column="class", nodata_val=255, classes_interest=None):        
         self.vector_path = vector_file
         self.raster_path = in_raster_file
         self.class_column = class_column
         self.nodata_val = nodata_val
         self.base_raster = gdal.Open(self.raster_path) #gf.load_image(self.raster_path)
+        # Is it better to use here the class_names attribute?
+        self.classes_interest = classes_interest
 
     def get_base_raster(self):
         return self.base_raster

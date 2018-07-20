@@ -56,8 +56,9 @@ class SampleGenerator(object):
 
     def getSamples(self):
         return {
-            "img_samples": self.samples_img,
-            "labels": self.samples_labels
+            "images": self.samples_img,
+            "labels": self.samples_labels,
+            "classes": self.class_names
         }
 
     def save_samples_PNG(self, path, colorMap=None, r_g_b=[1,2,3]):
@@ -77,9 +78,9 @@ class SampleGenerator(object):
         if os.path.exists(path):
             os.remove(path)
         np.savez(path,
-                 img_samples = self.samples_img,
-                 label_samples = np.ma.filled(self.samples_labels, noDataValue),
-                 class_names=np.array(self.class_names))
+                 images = self.samples_img,
+                 labels= np.ma.filled(self.samples_labels, noDataValue),
+                 classes=np.array(self.class_names))
 
     def generate_windows_geo_coords(self):
         if(self.base_raster_path is None):
