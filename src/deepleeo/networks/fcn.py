@@ -2,8 +2,9 @@ import tensorflow as tf
 
 sys.path.insert(0, path.join(path.dirname(__file__),"../"))
 import networks.layers as layers
+import networks.loss_functions as lossf
 
-def fcn_32(samples, labels, class_names, mode):
+def fcn32_VGG(samples, labels, class_names, hiperparams, mode):
     g = tf.Graph()
     g.as_default()
 
@@ -46,3 +47,7 @@ def fcn_32(samples, labels, class_names, mode):
 
     pred_up = tf.argmax(inputs=up_score, dimension=3, name="pred_up")
 
+    if mode == tf.estimator.ModeKeys.PREDICT:
+        return tf.estimator.EstimatorSpec(mode=mode, predictions=pred_up)
+
+    loss = lossf.softmax_loss_cross_entropy(net_score=pred_up, labels=labels, num_classes=len(class_names))

@@ -7,12 +7,17 @@ def rotate_images(images, angles, data_type=np.float32):
     if(not isinstance(angles, list)):
         angles = [angles]
         
-    if(not isinstance(images, list)):
-        images = [images]
+    if(not isinstance(images, list) and not type(images) is np.ndarray):
+         images = [images]
     
     tf.reset_default_graph()
-    
-    tf_shape = (None,) + images[0].shape
+
+    if(type(images is np.ndarray)):
+        tf_shape = images.shape
+    else:
+        tf_shape = (None,) + images[0].shape
+    # print(images[0].shape)
+    # print(tf_shape)
     
     img = tf.placeholder(data_type, shape = tf_shape)
     radian = tf.placeholder(tf.float32, shape = (len(images)))
@@ -25,16 +30,15 @@ def rotate_images(images, angles, data_type=np.float32):
             radian_angle = angle * math.pi / 180
             radian_list = [radian_angle] * len(images)
             rot_img = sess.run(tf_img, feed_dict = {img: images, radian: radian_list})
-            rot_img = np.array(rot_img, dtype=data_type)
             rotated_imgs.extend(rot_img)
             
         sess.close()
-        return rotated_imgs
+        return np.array(rotated_imgs, dtype=data_type)
 
 def flip_images(images, data_type=np.float32):
-    if(not isinstance(images, list)):
-        angles = [images]
-        
+    if (not isinstance(images, list) and not type(images) is np.ndarray):
+        images = [images]
+
     flipped_imgs = []
     tf.reset_default_graph()
     
