@@ -70,6 +70,11 @@ class Preprocessor(object):
 
         return self.raster_array
 
+    def normalize_data(self):
+        nbands = self.raster_array.shape[2]
+        min = np.min(self.raster_array, axis=(0, 2, 3))
+        max = np.max(self.raster_array, axis=(0, 2, 3))
+
     def get_position_index_band(self, index):
         return self.sint_bands[index]
 

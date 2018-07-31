@@ -4,11 +4,14 @@ sys.path.insert(0, path.join(path.dirname(__file__),"../"))
 import networks.layers as layers
 import networks.loss_functions as lossf
 
-def fcn32_VGG(samples, labels, class_names, hiperparams, mode):
+def fcn32_VGG_description(samples, labels, class_names, hiperparams, mode):
     g = tf.Graph()
     g.as_default()
 
+    tf.logging.set_verbosity(tf.logging.INFO)
     training = mode == tf.estimator.ModeKeys.TRAIN
+
+    data_size, _, _, _ = samples.shape
 
     # Base Network (VGG_16)
     conv1_1 = layers.conv_pool_layer(input=samples, filters=64, training=training, name="1_1", pool=False)
@@ -51,3 +54,6 @@ def fcn32_VGG(samples, labels, class_names, hiperparams, mode):
         return tf.estimator.EstimatorSpec(mode=mode, predictions=pred_up)
 
     loss = lossf.softmax_loss_cross_entropy(net_score=pred_up, labels=labels, num_classes=len(class_names))
+
+def fcn_train():
+    x = 10
