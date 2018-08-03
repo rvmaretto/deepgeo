@@ -1,21 +1,25 @@
 import numpy as np
-import numpy.ma as ma
 import gdal
 import ogr
 
-def load_image(filename):
-    #print("--- Loading Raster ---")
-    rgb_dataset = gdal.Open(filename)
-    numBands = rgb_dataset.RasterCount
-    #print("   NUM Bands: ", numBands)
-    img_rgb = rgb_dataset.ReadAsArray()
-    # print("   Shape before roll: ", img_rgb.shape)
-    img_rgb= np.rollaxis(img_rgb, 0, start=3)
-    # print("   Shape after roll: ", img_rgb.shape)
-    img_rgb = ma.array(img_rgb[:,:,:numBands])#, mask=mask)
-    # convert it to float because it's easier for us after
-    img_rgb = ma.array(img_rgb.astype(np.float32) / 255.0)#, mask=mask)
-    return img_rgb
+
+def load_image(filepath, no_data=None):
+    img_ds = gdal.Open(filepath)
+
+    if (no_data is None):
+        no_data = 0
+
+    img = None
+    for i in range(1, img_ds.RasterCount + 1):
+        band = img_ds.GetRasterBand(i)
+        band_arr = band.ReadAsArray()
+        band_arr = np.ma.masked_array(band_arr, band_arr == no_data)
+        if (img is None):
+            img = band_arr
+        else:
+            img = np.ma.dstack((img, band_arr))
+
+    return img
 
 def load_vector_layer(filename):
     vector_ds = ogr.Open(filename)

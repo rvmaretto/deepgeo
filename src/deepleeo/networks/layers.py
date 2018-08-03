@@ -20,7 +20,7 @@ def conv_pool_layer(inputs, filters, kernel_size=3, training=True, name="", pool
 
 def up_conv_layer(inputs, filters, kernel_size, strides, name):
     deconv = tf.layers.conv2d_transpose(
-        inputs=input,
+        inputs=inputs,
         filters=filters,
         kernel_size=kernel_size,
         strides=strides,

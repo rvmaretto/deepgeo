@@ -1,7 +1,6 @@
 from sklearn import model_selection
-import time
 
-def split_dataset(dataset, perc_test=15, perc_val=15, random_seed=None):
+def split_dataset(dataset, perc_test=30, perc_val=0, random_seed=None):
     train_images, test_images, train_labels, test_labels = model_selection.train_test_split(
         dataset["images"],
         dataset["labels"],
