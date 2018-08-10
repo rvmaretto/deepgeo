@@ -31,19 +31,19 @@ def compute_EVI(np_raster, parameters):
 
     with np.errstate(divide='ignore', invalid='ignore'):
         divider = nir - red
-        dividend = nir + (6.0 * red) - (7.5 * blue) + 1.0
+        dividend = nir + (6.0 * red) - (7.5 * blue) + 10000.0
         evi = 2.5 * (np.true_divide(divider, dividend))
 
     return evi
 
 def compute_EVI2(np_raster, parameters):
     # print("Computing EVI2")
-    red = np_raster[:,:,parameters["idx_b_red"]]
-    nir = np_raster[:,:,parameters["idx_b_nir"]]
+    red = np_raster[:,:,parameters["idx_b_red"]] * 0.0001
+    nir = np_raster[:,:,parameters["idx_b_nir"]] * 0.0001
 
     with np.errstate(divide='ignore', invalid='ignore'):
         divider = np.subtract(nir, red)
-        dividend = nir + (2.4 * red) + 1.0
+        dividend = nir + (2.4 * red) + 10000.0
         evi2 = 2.5 * np.true_divide(divider, dividend)
 
     return evi2
@@ -149,7 +149,7 @@ class Preprocessor(object):
             self.raster_array = self.standardize_functions[strategy](self.raster_array, params)
         return self.raster_array
 
-    def register_standardization(self, name, function, params=None):
+    def register_standardization(self, name, function):
         self.standardize_functions[name] = function
 
     def save_index_raster(self, index, out_path):

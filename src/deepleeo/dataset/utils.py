@@ -1,9 +1,10 @@
 from sklearn import model_selection
+import numpy as np
 
 def split_dataset(dataset, perc_test=30, perc_val=0, random_seed=None):
     train_images, test_images, train_labels, test_labels = model_selection.train_test_split(
-        dataset["images"],
-        dataset["labels"],
+        dataset["images"].astype(np.float32), #TODO: Verify if this casting is necessary
+        dataset["labels"].astype(np.float32), #TODO: Verify if this casting is necessary
         test_size = ((perc_test + perc_val) / 100),
         random_state = random_seed
     )

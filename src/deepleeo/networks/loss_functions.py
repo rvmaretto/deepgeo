@@ -6,7 +6,7 @@ def softmax_loss_cross_entropy(net_score, labels, num_classes, weight_classes=No
         #tf.nn.softmax_cross_entropy_with_logits_v2(labels=labels, logits=up_score)
         up_score = tf.reshape(net_score, (-1, num_classes))
         epsilon = tf.constant(value=1e-4)
-        labels = tf.to_float(tf.reshape(labels, -1, num_classes))
+        labels = tf.reshape(labels, -1, num_classes)
 
         softmax = tf.nn.softmax(up_score) + epsilon
 
