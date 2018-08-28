@@ -14,6 +14,7 @@ reload(lossf)
 def fcn32_VGG_description(features, labels, params, mode, config):
     tf.logging.set_verbosity(tf.logging.INFO)
     training = mode == tf.estimator.ModeKeys.TRAIN
+    evaluating = mode == tf.estimator.ModeKeys.EVAL
 
     hyper_params = params
 
@@ -24,7 +25,8 @@ def fcn32_VGG_description(features, labels, params, mode, config):
 
     height, width, _ = samples[0].shape
 
-    labels = tf.one_hot(tf.cast(tf.add(labels, -1), tf.uint8), num_classes)
+    if(training or evaluating):
+        labels = tf.one_hot(tf.cast(tf.add(labels, -1), tf.uint8), num_classes)
 
     # Base Network (VGG_16)
     conv1_1 = layers.conv_pool_layer(inputs=samples, filters=64, training=training, name="1_1", pool=False)
@@ -61,17 +63,22 @@ def fcn32_VGG_description(features, labels, params, mode, config):
 
     probs = tf.nn.softmax(up_score, axis=-1, name="softmax")
 
-    output = tf.argmax(probs, axis=-1, name="prediction")
-    #output = tf.layers.conv2d(up_score, 1, (1, 1), name="output", activation=tf.nn.relu, padding="same",
+    #output = tf.argmax(probs, axis=-1, name="argmax_prediction")
+    #logits = tf.layers.conv2d(up_score, 1, (1, 1), name="output", activation=tf.nn.relu, padding="same",
     #                          kernel_initializer=tf.initializers.variance_scaling(scale=0.001, distribution="normal"))
 
+    predictions = {
+        "classes": tf.argmax(input=probs, axis=-1, name="Argmax_Prediction"),
+        "probabilities": probs
+    }
+
     if mode == tf.estimator.ModeKeys.PREDICT:
-        return tf.estimator.EstimatorSpec(mode=mode, predictions=up_score)
+        return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
 
     loss = tf.losses.softmax_cross_entropy(tf.squeeze(labels), probs)
     #loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=tf.squeeze(labels), logits=output)
 
-    optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate, name="optimizer")
+    optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate, name="Optimizer")
     optimizer = tf.contrib.estimator.TowerOptimizer(optimizer)
 
     # TODO: Review this piece of code
@@ -88,6 +95,7 @@ def fcn32_VGG_description(features, labels, params, mode, config):
 
     # with tf.name_scope("accuracy"):
     #     accuracy = tf.metrics.accuracy(labels=labels, predictions=output)
+    #     tf.summary.scalar("accuracy", accuracy)
 
 
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
@@ -95,20 +103,22 @@ def fcn32_VGG_description(features, labels, params, mode, config):
     with tf.control_dependencies(update_ops):
         train_op = optimizer.minimize(loss=loss, global_step=tf.train.get_global_step())
 
-    # eval_metric_ops = {"accuracy": tf.metrics.accuracy(
-    #     labels=labels,
-    #     predictions=output)
-    # }
-
     eval_summary_hook = tf.train.SummarySaverHook(save_steps=1,
                                                   output_dir=config.model_dir,
                                                   summary_op=tf.summary.merge_all())
 
+    eval_metric_ops = {"accuracy": tf.metrics.accuracy(
+        labels=tf.argmax(labels, axis=-1, name="Decode_one_hot"),
+        predictions=predictions["classes"])
+    }
+
     return tf.estimator.EstimatorSpec(mode=mode,
-                                      predictions=up_score,
+                                      predictions=predictions["classes"],
                                       loss=loss,
                                       train_op=train_op,
-                                      evaluation_hooks=[eval_summary_hook])
+                                      evaluation_hooks=[eval_summary_hook],
+                                      eval_metric_ops=eval_metric_ops)
+
 
 def fcn_train(train_imgs, test_imgs, train_labels, test_labels, hyper_params, output_dir):
     tf.logging.set_verbosity(tf.logging.INFO)
@@ -145,6 +155,18 @@ def fcn_train(train_imgs, test_imgs, train_labels, test_labels, hyper_params, ou
         print("Evaluating...")
         test_results = estimator.evaluate(input_fn=test_input, name="Evaluation")
 
+# def fcn_evaluate(images, labels, params, model_dir):
+#     data_size, _, _, _ = images.shape
+#
+#     tf.logging.set_verbosity(tf.logging.WARN)
+#     
+#     estimator = tf.estimator.Estimator(model_fn=tf.contrib.estimator.replicate_model_fn(fcn32_VGG_description),
+#                                        model_dir=model_dir,
+#                                        params=params)
+#     logging_hook = tf.train.LoggingTensorHook(tensors={}, every_n_iter=data_size)
+#
+#     input_imgs
+
 def fcn_predict(images, params, model_dir):
     tf.logging.set_verbosity(tf.logging.WARN)
 
@@ -161,8 +183,14 @@ def fcn_predict(images, params, model_dir):
                                                   batch_size=params["batch_size"],
                                                   shuffle=False)
 
-    predicted_images = estimator.predict(input_fn=input_fn)
+    predictions = estimator.predict(input_fn=input_fn)
 
     print("Classifying image with structure ", str(images.shape), "...")
+
+    predicted_images = []
+
+    for predict, dummy in zip(predictions, images):
+        #print(predict["probabilities"].shape)
+        predicted_images.append(predict["classes"])
 
     return predicted_images
