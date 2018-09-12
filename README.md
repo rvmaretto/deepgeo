@@ -11,6 +11,8 @@ Functionalities to Deep Learning based classification of Remote Sensing Images
 * pillow
 * scipy
 * matplotlib
+* rios
+* rsgislib
 
 ## Code Status
 
