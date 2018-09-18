@@ -8,23 +8,23 @@ from osgeo import ogr
 #import utils.geofunctions as gf
 
 class Rasterizer(object):
-    def __init__(self, vector_file, in_raster_file, class_column="class", nodata_val=255, classes_interest=None):        
+    def __init__(self, vector_file, in_raster_file, class_column="class", classes_interest=None,
+                 non_class_name="non_class", nodata_val=255):        
         self.vector_path = vector_file
         self.raster_path = in_raster_file
         self.class_column = class_column
         self.nodata_val = nodata_val
         self.base_raster = gdal.Open(self.raster_path) #gf.load_image(self.raster_path)
-        # Is it better to use here the class_names attribute?
-        self.classes_interest = classes_interest
+        self.classes_interest = [non_class_name] + classes_interest
+        self.non_class = non_class_name
 
-    def get_base_raster(self):
-        return self.base_raster
+    # def get_base_raster(self):
+        # return self.base_raster
 
     def get_class_names(self):
-        return self.class_names
+        return self.classes_interest
 
     def collect_class_names(self):
-        # print("--- Collecting Labels ---")
         vector_ds = ogr.Open(self.vector_path)
         vector_layer = vector_ds.GetLayer()
         vector_layer.ResetReading()
@@ -34,16 +34,12 @@ class Rasterizer(object):
             if feature is None:
                 break
             name = feature.GetField(self.class_column)
-            # unique_labels.add(np.string_(name))  # TODO: Verify why I needed this. Is it needed to put in a npz file?
             unique_labels.add(name)
 
         # Close DataSource Connection
         vector_ds.Destroy()
-        # print("Labels loaded:")
         self.class_names = []
         for name in sorted(unique_labels):
-            # print("\t\"", str(name, encoding="UTF-8"), "\"")  # TODO: The same as the last
-            # print("\t\"", name, "\"")
             self.class_names.append(name)
 
     def rasterize_label(self, vector_layer):
@@ -82,15 +78,25 @@ class Rasterizer(object):
                                 dtype=np.int16)
 
         for lid, label in enumerate(self.class_names):
+            if label in self.classes_interest:
+                value = self.classes_interest.index(label)
+            else:
+                value = self.classes_interest.index(self.non_class)
+            
             vector_layer.SetAttributeFilter("%s='%s'" % (str(self.class_column), str(label)))
             limg = self.rasterize_label(vector_layer)
-            self.labeled_raster[limg == 1] = lid
+            self.labeled_raster[limg == 1] = value
 
         # Close DataSource Connection
         vector_ds.Destroy()
 
     def get_labeled_raster(self):
         return self.labeled_raster
+
+    def execute(self):
+        #if self.class_names is None:
+        self.collect_class_names()
+        self.rasterize_layer()
 
     def save_labeled_raster_to_gtiff(self, path_tiff):
         driver = gdal.GetDriverByName('GTiff')

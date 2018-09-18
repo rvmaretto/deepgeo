@@ -8,7 +8,7 @@ def rotate_images(images, angles, data_type=np.float32):
         angles = [angles]
         
     if(not isinstance(images, list) and not type(images) is np.ndarray):
-         images = [images]
+        images = [images]
     
     tf.reset_default_graph()
 

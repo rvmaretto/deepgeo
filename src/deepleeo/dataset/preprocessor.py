@@ -91,6 +91,21 @@ def standardize_tf(raster_array):
         stand_img = sess.run(tf_img, feed_dict={img: raster_array})
         return np.array(stand_img, dtype=np.float32)
 
+def normalize_0_1(raster_array):
+    nbands = raster_array.shape[2]
+    min = np.min(raster_array)
+    max = np.max(raster_array)
+    norm_raster_array = None
+    for band in range(nbands):
+        band_norm = raster_array[:,:,band]
+        band_norm = (band_norm - min) / (max - min)
+        if norm_raster_array is None:
+            norm_raster_array = band_norm
+        else:
+            norm_raster_array = np.ma.dstack((norm_raster_array, band_norm))
+
+    return np.array(norm_raster_array, dtype=np.float32)
+
 # ----------------------------------------------------------------- #
 # Preprocessor class
 # ----------------------------------------------------------------- #
@@ -105,14 +120,16 @@ class Preprocessor(object):
     standardize_functions = {
         "mean_std": standardize_mean_std,
         "median_std": standardize_median_std,
-        "tensorflow": standardize_tf
+        "tensorflow": standardize_tf,
+        "norm_0-1": normalize_0_1
     }
 
     sint_bands = {}
 
-    def __init__(self, raster_path, vector_path, no_data=0):
+    #def __init__(self, raster_path, vector_path, no_data=0):
+    def __init__(self, raster_path, no_data):
         self.raster_path = raster_path
-        self.vector_path = vector_path
+        # self.vector_path = vector_path
         self.raster_array = gf.load_image(raster_path, no_data)
         self.img_dataset = gdal.Open(raster_path)
         # self.raster_array = self.img_dataset.ReadAsArray()
