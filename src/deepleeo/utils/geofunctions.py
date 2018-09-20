@@ -1,7 +1,8 @@
 import numpy as np
 import gdal
 import ogr
-
+import os
+import subprocess
 
 def load_image(filepath, no_data=None):
     img_ds = gdal.Open(filepath)
@@ -68,3 +69,38 @@ def load_vector_layer(filename):
     vector_ds = ogr.Open(filename)
     layer = vector_ds.GetLayer()
     return layer
+
+#TODO: Extend this method to other file formats
+def merge_vector_layers(files, output_file):
+    if not isinstance(files, list):
+        raise TypeError("Argument \"files\" must be a list.")
+
+    if len(files) < 2:
+        raise Exception("You must provide at least two files.")
+
+    arguments_1 = ['ogr2ogr', '-f', 'ESRI Shapefile', output_file, files[0]]
+
+    if os.path.exists(output_file):
+        os.remove(output_file)
+
+    print("Merging Files...")
+
+    ps = subprocess.Popen(arguments_1, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    output = ps.communicate()
+    for line in output[0].splitlines():
+        print(str(line, 'utf-8'))
+
+    for line in output[1].splitlines():
+        print(str(line, 'utf-8'))
+
+    for i in range(1, len(files)):
+        arguments_2 = ['ogr2ogr', '-f', 'ESRI Shapefile', '-update', '-append',
+                       output_file, files[i]]#, '-nln', 'PRODES']
+
+        ps = subprocess.Popen(arguments_2, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        output = ps.communicate()
+        for line in output[0].splitlines():
+            print(str(line, 'utf-8'))
+
+        for line in output[1].splitlines():
+            print(str(line, 'utf-8'))
