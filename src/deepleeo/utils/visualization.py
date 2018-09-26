@@ -2,13 +2,18 @@ import skimage
 import pylab as plt
 import seaborn as sns
 import numpy as np
+import os
 from skimage import exposure
+from matplotlib.colors import ListedColormap
+from shapely.geometry import Polygon
+from shapely.wkb import loads
+from osgeo import ogr
 
-def plot_rgb_img(raster_array, bands=[1,2,3], contrast=False, title="RGB Composition"):
+def plot_rgb_img(raster_array, bands=[1,2,3], contrast=False, title="RGB Composition", figsize=(10, 10)):
     if len(bands) != 3 and len(bands) != 1:
         raise AttributeError("Parameter bands must have size 3 or 1.")
 
-    plt.figure(figsize=(10, 10))
+    plt.figure(figsize=figsize)
     plt.title(title)
     raster_img = skimage.img_as_ubyte(raster_array)
     if contrast:
@@ -21,6 +26,45 @@ def plot_rgb_img(raster_array, bands=[1,2,3], contrast=False, title="RGB Composi
     else:
         plt.imshow(raster_img[:,:,bands[0]])
     plt.axis('off')
+
+def plot_labels(labels_array, class_names, colors=None, title="Labels", figsize=(10, 10)):
+    plt.figure(figsize=figsize)
+    plt.title(title)
+
+    # labels = np.ma.masked_where(labels_array == 255, labels_array) # TODO: Is this line necessary? Try to comment it
+
+    num_classes = len(class_names)
+    if colors is None:
+        colorMap = plt.cm.get_cmap("prism", num_classes)
+    else:
+        colorMap = ListedColormap(colors)
+
+    plt.imshow(labels_array[:,:,0], cmap=colorMap)
+    cbar = plt.colorbar()
+    cbar.ax.get_yaxis().set_ticks([])
+
+    for j, lab in enumerate(class_names):
+        cbar.ax.text(1.5, (2 * j + 1) / (num_classes * 2), lab, ha='left')
+
+    cbar.ax.get_yaxis().labelpad = 15
+
+# TODO: How to plot the raster together? Decrease the blank space from the origin to the data
+def plot_vector_file(path_file):
+    fig = plt.figure(figsize=(8, 8))
+    ax = fig.add_subplot(111)
+    out_ds = ogr.Open(path_file)
+
+    layer = out_ds.GetLayerByName(os.path.splitext(os.path.basename(path_file))[0])
+    parcel = layer.GetNextFeature()
+
+    while parcel is not None:
+        polygon = loads(parcel.GetGeometryRef().ExportToWkb())
+        xCoord, yCoord = polygon.exterior.xy
+        ax.fill(xCoord, yCoord, "y")
+        ax.plot(xCoord, yCoord, "k-")
+        parcel = layer.GetNextFeature()
+
+    out_ds.Destroy()
 
 def plot_image_histogram(raster_array, cmap=None, nbins = 256, title="Histogram", legend=None):
     fig = plt.figure(figsize=(12, 8))
