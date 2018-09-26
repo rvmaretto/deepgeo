@@ -10,6 +10,7 @@ from osgeo import osr #TODO: Verify if it is really necessary? If I get the SRID
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__),"../"))
 import utils.filesystem as fs
+import dataset.data_augment as daug
 
 #def generate_sequential_chips():
 
@@ -17,7 +18,6 @@ class ChipsGenerator(object):
     # strategies = {
     #     "sequential": generate_sequential_chips
     # }
-    win_size = 128
 
     def __init__(self, path_img, labeled_img, class_names, base_raster_path=None):
         self.ref_img = path_img
@@ -25,14 +25,18 @@ class ChipsGenerator(object):
         self.class_names = class_names
         self.base_raster_path = base_raster_path
 
-    def compute_sample_indexes(self, quantity):
+    def compute_sample_indexes(self, quantity, class_of_interest=None):
         """
         Sample quantity indices in the labeled image
         """
-        sample_candidates = np.transpose(np.nonzero(~self.labeled_img.mask))
-        #sample_candidates = np.transpose(np.nonzero(np.logical_and(~self.labeled_img.mask, self.labels == class_interest)))
-        indices = np.random.choice(np.arange(len(sample_candidates)), quantity, replace=False)
-        self.ij_samples = sample_candidates[indices]
+        if class_of_interest is None:
+            self.sample_candidates = np.transpose(np.nonzero(~self.labeled_img.mask))
+        else:
+            label_interest = self.class_names.index(class_of_interest)
+            self.sample_candidates = np.transpose(np.nonzero(np.logical_and(~self.labeled_img.mask,
+                                                                       self.labeled_img == label_interest)))
+        indices = np.random.choice(np.arange(len(self.sample_candidates)), quantity, replace=False)
+        self.ij_samples = self.sample_candidates[indices]
 
     def get_sample_indexes(self):
         return self.ij_samples
@@ -65,15 +69,41 @@ class ChipsGenerator(object):
         self.samples_labels = []
         self.win_size = win_size
 
-        # count = 0
+        count = 0
         for coord in self.ij_samples:
             window = self.compute_window_coords(coord)
             sampleImg = self.ref_img[window["upperLin"]:window["lowerLin"], window["leftCol"]:window["rightCol"]]
             sampleLabel = self.labeled_img[window["upperLin"]:window["lowerLin"], window["leftCol"]:window["rightCol"]]
+            # if np.count_nonzero(sampleLabel.mask) == 0:
+            #     self.samples_img.append(sampleImg)
+            #     self.samples_labels.append(sampleLabel)
+            # else:
+            #     # print("Chip with No data")
+            #     # print(np.unique(sampleLabel))
+            while np.count_nonzero(sampleLabel.mask) != 0:
+                indice = np.random.choice(np.arange(len(self.sample_candidates)), 1, replace=False)
+                coord = self.sample_candidates[indice][0]
+                self.ij_samples[count] = coord
+                window = self.compute_window_coords(coord)
+                sampleImg = self.ref_img[window["upperLin"]:window["lowerLin"], window["leftCol"]:window["rightCol"]]
+                sampleLabel = self.labeled_img[window["upperLin"]:window["lowerLin"], window["leftCol"]:window["rightCol"]]
+
             self.samples_img.append(sampleImg)
             self.samples_labels.append(sampleLabel)
+            count = count + 1
 
         self.generate_windows_geo_coords()
+
+    def applyDataAugmentation(self, rot_angles=[90, 180, 270], rotation=True, flip=True):
+        rot_imgs = daug.rotate_images(self.samples_img, rot_angles)
+        rot_labels = daug.rotate_images(self.samples_labels, rot_angles)
+        flip_imgs = daug.flip_images(self.samples_img)
+        flip_labels = daug.flip_images(self.samples_labels)
+
+        self.samples_img = np.concatenate(self.samples_img, rot_imgs)
+        self.samples_img = np.concatenate(self.samples_img, flip_imgs)
+        self.samples_labels = np.concatenate(self.samples_labels, rot_labels)
+        self.samples_labels = np.concatenate(self.samples_labels, flip_labels)
 
     def getSamples(self):
         return {
@@ -98,7 +128,7 @@ class ChipsGenerator(object):
     def save_samples_NPZ(self, path, noDataValue=255):
         if os.path.exists(path):
             os.remove(path)
-        print("UNIQUE: ", np.unique(self.samples_labels))
+        # print("UNIQUE: ", np.unique(self.samples_labels))
         np.savez(path,
                  images = self.samples_img,
                  labels= np.ma.filled(self.samples_labels, noDataValue),
@@ -142,9 +172,6 @@ class ChipsGenerator(object):
         else:
             img_ds = gdal.Open(self.base_raster_path)
 
-        if os.path.exists(path):
-            os.remove(path)
-
         transform = img_ds.GetGeoTransform()
 
         xOrigin = transform[0]
@@ -153,6 +180,9 @@ class ChipsGenerator(object):
         pixelHeight = transform[5]
 
         driver = ogr.GetDriverByName("ESRI Shapefile")
+
+        if os.path.exists(path):
+            driver.DeleteDataSource(path)
 
         prj = img_ds.GetProjection()
         srs = osr.SpatialReference(wkt=prj)
