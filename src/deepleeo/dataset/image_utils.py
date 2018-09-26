@@ -1,4 +1,5 @@
 from osgeo import gdal
+from osgeo import ogr
 import os
 import subprocess
 # import rasterio
@@ -9,7 +10,7 @@ def stack_bands(files, output_img, band_names=None):#, no_data=-9999, format="GT
         raise TypeError("Argument \"files\" must be a list.")
     
     if len(files) < 2:
-            raise Exception("You must provide at least two .tiff files.")
+        raise Exception("You must provide at least two .tiff files.")
 
     if band_names is None:
         band_names = []
@@ -26,18 +27,84 @@ def stack_bands(files, output_img, band_names=None):#, no_data=-9999, format="GT
     outvrt = '/vsimem/stacked.vrt' #/vsimem is special in-memory virtual "directory"
     outds = gdal.BuildVRT(outvrt, files, separate=True)
 
-    for i in range(1, len(files) + 1):
-        ds = gdal.Open(files[i-1])
-        outds.GetRasterBand(i).SetNoDataValue(ds.GetRasterBand(1).GetNoDataValue())
-        outds.GetRasterBand(i).SetMetadata(ds.GetRasterBand(1).GetMetadata())
-        outds.GetRasterBand(i).SetDescription(band_names[i - 1])
+    count = 1
+    for i in range(0, len(files)):
+        ds = gdal.Open(files[i])
+        for j in range(1, ds.RasterCount + 1):
+            outds.GetRasterBand(count).SetNoDataValue(ds.GetRasterBand(j).GetNoDataValue())
+            outds.GetRasterBand(count).SetMetadata(ds.GetRasterBand(j).GetMetadata())
+            outds.GetRasterBand(count).SetDescription(band_names[count - 1])
+            count = count + 1
 
     ds = gdal.Open(files[0])
     outds.SetGeoTransform(ds.GetGeoTransform())
     outds.SetProjection(ds.GetProjection())
     gdal.Translate(output_img, outds)
 
-#TODO: Verify band names and other metadata if they are Ok.
+def clip_img_by_extent(img_file, reference_shp, output_img):
+    if os.path.exists(output_img):
+        os.remove(output_img)
+
+    # Get a Layer's Extent
+    vector_driver = ogr.GetDriverByName("ESRI Shapefile")
+    vector_ds = vector_driver.Open(reference_shp, 0) # 0=Read-only, 1=Read-Write
+    vector_layer = vector_ds.GetLayer()
+    min_x, max_x, min_y, max_y = vector_layer.GetExtent()
+
+    raster_to_clip = gdal.Open(img_file)
+    projection = raster_to_clip.GetProjectionRef()
+
+    gdal.Warp(output_img, raster_to_clip, format="GTiff",
+                       outputBounds=[min_x, min_y, max_x, max_y],
+                       dstSRS=projection, resampleAlg=gdal.GRA_NearestNeighbour,
+                       options=['COMPRESS=DEFLATE'])
+
+    vector_ds.Destroy()
+    raster_to_clip = None
+
+def stack_temporal_images(files, output_img, band_names=None):
+    if not isinstance(files, list):
+        raise TypeError("Argument \"files\" must be a list.")
+
+    if len(files) < 2:
+        raise Exception("You must provide at least two .tiff files.")
+
+    if os.path.exists(output_img):
+        os.remove(output_img)
+
+    num_bands = 0
+    for file in files:
+        inputds = gdal.Open(file)
+        num_bands = num_bands + inputds.RasterCount
+        inputds = None
+
+    drv = gdal.GetDriverByName("GTiff")
+    inputds = gdal.Open(files[0])
+    out_xSize = inputds.RasterXSize
+    out_ySize = inputds.RasterYSize
+    datatype = inputds.GetRasterBand(1).DataType
+
+    outds = drv.Create(output_img, out_xSize, out_ySize, num_bands, datatype)
+
+    count = 1
+    for i in range(0, len(files)):
+        inputds = gdal.Open(files[i])
+
+        for j in range(1, inputds.RasterCount + 1):
+            band = inputds.GetRasterBand(j)
+            band_arr = band.ReadAsArray()
+            outds.GetRasterBand(count).WriteArray(band_arr)
+            outds.GetRasterBand(count).SetNoDataValue(inputds.GetRasterBand(j).GetNoDataValue())
+            outds.GetRasterBand(count).SetMetadata(inputds.GetRasterBand(j).GetMetadata())
+            outds.GetRasterBand(count).SetDescription(band_names[count - 1])
+            count = count + 1
+        inputds = None
+
+    ds = gdal.Open(files[0])
+    outds.SetGeoTransform(ds.GetGeoTransform())
+    outds.SetProjection(ds.GetProjection())
+    outds = None
+
 def mosaic_images(files, output_file, band_names=None):
     if not isinstance(files, list):
         raise TypeError("Argument \"files\" must be a list.")
@@ -49,8 +116,6 @@ def mosaic_images(files, output_file, band_names=None):
     for file_name in files:
         print(" >", file_name)
 
-    # in_ds = gdal.Open(files[0])
-    # no_data_value = in_ds.GetRasterBand(1).GetNoDataValue()
     arguments = ['gdal_merge.py', '-o', output_file, '-q', '-v']
 
     for file_name in files:
