@@ -75,7 +75,7 @@ class Rasterizer(object):
         vector_layer = vector_ds.GetLayer()
         self.labeled_raster = np.ma.masked_all((self.base_raster.RasterYSize, 
                                 self.base_raster.RasterXSize, 1),
-                                dtype=np.int16)
+                                dtype=np.int32)
 
         for lid, label in enumerate(self.class_names):
             if label in self.classes_interest:
