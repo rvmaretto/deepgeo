@@ -14,7 +14,12 @@ def conv_pool_layer(inputs, filters, kernel_size=3, training=True, name="", pool
         relu = tf.nn.relu(norm, name="relu_{}".format(name))
 
         if(pool):
-            return tf.layers.max_pooling2d(relu, 2, strides=2, name="pool_{}".format(name))
+            return tf.layers.max_pooling2d(
+                relu,
+                2,
+                strides=2,
+                padding="SAME",
+                name="pool_{}".format(name))
         else:
             return relu
 

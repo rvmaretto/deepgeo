@@ -11,7 +11,7 @@ reload(layers)
 reload(lossf)
 
 
-def fcn32_VGG_description(features, labels, params, mode, config):
+def fcn8_description(features, labels, params, mode, config):
     tf.logging.set_verbosity(tf.logging.INFO)
     training = mode == tf.estimator.ModeKeys.TRAIN
     evaluating = mode == tf.estimator.ModeKeys.EVAL
@@ -26,50 +26,70 @@ def fcn32_VGG_description(features, labels, params, mode, config):
     height, width, _ = samples[0].shape
 
     # print("SHAPE LABELS: ", labels.shape)
+    # print("SHAPE Input: ", samples.shape)
     # labels_1hot = labels
 
     # Base Network (VGG_16)
     conv1_1 = layers.conv_pool_layer(inputs=samples, filters=64, training=training, name="1_1", pool=False)
     pool1 = layers.conv_pool_layer(inputs=conv1_1, filters=64, training=training, name="1_2")
 
+    # print("SHAPE Conv_1: ", pool1.shape)
+
     conv2_1 = layers.conv_pool_layer(inputs=pool1, filters=128, training=training, name="2_1", pool=False)
     pool2 = layers.conv_pool_layer(inputs=conv2_1, filters=128, training=training, name="2_2")
+
+    # print("SHAPE Conv_2: ", pool2.shape)
 
     conv3_1 = layers.conv_pool_layer(inputs=pool2, filters=256, training=training, name="3_1", pool=False)
     conv3_2 = layers.conv_pool_layer(inputs=conv3_1, filters=256, training=training, name="3_2", pool=False)
     pool3 = layers.conv_pool_layer(inputs=conv3_2, filters=256, training=training, name="3_3")
 
+    # print("SHAPE Conv_3: ", pool3.shape)
+
     conv4_1 = layers.conv_pool_layer(inputs=pool3, filters=512, training=training, name="4_1", pool=False)
     conv4_2 = layers.conv_pool_layer(inputs=conv4_1, filters=512, training=training, name="4_2", pool=False)
     pool4 = layers.conv_pool_layer(inputs=conv4_2, filters=512, training=training, name="4_3")
 
+    # print("SHAPE Conv_4: ", pool4.shape)
+
     conv5_1 = layers.conv_pool_layer(inputs=pool4, filters=512, training=training, name="5_1", pool=False)
     conv5_2 = layers.conv_pool_layer(inputs=conv5_1, filters=512, training=training, name="5_2", pool=False)
     pool5 = layers.conv_pool_layer(inputs=conv5_2, filters=512, training=training, name="5_3")
+
+    # print("SHAPE Conv_5: ", pool5.shape)
 
     # Fully Convolutional part
     fconv6 = layers.conv_pool_layer(inputs=pool5, filters=4096, kernel_size=7, training=training, name="fc6")
     if(training):
         fconv6 = tf.layers.dropout(inputs=fconv6, rate=0.5, name="drop_6")
 
+    # print("SHAPE FConv_6: ", fconv6.shape)
+
     fconv7 = layers.conv_pool_layer(inputs=fconv6, filters=4096, kernel_size=1, training=training, name="fc7")
     if(training):
         fconv7 = tf.layers.dropout(inputs=fconv7, rate=0.5, name="drop_7")
 
+    # print("SHAPE FConv_7: ", fconv7.shape)
+
     score_layer = tf.layers.conv2d(inputs=fconv7, filters=1000, kernel_size=1, padding="same",
                                 data_format="channels_last", activation=None, name="score_layer")
 
-    up_score = layers.up_conv_layer(score_layer, filters=num_classes, kernel_size=(height, width), strides=32, name="uc")
+    # print("SHAPE Score Layer: ", score_layer.shape)
+
+    up_score = layers.up_conv_layer(score_layer, filters=num_classes,
+                                    kernel_size=(height - 64, width - 64), strides=32, name="uc")
+
+    # print("SHAPE Up Score: ", up_score.shape)
 
     # probs = tf.nn.softmax(up_score, axis=-1, name="softmax")
     #probs = tf.nn.sigmoid(up_score, name="sigmoid")
 
     # output = tf.argmax(probs, axis=-1, name="argmax_prediction")
-    # output = tf.layers.conv2d(up_score, 1, (1, 1), name="output", activation=tf.nn.sigmoid, padding="same",
-                            #  kernel_initializer=tf.initializers.variance_scaling(scale=0.001, distribution="normal"))
+    output = tf.layers.conv2d(up_score, 1, (1, 1), name="output", activation=tf.nn.sigmoid, padding="same",
+                             kernel_initializer=tf.initializers.variance_scaling(scale=0.001, distribution="normal"))
 
     predictions = {
-        "classes": tf.argmax(input=up_score, axis=-1, name="Argmax_Prediction"),
+        "classes": output,#tf.argmax(input=up_score, axis=-1, name="Argmax_Prediction"),
         # "probabilities": probs
     }
 
@@ -82,8 +102,9 @@ def fcn32_VGG_description(features, labels, params, mode, config):
     # labels_1hot = tf.squeeze(labels_1hot)
     # loss = tf.losses.sigmoid_cross_entropy(labels_1hot, output)
     # loss = tf.losses.softmax_cross_entropy(labels_1hot, probs)
-    # loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=probs)
     # loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=tf.squeeze(labels), logits=output)
+    # print(labels)
+    # print(predictions["classes"])
     labels = tf.cast(labels, tf.float32)
     loss = lossf.twoclass_cost(predictions["classes"], labels)
 
@@ -93,7 +114,7 @@ def fcn32_VGG_description(features, labels, params, mode, config):
     # labels2plot = tf.argmax(labels_1hot, axis=-1)
 
     with tf.name_scope("metrics"):
-        input_data_vis = (samples[:,:,:,0:3])
+        input_data_vis = (samples[:,:,:,1:4])
         input_data_vis = tf.image.convert_image_dtype(input_data_vis, tf.uint8, saturate=True)
 
         # labels_vis = tf.cast(labels, tf.float32)
@@ -124,10 +145,6 @@ def fcn32_VGG_description(features, labels, params, mode, config):
                                                        predictions=predictions["classes"])
     }
 
-    # with tf.namescope("uniqueValues"):
-    #     unique_labels = tf.unique(tf.reshape(labels, [-1]), name="unique_labels")
-    #     unique_predictions = tf.unique(tf.reshape(predictions["classes"], [-1]), name="unique_classes")
-
     logging_hook = tf.train.LoggingTensorHook({#"batch_probs": probs,
                                                "batch_labels": labels,
                                                "batch_predictions": predictions["classes"]},
@@ -155,7 +172,7 @@ def fcn_train(train_imgs, test_imgs, train_labels, test_labels, params, output_d
     # print("UNIQUE IMAGE: ", np.unique(train_imgs))
 
     estimator = tf.estimator.Estimator(#model_fn=fcn32_VGG_description,
-                                       model_fn=tf.contrib.estimator.replicate_model_fn(fcn32_VGG_description),
+                                       model_fn=tf.contrib.estimator.replicate_model_fn(fcn8_description),
                                        model_dir=output_dir,
                                        params=params)
     logging_hook = tf.train.LoggingTensorHook(tensors={}, every_n_iter=25)
@@ -199,11 +216,11 @@ def fcn_predict(images, params, model_dir):
     tf.logging.set_verbosity(tf.logging.WARN)
 
     if params["multi_gpu"]:
-        estimator = tf.estimator.Estimator(model_fn=tf.contrib.estimator.replicate_model_fn(fcn32_VGG_description),
+        estimator = tf.estimator.Estimator(model_fn=tf.contrib.estimator.replicate_model_fn(fcn8_description),
                                            model_dir=model_dir,
                                            params=params)
     else:
-        estimator = tf.estimator.Estimator(model_fn=fcn32_VGG_description,
+        estimator = tf.estimator.Estimator(model_fn=fcn8_description,
                                            model_dir=model_dir,
                                            params=params)
 
