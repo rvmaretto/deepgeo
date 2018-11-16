@@ -5,7 +5,7 @@ from os import path
 
 sys.path.insert(0, path.join(path.dirname(__file__),"../"))
 import networks.fcn8s as fcn8s
-import networks.fcn as fcn32s
+import networks.fcn32s as fcn32s
 
 #TODO: Implement in the ModelBuilder a function that computes the output size.
 class ModelBuilder(object):
@@ -34,7 +34,7 @@ class ModelBuilder(object):
                                         model_fn=tf.contrib.estimator.replicate_model_fn(self.model_description),
                                         model_dir=output_dir,
                                         params=params)
-        logging_hook = tf.train.LoggingTensorHook(tensors={}, every_n_iter=25)
+        logging_hook = tf.train.LoggingTensorHook(tensors={'loss': 'loss'}, every_n_iter=25)
 
         for epoch in range(1, params["epochs"] + 1):
             print("===============================================")

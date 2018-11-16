@@ -39,7 +39,7 @@ def stack_bands(files, output_img, band_names=None):#, no_data=-9999, format="GT
     ds = gdal.Open(files[0])
     outds.SetGeoTransform(ds.GetGeoTransform())
     outds.SetProjection(ds.GetProjection())
-    gdal.Translate(output_img, outds)
+    gdal.Translate(output_img, outds, options=['COMPRESS=LZW'])
 
 def clip_img_by_extent(img_file, reference_shp, output_img):
     if os.path.exists(output_img):
@@ -57,7 +57,7 @@ def clip_img_by_extent(img_file, reference_shp, output_img):
     gdal.Warp(output_img, raster_to_clip, format="GTiff",
                        outputBounds=[min_x, min_y, max_x, max_y],
                        dstSRS=projection, resampleAlg=gdal.GRA_NearestNeighbour,
-                       options=['COMPRESS=DEFLATE'])
+                       options=['COMPRESS=LZW'])
 
     vector_ds.Destroy()
     raster_to_clip = None
@@ -84,7 +84,7 @@ def stack_temporal_images(files, output_img, band_names=None):
     out_ySize = inputds.RasterYSize
     datatype = inputds.GetRasterBand(1).DataType
 
-    outds = drv.Create(output_img, out_xSize, out_ySize, num_bands, datatype)
+    outds = drv.Create(output_img, out_xSize, out_ySize, num_bands, datatype, options=['COMPRESS=LZW'])
 
     count = 1
     for i in range(0, len(files)):
@@ -116,7 +116,7 @@ def mosaic_images(files, output_file, band_names=None):
     for file_name in files:
         print(" >", file_name)
 
-    arguments = ['gdal_merge.py', '-o', output_file, '-q', '-v']
+    arguments = ['gdal_merge.py', '-o', output_file, '-co','COMPRESS=LZW', '-q', '-v']
 
     for file_name in files:
         arguments.append(file_name)

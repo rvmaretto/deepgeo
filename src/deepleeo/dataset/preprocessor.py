@@ -130,6 +130,7 @@ class Preprocessor(object):
     def __init__(self, raster_path, no_data):
         self.raster_path = raster_path
         # self.vector_path = vector_path
+        self.raster_dummy = no_data
         self.raster_array = gf.load_image(raster_path, no_data)
         self.img_dataset = gdal.Open(raster_path)
         # self.raster_array = self.img_dataset.ReadAsArray()
@@ -168,6 +169,10 @@ class Preprocessor(object):
 
     def register_standardization(self, name, function):
         self.standardize_functions[name] = function
+
+    def set_nodata_value(self, new_value):
+        self.raster_array[self.raster_array == self.raster_dummy] = new_value
+        self.raster_dummy = new_value
 
     def save_index_raster(self, index, out_path):
         driver = gdal.GetDriverByName("GTiff")
