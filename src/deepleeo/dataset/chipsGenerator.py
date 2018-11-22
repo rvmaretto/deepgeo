@@ -11,13 +11,14 @@ from osgeo import osr #TODO: Verify if it is really necessary? If I get the SRID
 sys.path.insert(0, os.path.join(os.path.dirname(__file__),"../"))
 import utils.filesystem as fs
 import dataset.data_augment as daug
+import dataset.sequencialchips as seqchips
 
-#def generate_sequential_chips():
+#TODO: Review this class to work with strategies.
 
 class ChipsGenerator(object):
-    # strategies = {
-    #     "sequential": generate_sequential_chips
-    # }
+    strategies = {
+        "sequential": seqchips.generate_sequential_chips
+    }
 
     def __init__(self, path_img, labeled_img, class_names, base_raster_path=None):
         self.ref_img = path_img
