@@ -5,7 +5,8 @@ import numpy as np
 import os
 from skimage import exposure
 from matplotlib.colors import ListedColormap
-from shapely.geometry import Polygon
+# from shapely.geometry import Polygon
+from descartes import PolygonPatch
 from shapely.wkb import loads
 from osgeo import ogr
 
@@ -39,7 +40,10 @@ def plot_labels(labels_array, class_names, colors=None, title="Labels", figsize=
     else:
         colorMap = ListedColormap(colors)
 
-    plt.imshow(labels_array[:,:,0], cmap=colorMap)
+    if len(labels_array.shape) > 2:
+        plt.imshow(labels_array[:,:,0], cmap=colorMap)
+    else:
+        plt.imshow(labels_array, cmap=colorMap)
     cbar = plt.colorbar()
     cbar.ax.get_yaxis().set_ticks([])
 
@@ -49,19 +53,26 @@ def plot_labels(labels_array, class_names, colors=None, title="Labels", figsize=
     cbar.ax.get_yaxis().labelpad = 15
 
 # TODO: How to plot the raster together? Decrease the blank space from the origin to the data
-def plot_vector_file(path_file):
-    fig = plt.figure(figsize=(8, 8))
+def plot_vector_file(path_file, edge_color="black", face_color="red"):
+    fig = plt.figure(figsize=(10, 10))
     ax = fig.add_subplot(111)
     out_ds = ogr.Open(path_file)
 
     layer = out_ds.GetLayerByName(os.path.splitext(os.path.basename(path_file))[0])
+
+    min_x, max_x, min_y, max_y = layer.GetExtent()
+    plt.xlim([min_x, max_x])
+    plt.ylim([min_y, max_y])
+
     parcel = layer.GetNextFeature()
 
     while parcel is not None:
         polygon = loads(parcel.GetGeometryRef().ExportToWkb())
-        xCoord, yCoord = polygon.exterior.xy
-        ax.fill(xCoord, yCoord, "y")
-        ax.plot(xCoord, yCoord, "k-")
+        # xCoord, yCoord = polygon.exterior.xy
+        # ax.fill(xCoord, yCoord, "r")
+        # ax.plot(xCoord, yCoord, "k-")
+        ring_patch = PolygonPatch(polygon, edgecolor=edge_color, facecolor=face_color)
+        ax.add_patch(ring_patch)
         parcel = layer.GetNextFeature()
 
     out_ds.Destroy()
