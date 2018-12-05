@@ -7,6 +7,20 @@ sys.path.insert(0, path.join(path.dirname(__file__),"../"))
 import networks.fcn8s as fcn8s
 import networks.fcn32s as fcn32s
 
+
+#TODO: Remove this
+def discretize_values(data, numberClass, startValue=0):
+    for clazz in range(startValue, (numberClass + 1)):
+        if clazz == startValue:
+            classFilter = (data <= clazz + 0.5)
+        elif clazz == numberClass:
+            classFilter = (data > clazz - 0.5)
+        else:
+            classFilter = np.logical_and(data > clazz - 0.5, data <= clazz + 0.5)
+        data[classFilter] = clazz
+
+    return data.astype(np.uint8)
+
 #TODO: Implement in the ModelBuilder a function that computes the output size.
 class ModelBuilder(object):
     predefModels = {
@@ -100,7 +114,8 @@ class ModelBuilder(object):
         for predict, dummy in zip(predictions, images):
             # predicted_images.append(np.argmax(predict["probabilities"], -1))
             # classif = np.argmax(predict["probabilities"], axis=-1)
-            predicted_images.append(predict["classes"])
-
+            predicted_images.append(discretize_values(predict["classes"],
+                                                      len(params["class_names"]),
+                                                      0))
 
         return predicted_images

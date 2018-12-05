@@ -2,7 +2,9 @@ from osgeo import gdal
 from osgeo import ogr
 import os
 import subprocess
-# import rasterio
+import fiona
+import rasterio
+import rasterio.mask
 # from rasterio.merge import merge
 
 def stack_bands(files, output_img, band_names=None):#, no_data=-9999, format="GTiff", dtype=gdal.GDT_Int16):
@@ -152,3 +154,33 @@ def mosaic_images(files, output_file, band_names=None):
 
     out_ds = None
     input_ds = None
+
+def clip_by_aggregated_polygons(in_raster_path, shape_file, output_path, band_names=None):
+    if band_names is None:
+        band_names = []
+        ds = gdal.Open(in_raster_path)
+        for i in range(1, ds.RasterCount):
+            name = ds.GetRasterBand(i).GetDescription()
+            if name == '':
+                name = "band_" + str(i - 1)
+            band_names.append(name)
+
+    with fiona.open(shape_file, "r") as shapefile:
+        features = [feature["geometry"] for feature in shapefile]
+
+    with rasterio.open(in_raster_path) as src:
+        out_image, out_transform = rasterio.mask.mask(src, features, crop=True)
+        out_meta = src.meta.copy()
+
+    out_meta.update({"driver": "GTiff",
+                     "height": out_image.shape[1],
+                     "width": out_image.shape[2],
+                     "transform": out_transform})
+
+    if os.path.exists(output_path):
+        os.remove(output_path)
+
+    with rasterio.open(output_path, "w", **out_meta) as dest:
+        for id, name in enumerate(band_names):
+            dest.set_band_description(id + 1, name)
+        dest.write(out_image)

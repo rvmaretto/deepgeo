@@ -27,6 +27,7 @@ def plot_rgb_img(raster_array, bands=[1,2,3], contrast=False, title="RGB Composi
     else:
         plt.imshow(raster_img[:,:,bands[0]])
     plt.axis('off')
+    plt.show()
 
 def plot_labels(labels_array, class_names, colors=None, title="Labels", figsize=(10, 10)):
     plt.figure(figsize=figsize)
@@ -91,6 +92,8 @@ def plot_image_histogram(raster_array, cmap=None, nbins = 256, title="Histogram"
 
     if cmap is None:
         cmap = plt.cm.get_cmap("hsv", num_channels)
+    elif isinstance(cmap, list):
+        cmap = ListedColormap(cmap)
 
     if legend is None:
         legend = []
@@ -120,6 +123,8 @@ def plot_image_histogram_lines(raster_array, cmap=None, title="Histogram", legen
 
     if (cmap is None):
         cmap = plt.cm.get_cmap("hsv", num_channels)
+    elif isinstance(cmap, list):
+        cmap = ListedColormap(cmap)
 
     if legend is None:
         legend = []

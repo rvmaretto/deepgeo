@@ -42,11 +42,18 @@
 #                     index = index + nchips
 #
 #     return chip_data_list, chip_expect_list
+import matplotlib.patches as patches
+import matplotlib.pyplot as plt
+import numpy as np
+import gdal
+import osr
+import skimage
+from skimage import exposure
 
 #TODO: How to put this as an strategy to the chipGenerator?
 def generate_sequential_chips(img_array, chip_size=286, overlap=(0, 0), remove_no_data=True):
     x_size, y_size, nbands = img_array.shape
-    print("Raster size: (", x_size, ", ", y_size, ", ", nbands, ")")
+    # print("Raster size: (", x_size, ", ", y_size, ", ", nbands, ")")
 
     struct = {"chips": [], "coords": []}
     for y_start in range(0, y_size, chip_size - overlap[0]):
@@ -71,3 +78,49 @@ def generate_sequential_chips(img_array, chip_size=286, overlap=(0, 0), remove_n
             struct["coords"].append({"x_start": x_start, "x_end": x_end, "y_start": y_start, "y_end": y_end})
 
     return struct
+
+def plot_chips(chips, raster_array, bands=[1, 2, 3], contrast=False):
+    fig,ax = plt.subplots(1, figsize=(12, 12))
+
+    # Display the image
+    raster_img = skimage.img_as_ubyte(raster_array)
+    if contrast:
+        for band in bands:
+            p2, p98 = np.percentile(raster_img[:, :, band], (2, 98))
+            raster_img[:, :, band] = exposure.rescale_intensity(raster_img[:, :, band], in_range=(p2, p98))
+
+    if len(bands) == 3:
+        ax.imshow(raster_img[:, :, bands])
+    else:
+        ax.imshow(raster_img[:, :, bands[0]])
+
+    for coord in chips["coords"]:
+        width = coord["y_end"] - coord["y_start"]
+        height = coord["x_end"] - coord["x_start"]
+        rect = patches.Rectangle((coord["y_start"], coord["x_start"]), width, height,
+                                  edgecolor="blue", facecolor="none")
+        ax.add_patch(rect)
+
+
+def write_chips(output_path, base_raster, pred_struct, output_format="GTiff", dataType=gdal.GDT_UInt16):
+    driver = gdal.GetDriverByName(output_format)
+    base_ds = gdal.Open(base_raster)
+
+    x_start, pixel_width, _, y_start, _, pixel_height = base_ds.GetGeoTransform()
+    x_size = base_ds.RasterXSize
+    y_size = base_ds.RasterYSize
+
+    srs = osr.SpatialReference()
+    srs.ImportFromWkt(base_ds.GetProjectionRef())
+
+    out_ds = driver.Create(output_path, x_size, y_size, 1, dataType)
+    out_ds.SetGeoTransform((x_start, pixel_width, 0, y_start, 0, pixel_height))
+    out_ds.SetProjection(srs.ExportToWkt())
+    out_band = out_ds.GetRasterBand(1)
+
+    for idx in range(1, len(pred_struct["chips"])):
+        chip = pred_struct["chips"][idx]
+        chip = np.squeeze(chip)
+        out_band.WriteArray(chip, pred_struct["coords"][idx]["y_start"], pred_struct["coords"][idx]["x_start"])
+
+    out_band.FlushCache()
