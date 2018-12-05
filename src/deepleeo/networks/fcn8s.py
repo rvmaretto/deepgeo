@@ -16,12 +16,10 @@ def fcn8s_description(features, labels, params, mode, config):
     training = mode == tf.estimator.ModeKeys.TRAIN
     evaluating = mode == tf.estimator.ModeKeys.EVAL
 
-    hyper_params = params
-
-    num_classes = len(hyper_params["class_names"])
+    num_classes = len(params["class_names"])
     #num_channels = hyper_params["bands"]
     samples = features["data"]
-    learning_rate = hyper_params["learning_rate"]
+    learning_rate = params["learning_rate"]
 
     height, width, _ = samples[0].shape
 
@@ -31,57 +29,57 @@ def fcn8s_description(features, labels, params, mode, config):
 
     # Base Network (VGG_16)
     with tf.variable_scope("Layer_1"):
-        conv1_1 = layers.conv_pool_layer(bottom=samples, filters=64, training=training, name="1_1",
+        conv1_1 = layers.conv_pool_layer(bottom=samples, filters=64, params=params, training=training, name="1_1",
                                          pool=False)
-        pool1 = layers.conv_pool_layer(bottom=conv1_1, filters=64, training=training, name="1_2")
+        pool1 = layers.conv_pool_layer(bottom=conv1_1, filters=64, params=params, training=training, name="1_2")
 
     # print("SHAPE Conv_1: ", pool1.shape)
 
     with tf.variable_scope("Layer_2"):
-        conv2_1 = layers.conv_pool_layer(bottom=pool1, filters=128, training=training,
+        conv2_1 = layers.conv_pool_layer(bottom=pool1, filters=128, params=params, training=training,
                                          name="2_1", pool=False)
-        pool2 = layers.conv_pool_layer(bottom=conv2_1, filters=128, training=training, name="2_2")
+        pool2 = layers.conv_pool_layer(bottom=conv2_1, filters=128, params=params, training=training, name="2_2")
 
     # print("SHAPE Conv_2: ", pool2.shape)
 
     with tf.variable_scope("Layer_3"):
-        conv3_1 = layers.conv_pool_layer(bottom=pool2, filters=256, training=training,
+        conv3_1 = layers.conv_pool_layer(bottom=pool2, filters=256, params=params, training=training,
                                          name="3_1", pool=False)
-        conv3_2 = layers.conv_pool_layer(bottom=conv3_1, filters=256, training=training,
+        conv3_2 = layers.conv_pool_layer(bottom=conv3_1, filters=256, params=params, training=training,
                                          name="3_2", pool=False)
-        pool3 = layers.conv_pool_layer(bottom=conv3_2, filters=256, training=training, name="3_3")
+        pool3 = layers.conv_pool_layer(bottom=conv3_2, filters=256, params=params, training=training, name="3_3")
 
     # print("SHAPE Conv_3: ", pool3.shape)
 
     with tf.variable_scope("Layer_4"):
-        conv4_1 = layers.conv_pool_layer(bottom=pool3, filters=512, training=training,
+        conv4_1 = layers.conv_pool_layer(bottom=pool3, filters=512, params=params, training=training,
                                          name="4_1", pool=False)
-        conv4_2 = layers.conv_pool_layer(bottom=conv4_1, filters=512, training=training,
+        conv4_2 = layers.conv_pool_layer(bottom=conv4_1, filters=512, params=params, training=training,
                                          name="4_2", pool=False)
-        pool4 = layers.conv_pool_layer(bottom=conv4_2, filters=512, training=training, name="4_3")
+        pool4 = layers.conv_pool_layer(bottom=conv4_2, filters=512, params=params, training=training, name="4_3")
 
     # print("SHAPE Conv_4: ", pool4.shape)
 
     with tf.variable_scope("Layer_5"):
-        conv5_1 = layers.conv_pool_layer(bottom=pool4, filters=512, training=training,
+        conv5_1 = layers.conv_pool_layer(bottom=pool4, filters=512, params=params, training=training,
                                          name="5_1", pool=False)
-        conv5_2 = layers.conv_pool_layer(bottom=conv5_1, filters=512, training=training,
+        conv5_2 = layers.conv_pool_layer(bottom=conv5_1, filters=512, params=params, training=training,
                                          name="5_2", pool=False)
-        pool5 = layers.conv_pool_layer(bottom=conv5_2, filters=512, training=training, name="5_3")
+        pool5 = layers.conv_pool_layer(bottom=conv5_2, filters=512, params=params, training=training, name="5_3")
 
     # print("SHAPE Conv_5: ", pool5.shape)
 
     # Fully Convolutional part
     with tf.variable_scope("FC_Layer_1"):
-        fconv6 = layers.conv_pool_layer(bottom=pool5, filters=4096, kernel_size=7, training=training,
-                                        name="fc6", pool=False)
+        fconv6 = layers.conv_pool_layer(bottom=pool5, filters=4096, kernel_size=7, params=params,
+                                        training=training, name="fc6", pool=False)
         if(training):
             fconv6 = tf.layers.dropout(inputs=fconv6, rate=0.5, name="drop_6") # TODO: Put this rate in params
 
     # print("SHAPE FConv_6: ", fconv6.shape)
     with tf.variable_scope("FC_Layer_2"):
-        fconv7 = layers.conv_pool_layer(bottom=fconv6, filters=4096, kernel_size=1, training=training,
-                                        name="fc7", pool=False)
+        fconv7 = layers.conv_pool_layer(bottom=fconv6, filters=4096, kernel_size=1, params=params,
+                                        training=training, name="fc7", pool=False)
         if(training):
             fconv7 = tf.layers.dropout(inputs=fconv7, rate=0.5, name="drop_7") # TODO: Put this rate in params
 
@@ -102,19 +100,19 @@ def fcn8s_description(features, labels, params, mode, config):
     # up_score_1 = layers.up_conv_layer(score_layer, filters=num_classes,
     #                                   kernel_size=(height - 64, width - 64),
     #                                   strides=32, name="uc")
-    up_score_1 = layers.up_conv_concat_layer(score_layer, pool4,kernel_size=4, num_filters=num_classes,
-                                             strides=2, pad="same", name="1")
+    up_score_1 = layers.up_conv_concat_layer(score_layer, pool4, params=params, kernel_size=4,
+                                             num_filters=num_classes, strides=2, pad="same", name="1")
 
     # print("SHAPE Up Score: ", up_score_1.shape)
 
-    up_score_2 = layers.up_conv_concat_layer(up_score_1, pool3, kernel_size=4, num_filters=num_classes,
-                                             strides=2, pad="same", name="2")
+    up_score_2 = layers.up_conv_concat_layer(up_score_1, pool3, params=params, kernel_size=4,
+                                             num_filters=num_classes, strides=2, pad="same", name="2")
 
-    up_score_3 = layers.up_conv_concat_layer(up_score_2, pool2, kernel_size=4, num_filters=num_classes,
-                                             strides=2, pad="same", name="3")
+    up_score_3 = layers.up_conv_concat_layer(up_score_2, pool2, params=params, kernel_size=4,
+                                             num_filters=num_classes, strides=2, pad="same", name="3")
 
-    up_final = layers.up_conv_layer(up_score_3, num_filters=num_classes, kernel_size=8,
-                                    strides=4, out_size=height, pad="same", name="final")
+    up_final = layers.up_conv_layer(up_score_3, num_filters=num_classes, kernel_size=8, strides=4,
+                                    params=params, out_size=height, pad="same", name="final")
 
     # print("SHAPE Up Score Final: ", up_final.shape)
 
@@ -123,7 +121,7 @@ def fcn8s_description(features, labels, params, mode, config):
     # output = tf.argmax(probs, axis=-1, name="argmax_prediction")
 
     output = tf.layers.conv2d(up_final, 1, (1, 1), name="output", activation=tf.nn.sigmoid, padding="same",
-                             kernel_initializer=tf.initializers.variance_scaling(scale=0.001, distribution="normal"))
+                             kernel_initializer=tf.initializers.variance_scaling(scale=0.001, distribution="uniform"))
 
     predictions = {
         "classes": output,#tf.argmax(input=up_score_1, axis=-1, name="Argmax_Prediction"),
@@ -146,7 +144,7 @@ def fcn8s_description(features, labels, params, mode, config):
     loss = lossf.twoclass_cost(predictions["classes"], labels)
 
     # optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate, name="Optimizer")
-    optimizer = tf.contrib.opt.NadamOptimizer(learning_rate, name="Optimizer") #TODO: Test this
+    optimizer = tf.contrib.opt.NadamOptimizer(learning_rate, name="Optimizer")
     optimizer = tf.contrib.estimator.TowerOptimizer(optimizer)
 
     # labels2plot = tf.argmax(labels_1hot, axis=-1)
@@ -164,9 +162,9 @@ def fcn8s_description(features, labels, params, mode, config):
         # labels2plot_vis = tf.image.convert_image_dtype(labels2plot, tf.uint8)
         # labels2plot_vis = tf.image.grayscale_to_rgb(tf.expand_dims(labels2plot_vis, axis=-1))
 
-        tf.summary.image("input_image", input_data_vis, max_outputs=4)
-        tf.summary.image("output", output_vis, max_outputs=4)
-        tf.summary.image("labels", labels_vis, max_outputs=4)
+        tf.summary.image("input_image", input_data_vis, max_outputs=params['chips_tensorboard'])
+        tf.summary.image("output", output_vis, max_outputs=params['chips_tensorboard'])
+        tf.summary.image("labels", labels_vis, max_outputs=params['chips_tensorboard'])
         # tf.summary.image("labels1hot", labels2plot_vis, max_outputs=4)
 
 

@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 #TODO: This function was taken from GEE Hackaton. Review this and reimplement if necessary.
-def conv_pool_layer(bottom, filters, kernel_size=3, training=True, name="", pool=True, pad="same"):
+def conv_pool_layer(bottom, filters, params, kernel_size=3, training=True, name="", pool=True, pad="same"):
     with tf.variable_scope("Conv_layer_{}".format(name)):
         conv = tf.layers.conv2d(
             inputs=bottom,
@@ -10,8 +10,8 @@ def conv_pool_layer(bottom, filters, kernel_size=3, training=True, name="", pool
             padding=pad,
             data_format='channels_last',
             activation=None,
-            kernel_regularizer=tf.contrib.layers.l2_regularizer(0.5), #TODO: Put this rate in params
-            kernel_initializer=tf.initializers.variance_scaling(scale=0.001, distribution="normal"),
+            kernel_regularizer=tf.contrib.layers.l2_regularizer(params['l2_reg_rate']),
+            kernel_initializer=tf.initializers.variance_scaling(scale=params['var_scale_factor'], distribution="uniform"),
             name="convolution_{}".format(name)
         )
         norm = tf.layers.batch_normalization(inputs=conv, training=training)
@@ -27,7 +27,7 @@ def conv_pool_layer(bottom, filters, kernel_size=3, training=True, name="", pool
         else:
             return relu
 
-def up_conv_layer(bottom, num_filters, kernel_size, strides, out_size=None, name="", pad="valid"):
+def up_conv_layer(bottom, num_filters, kernel_size, strides, params, out_size=None, name="", pad="valid"):
     with tf.variable_scope("UP_Conv_Layer_{}".format(name)):
         up_conv = tf.layers.conv2d_transpose(
             inputs=bottom,
@@ -35,8 +35,8 @@ def up_conv_layer(bottom, num_filters, kernel_size, strides, out_size=None, name
             kernel_size=kernel_size,
             strides=strides,
             padding=pad,
-            kernel_regularizer=tf.contrib.layers.l2_regularizer(0.5),  # TODO: Put this rate in params
-            kernel_initializer=tf.initializers.variance_scaling(scale=0.001, distribution="normal"),
+            kernel_regularizer=tf.contrib.layers.l2_regularizer(params['l2_reg_rate']),
+            kernel_initializer=tf.initializers.variance_scaling(scale=params['var_scale_factor'], distribution="uniform"),
             name="upconv{}".format(name)
         )
 
@@ -52,7 +52,7 @@ def up_conv_layer(bottom, num_filters, kernel_size, strides, out_size=None, name
 
         return up_conv
 
-def up_conv_concat_layer(bottom, concat, kernel_size=4, num_filters=2, strides=2,
+def up_conv_concat_layer(bottom, concat, params, kernel_size=4, num_filters=2, strides=2,
                          pad="valid", name=""):
     with tf.variable_scope("UP_Conv_Layer_{}".format(name)):
         upconv = tf.layers.conv2d_transpose(
@@ -61,8 +61,8 @@ def up_conv_concat_layer(bottom, concat, kernel_size=4, num_filters=2, strides=2
             kernel_size=kernel_size,
             strides=strides,
             padding=pad,
-            kernel_regularizer=tf.contrib.layers.l2_regularizer(0.5),  # TODO: Put this rate in params
-            kernel_initializer=tf.initializers.variance_scaling(scale=0.001, distribution="normal"),
+            kernel_regularizer=tf.contrib.layers.l2_regularizer(params['l2_reg_rate']),
+            kernel_initializer=tf.initializers.variance_scaling(scale=params['var_scale_factor'], distribution="uniform"),
             name="deconv_{}".format(name)
         )
 
@@ -74,4 +74,4 @@ def up_conv_concat_layer(bottom, concat, kernel_size=4, num_filters=2, strides=2
         return upconv
 
 def resnet_base_layer(bottom, num_filters, strides):
-    return false
+    return False
