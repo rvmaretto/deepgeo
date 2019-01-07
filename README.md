@@ -1,4 +1,4 @@
-# DeepLeEO: Deep Learning for Earth Observation
+# DeepGeo: Deep Learning for Geospatial Data Toolbox
 
 Functionalities to Deep Learning based classification of Remote Sensing Images
 
@@ -18,7 +18,7 @@ Functionalities to Deep Learning based classification of Remote Sensing Images
 
 ```latex
 @Manual{DeepGeo,
-    title = {{DeepGeo} Deep Learning for Earth Observation ToolBox},
+    title = {{DeepGeo} Deep Learning for Geospatial Data Toolbox},
     author = {Maretto, Raian Vargas and K\"orting, Thales Sehn and Fonseca, Leila Maria Garcia},
     year = {2019},
     url = {https://github.com/rvmaretto/deepgeo},
