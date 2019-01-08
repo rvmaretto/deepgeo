@@ -11,16 +11,24 @@ import utils.geofunctions as gf
 # Predefined Indexes
 # ----------------------------------------------------------------- #
 def compute_NDVI(np_raster, parameters):
-    # print("Computing NDVI")
+    if parameters is None:
+        raise AttributeError("Attribute 'parameters' is None.")
+    elif not isinstance(parameters, dict):
+        raise ValueError("Attribute 'parameters' must be a dictionary, currently it is " + str(type(parameters)))
+
     red = np_raster[:,:,parameters["idx_b_red"]]
     nir = np_raster[:,:,parameters["idx_b_nir"]]
     with np.errstate(divide='ignore', invalid='ignore'):
-        ndvi = np.true_divide(np.subtract(nir, red), np.add(nir, red))
+        ndvi = np.ma.true_divide(np.ma.subtract(nir, red), np.ma.add(nir, red))
 
     return ndvi
 
 def compute_EVI(np_raster, parameters):
-    # print("Computing EVI")
+    if parameters is None:
+        raise AttributeError("Attribute 'parameters' is None.")
+    elif not isinstance(parameters, dict):
+        raise ValueError("Attribute 'parameters' must be a dictionary, currently it is " + str(type(parameters)))
+
     if ("factor" in parameters):
         factor = parameters["factor"]
     else:
@@ -32,19 +40,23 @@ def compute_EVI(np_raster, parameters):
     with np.errstate(divide='ignore', invalid='ignore'):
         divider = nir - red
         dividend = nir + (6.0 * red) - (7.5 * blue) + 10000.0
-        evi = 2.5 * (np.true_divide(divider, dividend))
+        evi = 2.5 * (np.ma.true_divide(divider, dividend))
 
     return evi
 
 def compute_EVI2(np_raster, parameters):
-    # print("Computing EVI2")
+    if parameters is None:
+        raise AttributeError("Attribute 'parameters' is None.")
+    elif not isinstance(parameters, dict):
+        raise ValueError("Attribute 'parameters' must be a dictionary, currently it is " + str(type(parameters)))
+
     red = np_raster[:,:,parameters["idx_b_red"]] * 0.0001
     nir = np_raster[:,:,parameters["idx_b_nir"]] * 0.0001
 
     with np.errstate(divide='ignore', invalid='ignore'):
-        divider = np.subtract(nir, red)
+        divider = np.ma.subtract(nir, red)
         dividend = nir + (2.4 * red) + 10000.0
-        evi2 = 2.5 * np.true_divide(divider, dividend)
+        evi2 = 2.5 * np.ma.true_divide(divider, dividend)
 
     return evi2
 
@@ -57,15 +69,15 @@ def standardize_median_std(raster_array):
     norm_raster_array = None
     for band in range(nbands):
         band_norm = raster_array[:, :, band]
-        median = np.median(band_norm)
-        stddev = np.std(band_norm)
+        median = np.ma.median(band_norm)
+        stddev = np.ma.std(band_norm)
         band_norm = (band_norm - median) / stddev
         if (norm_raster_array is None):
             norm_raster_array = band_norm
         else:
             norm_raster_array = np.ma.dstack((norm_raster_array, band_norm))
 
-    return np.array(norm_raster_array, dtype=np.float32)
+    return np.ma.array(norm_raster_array, dtype=np.float32)
 
 
 def standardize_mean_std(raster_array):
@@ -73,15 +85,15 @@ def standardize_mean_std(raster_array):
     norm_raster_array = None
     for band in range(nbands):
         band_norm = raster_array[:, :, band]
-        mean = np.mean(band_norm)
-        stddev = np.std(band_norm)
+        mean = np.ma.mean(band_norm)
+        stddev = np.ma.std(band_norm)
         band_norm = (band_norm - mean) / stddev
         if (norm_raster_array is None):
             norm_raster_array = band_norm
         else:
             norm_raster_array = np.ma.dstack((norm_raster_array, band_norm))
 
-    return np.array(norm_raster_array, dtype=np.float32)
+    return np.ma.array(norm_raster_array, dtype=np.float32)
 
 
 def standardize_tf(raster_array):
@@ -93,8 +105,8 @@ def standardize_tf(raster_array):
 
 def normalize_0_1(raster_array):
     nbands = raster_array.shape[2]
-    min = np.min(raster_array)
-    max = np.max(raster_array)
+    min = np.ma.min(raster_array)
+    max = np.ma.max(raster_array)
     norm_raster_array = None
     for band in range(nbands):
         band_norm = raster_array[:,:,band]
@@ -104,7 +116,7 @@ def normalize_0_1(raster_array):
         else:
             norm_raster_array = np.ma.dstack((norm_raster_array, band_norm))
 
-    return np.array(norm_raster_array, dtype=np.float32)
+    return np.ma.array(norm_raster_array, dtype=np.float32)
 
 # ----------------------------------------------------------------- #
 # Preprocessor class
@@ -127,7 +139,7 @@ class Preprocessor(object):
     sint_bands = {}
 
     #def __init__(self, raster_path, vector_path, no_data=0):
-    def __init__(self, raster_path, no_data):
+    def __init__(self, raster_path, no_data=0):
         self.raster_path = raster_path
         # self.vector_path = vector_path
         self.raster_dummy = no_data
@@ -171,7 +183,9 @@ class Preprocessor(object):
         self.standardize_functions[name] = function
 
     def set_nodata_value(self, new_value):
-        self.raster_array[self.raster_array == self.raster_dummy] = new_value
+        self.raster_array = self.raster_array.filled(new_value)
+        self.raster_array = np.ma.masked_array(self.raster_array, self.raster_array==new_value)
+        self.raster_array.set_fill_value(new_value)
         self.raster_dummy = new_value
 
     def save_index_raster(self, index, out_path):

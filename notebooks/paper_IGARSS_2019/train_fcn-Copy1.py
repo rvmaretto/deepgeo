@@ -1,15 +1,13 @@
 
 # coding: utf-8
 
-# In[ ]:
+# In[2]:
 
 
 import tensorflow as tf
 import numpy as np
 import os
 import sys
-import skimage
-import pylab as plt
 from importlib import reload
 from datetime import datetime
 
@@ -19,30 +17,26 @@ import deepleeo.dataset.utils as dsutils
 import deepleeo.utils.geofunctions as gf
 import deepleeo.networks.model_builder as mb
 
+reload(dtaug)
+reload(dsutils)
+reload(mb)
+reload(gf)
+
+
 # # Load input Dataset
 
-# In[ ]:
+# In[3]:
 
 
 # DATA_DIR = os.path.join(os.path.abspath(os.path.dirname("__file__")), '../', 'data_real', 'generated')
-network = "unet"
-DATA_DIR = "/home/raian/doutorado/Dados/generated"
-DATASET_FILE = os.path.join(DATA_DIR, 'dataset_286x286_timesstack-2015-2016.npz')#'dataset_1.npz')
+network = "fcn8s"
+DATA_DIR = "/home/raian/doutorado/Dados/generated/igarss"
+DATASET_FILE = os.path.join(DATA_DIR, 'samples_dataset_igarss.npz')#'dataset_1.npz')
 
 model_dir = os.path.join(DATA_DIR, 'tf_logs', "test_%s_%s" % (network, datetime.now().strftime('%d_%m_%Y-%H_%M_%S')))
-# model_dir = "/home/raian/doutorado/DeepLeEO/data_real/generated/tf_logs/test_debug"
-#model_dir = os.path.join(DATA_DIR, 'tf_logs', 'test_unet_lf_17_12_2018-22_39_13')
 
 
-# In[ ]:
-
-
-# raster_path = os.path.join(DATA_DIR, "..", "Landsat8_225064_17072016_R6G5B4_clip.tif")
-raster_path = os.path.join(DATA_DIR, "stacked_mosaic_2016_2017.tif")
-# raster_path = os.path.join(DATA_DIR, 'stacked_mosaic_2016_2017.tif')
-
-
-# In[ ]:
+# In[4]:
 
 
 dataset = np.load(DATASET_FILE)
@@ -61,16 +55,10 @@ print("Labels shape: ", dataset["labels"][0].shape, " - DType: ", dataset["label
 
 # In[ ]:
 
+
 new_dataset = {}
 new_dataset["images"] = dataset["images"]
 new_dataset["labels"] = dataset["labels"]
-
-# steps = 1000
-# num_chips = len(dataset["images"])
-# for i in range(0, num_chips, steps):
-# endstep = i + steps
-# if endstep >= num_chips:
-#     endstep = num_chips - 1
 
 angles = [90, 180, 270]
 rotated_imgs = dtaug.rotate_images(dataset["images"], angles)
@@ -114,15 +102,15 @@ print("  -> Validation Labels: ", valid_labels.shape)
 
 
 params = {
-    "epochs": 1000,
+    "epochs": 600,
     "batch_size": 100,
     "learning_rate": 0.0001,
     "l2_reg_rate": 0.5,
     "var_scale_factor": 2.0,
     "chips_tensorboard": 2,
     "dropout_rate": 0.5,
-    "class_names": new_dataset["classes"],
-     "bands_plot": [6, 7, 8] #[1,2,3]
+    "class_names": dataset["classes"],
+     "bands_plot": [1,2,3]
 }
 
 
@@ -132,3 +120,10 @@ params = {
 reload(mb)
 model = mb.ModelBuilder(network)
 model.train(train_images, test_images, train_labels, test_labels, params, model_dir)
+
+
+# In[ ]:
+
+
+#fcn.fcn_evaluate(valid_images, valid_labels,)
+
