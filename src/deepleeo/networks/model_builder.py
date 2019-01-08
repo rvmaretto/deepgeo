@@ -2,11 +2,14 @@ import sys
 import tensorflow as tf
 import numpy as np
 from os import path
+import csv
 
 sys.path.insert(0, path.join(path.dirname(__file__),"../"))
+import utils.filesystem as fs
 import networks.fcn8s as fcn8s
 import networks.fcn32s as fcn32s
-
+import networks.unet as unet
+import networks.laterfusion.unet_lf as unet_lf
 
 #TODO: Remove this
 def discretize_values(data, numberClass, startValue=0):
@@ -25,18 +28,33 @@ def discretize_values(data, numberClass, startValue=0):
 class ModelBuilder(object):
     predefModels = {
         "fcn8s": fcn8s.fcn8s_description,
-        "fcn32s": fcn32s.fcn32s_description
+        "fcn32s": fcn32s.fcn32s_description,
+        "unet": unet.unet_description,
+        "unet_lf": unet_lf.unet_lf_description
     }
 
     def __init__(self, model):
         if isinstance(model, str):
+            self.network = model
             self.model_description = self.predefModels[model]
         else:
+            self.network = "custom" #TODO: Change this. Implement a registration for new strategies.
             self.model_description = model
 
     def train(self, train_imgs, test_imgs, train_labels, test_labels, params, output_dir):
         # tf.set_random_seed(1987)
         tf.logging.set_verbosity(tf.logging.INFO)
+
+        if not path.exists(output_dir):
+            fs.mkdir(output_dir)
+            
+        with open(path.join(output_dir, "parameters.csv"), "w") as f:
+            w = csv.writer(f, delimiter=';')
+            w.writerow(["network", self.network])
+            w.writerow(["input_chip_size", [train_imgs[0].shape[0], train_imgs[0].shape[1]]])
+            w.writerow(["num_channels", train_imgs[0].shape[2]])
+            for key, value in params.items():
+                w.writerow([key, value])
 
         data_size, _, _, bands = train_imgs.shape
         params["bands"] = bands
@@ -48,7 +66,11 @@ class ModelBuilder(object):
                                         model_fn=tf.contrib.estimator.replicate_model_fn(self.model_description),
                                         model_dir=output_dir,
                                         params=params)
-        logging_hook = tf.train.LoggingTensorHook(tensors={'loss': 'loss'}, every_n_iter=25)
+
+        tensors_to_log = {'loss': 'loss'}#,
+                          # 'accuracy': 'accuracy'}#,
+                          # 'learning_rate': 'learning_rate'}
+        logging_hook = tf.train.LoggingTensorHook(tensors=tensors_to_log, every_n_iter=25)
 
         for epoch in range(1, params["epochs"] + 1):
             print("===============================================")
@@ -71,7 +93,11 @@ class ModelBuilder(object):
 
             print("---------------")
             print("Evaluating...")
-            test_results = estimator.evaluate(input_fn=test_input, name="Evaluation")
+            test_results = estimator.evaluate(input_fn=test_input)#, hooks=[logging_hook], name="Evaluation")
+        
+        # tf.estimator.train_and_evaluate(estimator,
+        #                                 train_spec=tf.estimator.TrainSpec(train_input, hooks=[logging_hook]),
+        #                                 eval_spec=tf.estimator.EvalSpec(test_input))
 
     # def fcn_evaluate(images, labels, params, model_dir):
     #     data_size, _, _, _ = images.shape

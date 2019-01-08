@@ -10,7 +10,8 @@ import networks.loss_functions as lossf
 reload(layers)
 reload(lossf)
 
-
+#TODO: Refactor this file. Create a class and put the FCN8s, FCN16s and FCN32s in the same file/(function or class)
+#TODO: Refactor this to allow multiple classes and to allow the user to chose the loss function through parameters.
 def fcn8s_description(features, labels, params, mode, config):
     tf.logging.set_verbosity(tf.logging.INFO)
     training = mode == tf.estimator.ModeKeys.TRAIN
@@ -20,6 +21,8 @@ def fcn8s_description(features, labels, params, mode, config):
     #num_channels = hyper_params["bands"]
     samples = features["data"]
     learning_rate = params["learning_rate"]
+    # tf.identity(learning_rate, "learning_rate")
+    # tf.summary.scalar('learning_rate', learning_rate)
 
     height, width, _ = samples[0].shape
 
@@ -74,23 +77,26 @@ def fcn8s_description(features, labels, params, mode, config):
         fconv6 = layers.conv_pool_layer(bottom=pool5, filters=4096, kernel_size=7, params=params,
                                         training=training, name="fc6", pool=False)
         if(training):
-            fconv6 = tf.layers.dropout(inputs=fconv6, rate=0.5, name="drop_6") # TODO: Put this rate in params
+            fconv6 = tf.layers.dropout(inputs=fconv6, rate=params["dropout_rate"], name="drop_6") # TODO: Put this rate in params
 
     # print("SHAPE FConv_6: ", fconv6.shape)
     with tf.variable_scope("FC_Layer_2"):
         fconv7 = layers.conv_pool_layer(bottom=fconv6, filters=4096, kernel_size=1, params=params,
                                         training=training, name="fc7", pool=False)
         if(training):
-            fconv7 = tf.layers.dropout(inputs=fconv7, rate=0.5, name="drop_7") # TODO: Put this rate in params
+            fconv7 = tf.layers.dropout(inputs=fconv7, rate=params["dropout_rate"], name="drop_7") # TODO: Put this rate in params
 
     # print("SHAPE FConv_7: ", fconv7.shape)
 
     # fconv8 = tf.layers.conv2d(inputs=fconv7, filters=1000, kernel_size=1, padding="same",
     #                             data_format="channels_last", activation=None, name="fc8")
-    # if (training):
-    #     fconv8 = tf.layers.dropout(inputs=fconv8, rate=0.5, name="drop_6")
+    
+    # TODO: Is it suitable to put the sigmoid here? If yes, it should be used in the score pool too
     score_layer = tf.layers.conv2d(inputs=fconv7, filters=num_classes, kernel_size=1, padding="valid",
                                    data_format="channels_last", activation=None, name="Score_Layer_FC_2")
+
+    if (training):
+        score_layer = tf.layers.dropout(inputs=score_layer, rate=params["dropout_rate"], name="drop_8")
 
     # score_pool4 = tf.layers.conv2d(inputs=pool5, filters=num_classes, kernel_size=1, padding="same",
     #                                data_format="channels_last", activation=None, name="score_pool4")
@@ -100,16 +106,16 @@ def fcn8s_description(features, labels, params, mode, config):
     # up_score_1 = layers.up_conv_layer(score_layer, filters=num_classes,
     #                                   kernel_size=(height - 64, width - 64),
     #                                   strides=32, name="uc")
-    up_score_1 = layers.up_conv_concat_layer(score_layer, pool4, params=params, kernel_size=4,
+    up_score_1 = layers.up_conv_add_layer(score_layer, pool4, params=params, kernel_size=4,
                                              num_filters=num_classes, strides=2, pad="same", name="1")
 
     # print("SHAPE Up Score: ", up_score_1.shape)
 
-    up_score_2 = layers.up_conv_concat_layer(up_score_1, pool3, params=params, kernel_size=4,
+    up_score_2 = layers.up_conv_add_layer(up_score_1, pool3, params=params, kernel_size=4,
                                              num_filters=num_classes, strides=2, pad="same", name="2")
 
-    up_score_3 = layers.up_conv_concat_layer(up_score_2, pool2, params=params, kernel_size=4,
-                                             num_filters=num_classes, strides=2, pad="same", name="3")
+    up_score_3 = layers.up_conv_add_layer(up_score_2, pool2, params=params, kernel_size=4,
+                                          num_filters=num_classes, strides=2, pad="same", name="3")
 
     up_final = layers.up_conv_layer(up_score_3, num_filters=num_classes, kernel_size=8, strides=4,
                                     params=params, out_size=height, pad="same", name="final")
@@ -117,7 +123,7 @@ def fcn8s_description(features, labels, params, mode, config):
     # print("SHAPE Up Score Final: ", up_final.shape)
 
     # probs = tf.nn.softmax(up_score_1, axis=-1, name="softmax")
-    #probs = tf.nn.sigmoid(up_score_1, name="sigmoid")
+    # probs = tf.nn.sigmoid(up_score_1, name="sigmoid")
     # output = tf.argmax(probs, axis=-1, name="argmax_prediction")
 
     output = tf.layers.conv2d(up_final, 1, (1, 1), name="output", activation=tf.nn.sigmoid, padding="same",
@@ -130,9 +136,9 @@ def fcn8s_description(features, labels, params, mode, config):
 
     if mode == tf.estimator.ModeKeys.PREDICT:
         return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
-
     # print("LABELS SHAPE: ", labels.shape)
     # print("OUTPUT SHAPE: ", output.shape)
+
     # labels_1hot = tf.one_hot(tf.cast(labels, tf.uint8), num_classes)
     # labels_1hot = tf.squeeze(labels_1hot)
     # loss = tf.losses.sigmoid_cross_entropy(labels_1hot, output)
@@ -149,8 +155,10 @@ def fcn8s_description(features, labels, params, mode, config):
 
     # labels2plot = tf.argmax(labels_1hot, axis=-1)
 
-    with tf.name_scope("metrics"):
-        input_data_vis = (samples[:,:,:,1:4])
+    with tf.name_scope("image_metrics"):
+        input_data_vis = layers.crop_features(samples, output.shape[1])
+        bands = tf.constant(params['bands_plot'])
+        input_data_vis = tf.transpose(tf.nn.embedding_lookup(tf.transpose(input_data_vis), bands))
         input_data_vis = tf.image.convert_image_dtype(input_data_vis, tf.uint8, saturate=True)
 
         # labels_vis = tf.cast(labels, tf.float32)
@@ -173,25 +181,31 @@ def fcn8s_description(features, labels, params, mode, config):
     with tf.control_dependencies(update_ops):
         train_op = optimizer.minimize(loss=loss, global_step=tf.train.get_global_step())
 
+    # train_summary_hook = tf.train.SummarySaverHook(save_steps=1,
+    #                                               output_dir=config.model_dir,
+    #                                               summary_op=tf.summary.merge_all())
+
     eval_summary_hook = tf.train.SummarySaverHook(save_steps=1,
-                                                  output_dir=config.model_dir,
+                                                  output_dir=config.model_dir+"/eval", #TODO: When I change this, it start to plot also the eval chips
                                                   summary_op=tf.summary.merge_all())
 
-    eval_metric_ops = {"accuracy": tf.metrics.accuracy(labels=labels,
-                                                       predictions=predictions["classes"])
-    }
+    accuracy = tf.metrics.accuracy(labels=labels, predictions=predictions["classes"])
+    eval_metric_ops = {"accuracy": accuracy}
+    # tf.identity(accuracy, "accuracy")
+    # tf.summary.scalar("accuracy", accuracy[1])
 
-    logging_hook = tf.train.LoggingTensorHook({#"batch_probs": probs,
-                                               "batch_labels": labels,
-                                               "batch_predictions": predictions["classes"]},
-                                               # "unique_labels": unique_labels,
-                                               # "unique_predictions": unique_predictions},
-                                               every_n_iter=25)
+    # logging_hook = tf.train.LoggingTensorHook({#"batch_probs": probs,
+    #                                            "batch_labels": labels,
+    #                                            "batch_predictions": predictions["classes"]},
+    #                                            # "unique_labels": unique_labels,
+    #                                            # "unique_predictions": unique_predictions},
+    #                                            every_n_iter=25)
 
+    #TODO: Review this: How to plot both the train and evaluation loss in the same graph?
     return tf.estimator.EstimatorSpec(mode=mode,
                                       predictions=predictions["classes"],
                                       loss=loss,
                                       train_op=train_op,
-                                      evaluation_hooks=[eval_summary_hook],
-                                      eval_metric_ops=eval_metric_ops)
-                                      # training_hooks=[logging_hook])
+                                      eval_metric_ops=eval_metric_ops,
+                                      evaluation_hooks=[eval_summary_hook])#,
+                                      # training_hooks=[train_summary_hook])
