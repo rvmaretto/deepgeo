@@ -7,6 +7,7 @@ from importlib import reload
 sys.path.insert(0, path.join(path.dirname(__file__),"../"))
 import networks.layers as layers
 import networks.loss_functions as lossf
+import networks.tb_metrics as tbm
 reload(layers)
 reload(lossf)
 
@@ -141,26 +142,10 @@ def fcn4s_description(features, labels, params, mode, config):
 
     # labels2plot = tf.argmax(labels_1hot, axis=-1)
 
-    with tf.name_scope("image_metrics"):
-        input_data_vis = layers.crop_features(samples, output.shape[1])
-        bands = tf.constant(params['bands_plot'])
-        input_data_vis = tf.transpose(tf.nn.embedding_lookup(tf.transpose(input_data_vis), bands))
-        input_data_vis = tf.image.convert_image_dtype(input_data_vis, tf.uint8, saturate=True)
+    tbm.plot_chips_tensorboard(samples, labels, output, bands_plot=params["bands_plot"],
+                               num_chips=params['chips_tensorboard'])
 
-        # labels_vis = tf.cast(labels, tf.float32)
-        labels_vis = tf.image.grayscale_to_rgb(labels)
-
-        output_vis = tf.cast(predictions["classes"], tf.float32)
-        output_vis = tf.image.grayscale_to_rgb(output_vis)
-
-        # labels2plot_vis = tf.image.convert_image_dtype(labels2plot, tf.uint8)
-        # labels2plot_vis = tf.image.grayscale_to_rgb(tf.expand_dims(labels2plot_vis, axis=-1))
-
-        tf.summary.image("input_image", input_data_vis, max_outputs=params['chips_tensorboard'])
-        tf.summary.image("output", output_vis, max_outputs=params['chips_tensorboard'])
-        tf.summary.image("labels", labels_vis, max_outputs=params['chips_tensorboard'])
-        # tf.summary.image("labels1hot", labels2plot_vis, max_outputs=4)
-
+    metrics, summaries = tbm.define_quality_metrics(labels, output, loss)
 
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
 
@@ -171,14 +156,13 @@ def fcn4s_description(features, labels, params, mode, config):
     #                                               output_dir=config.model_dir,
     #                                               summary_op=tf.summary.merge_all())
 
-    eval_summary_hook = tf.train.SummarySaverHook(save_steps=1,
-                                                  output_dir=config.model_dir+"/eval", #TODO: When I change this, it start to plot also the eval chips
+    eval_summary_hook = tf.train.SummarySaverHook(save_steps=10,
+                                                  output_dir=config.model_dir + "/eval",
                                                   summary_op=tf.summary.merge_all())
 
-    accuracy = tf.metrics.accuracy(labels=labels, predictions=predictions["classes"])
-    eval_metric_ops = {"accuracy": accuracy}
-    # tf.identity(accuracy, "accuracy")
-    # tf.summary.scalar("accuracy", accuracy[1])
+    eval_metric_ops = {"eval_metrics/accuracy": metrics["accuracy"],
+                       "eval_metrics/f1-score": metrics["f1_score"],
+                       "eval_metrics/cross_entropy": metrics["cross_entropy"]}
 
     # logging_hook = tf.train.LoggingTensorHook({#"batch_probs": probs,
     #                                            "batch_labels": labels,

@@ -7,6 +7,7 @@ from importlib import reload
 sys.path.insert(0, path.join(path.dirname(__file__),"../"))
 import networks.layers as layers
 import networks.loss_functions as lossf
+import networks.tb_metrics as tbm
 reload(layers)
 reload(lossf)
 
@@ -120,8 +121,8 @@ def fcn8s_description(features, labels, params, mode, config):
 
     if mode == tf.estimator.ModeKeys.PREDICT:
         return tf.estimator.EstimatorSpec(mode=mode, predictions=output)
-    print("LABELS SHAPE: ", labels.shape)
-    print("OUTPUT SHAPE: ", output.shape)
+    # print("LABELS SHAPE: ", labels.shape)
+    # print("OUTPUT SHAPE: ", output.shape)
 
     # labels_1hot = tf.one_hot(tf.cast(labels, tf.uint8), num_classes)
     # labels_1hot = tf.squeeze(labels_1hot)
@@ -142,37 +143,10 @@ def fcn8s_description(features, labels, params, mode, config):
 
     # labels2plot = tf.argmax(labels_1hot, axis=-1)
 
-    with tf.name_scope("image_metrics"):
-        input_data_vis = layers.crop_features(samples, output.shape[1])
-        bands = tf.constant(params['bands_plot'])
-        input_data_vis = tf.transpose(tf.nn.embedding_lookup(tf.transpose(input_data_vis), bands))
-        input_data_vis = tf.image.convert_image_dtype(input_data_vis, tf.uint8, saturate=True)
+    tbm.plot_chips_tensorboard(samples, labels, output, bands_plot=params["bands_plot"],
+                               num_chips=params['chips_tensorboard'])
 
-        # labels_vis = tf.cast(labels, tf.float32)
-        labels_vis = tf.image.grayscale_to_rgb(labels)
-
-        output_vis = tf.cast(output, tf.float32)
-        output_vis = tf.image.grayscale_to_rgb(output_vis)
-
-        # labels2plot_vis = tf.image.convert_image_dtype(labels2plot, tf.uint8)
-        # labels2plot_vis = tf.image.grayscale_to_rgb(tf.expand_dims(labels2plot_vis, axis=-1))
-
-        tf.summary.image("input_image", input_data_vis, max_outputs=params['chips_tensorboard'])
-        tf.summary.image("output", output_vis, max_outputs=params['chips_tensorboard'])
-        tf.summary.image("labels", labels_vis, max_outputs=params['chips_tensorboard'])
-        # tf.summary.image("labels1hot", labels2plot_vis, max_outputs=4)
-
-    with tf.name_scope("quality_metrics"):
-        f1_score = tf.contrib.metrics.f1_score(labels=labels, predictions=output)
-        accuracy = tf.metrics.accuracy(labels=labels, predictions=output)
-        cross_entropy = tf.nn.sigmoid_cross_entropy_with_logits(labels=labels, logits=output)
-        cross_entropy = tf.metrics.mean(cross_entropy)
-        # intersec_over_union = tf.metrics.mean_iou(labels=labels, predictions=output, num_classes=num_classes)
-        accuracy_sum = tf.summary.scalar("accuracy", accuracy[1])
-        f1_score_sum = tf.summary.scalar("f1-score", f1_score[1])
-        cross_entropy_sum = tf.summary.scalar("cross_entropy", cross_entropy[1])
-        loss_sum = tf.summary.scalar("loss", loss)
-        # intersec_over_union_sum = tf.summary.scalar("intersection_over_union", intersec_over_union[1])
+    metrics, summaries = tbm.define_quality_metrics(labels, output, loss)
 
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
 
@@ -187,11 +161,9 @@ def fcn8s_description(features, labels, params, mode, config):
                                                   output_dir=config.model_dir+"/eval",
                                                   summary_op=tf.summary.merge_all())
 
-    eval_metric_ops = {"eval_metrics/accuracy": accuracy,
-                       "eval_metrics/f1-score": f1_score,
-                       "eval_metrics/cross_entropy": cross_entropy}
-    # tf.identity(accuracy, "accuracy")
-    # tf.summary.scalar("accuracy", accuracy[1])
+    eval_metric_ops = {"eval_metrics/accuracy": metrics["accuracy"],
+                       "eval_metrics/f1-score": metrics["f1_score"],
+                       "eval_metrics/cross_entropy": metrics["cross_entropy"]}
 
     # logging_hook = tf.train.LoggingTensorHook({#"batch_probs": probs,
     #                                            "batch_labels": labels,

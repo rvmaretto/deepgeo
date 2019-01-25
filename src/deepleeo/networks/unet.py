@@ -5,6 +5,7 @@ import tensorflow as tf
 sys.path.insert(0, path.join(path.dirname(__file__), ".."))
 import networks.layers as layers
 import networks.loss_functions as lossf
+import networks.tb_metrics as tbm
 
 def unet_encoder(samples, params, mode, name_sufix=""):
     training = mode == tf.estimator.ModeKeys.TRAIN
@@ -135,38 +136,27 @@ def unet_description(features, labels, params, mode, config):
     optimizer = tf.contrib.opt.NadamOptimizer(learning_rate, name="Optimizer")
     optimizer = tf.contrib.estimator.TowerOptimizer(optimizer) #TODO: Verify if removing this it plots losses together
 
-    with tf.name_scope("image_metrics"):
-        input_data_vis = layers.crop_features(samples, output.shape[1])
-        bands = tf.constant(params['bands_plot'])
-        input_data_vis = tf.transpose(tf.nn.embedding_lookup(tf.transpose(input_data_vis), bands))
-        input_data_vis = tf.image.convert_image_dtype(input_data_vis, tf.uint8, saturate=True)
+    tbm.plot_chips_tensorboard(samples, labels, output, bands_plot=params["bands_plot"],
+                               num_chips=params['chips_tensorboard'])
 
-        labels_vis = tf.image.grayscale_to_rgb(cropped_labels)
-
-        output_vis = tf.cast(output, tf.float32)
-        output_vis = tf.image.grayscale_to_rgb(output_vis)
-
-        tf.summary.image("input_image", input_data_vis, max_outputs=params['chips_tensorboard'])
-        tf.summary.image("output", output_vis, max_outputs=params['chips_tensorboard'])
-        tf.summary.image("labels", labels_vis, max_outputs=params['chips_tensorboard'])
+    metrics, summaries = tbm.define_quality_metrics(labels, output, loss)
 
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+
     with tf.control_dependencies(update_ops):
         train_op = optimizer.minimize(loss=loss, global_step=tf.train.get_global_step())
 
-    accuracy = tf.metrics.accuracy(labels=cropped_labels, predictions=output)
-    eval_metric_ops = {"accuracy": accuracy}
-    # tf.identity(accuracy, "accuracy_2")
-    # tf.summary.scalar("accuracy_2", accuracy[1])
-    # tf.summary.scalar("loss_cost", loss)
-
     # train_summary_hook = tf.train.SummarySaverHook(save_steps=1,
-    #                                                output_dir=config.model_dir,
-    #                                                summary_op=tf.summary.merge_all())
+    #                                               output_dir=config.model_dir,
+    #                                               summary_op=tf.summary.merge_all())
 
-    eval_summary_hook = tf.train.SummarySaverHook(save_steps=1,
-                                                  output_dir=config.model_dir+"/eval",
+    eval_summary_hook = tf.train.SummarySaverHook(save_steps=10,
+                                                  output_dir=config.model_dir + "/eval",
                                                   summary_op=tf.summary.merge_all())
+
+    eval_metric_ops = {"eval_metrics/accuracy": metrics["accuracy"],
+                       "eval_metrics/f1-score": metrics["f1_score"],
+                       "eval_metrics/cross_entropy": metrics["cross_entropy"]}
 
     return tf.estimator.EstimatorSpec(mode=mode,
                                       predictions=output,
