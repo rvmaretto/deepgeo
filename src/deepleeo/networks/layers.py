@@ -19,12 +19,13 @@ def conv_pool_layer(bottom, filters, params, kernel_size=3, training=True, name=
         relu = tf.nn.relu(norm, name="relu_{}".format(name))
 
         if(pool):
-            return tf.layers.max_pooling2d(
+            pooling = tf.layers.max_pooling2d(
                 relu,
                 2,
                 strides=2,
                 padding=pad,
                 name="pool_{}".format(name))
+            return relu, pooling
         else:
             return relu
 
@@ -63,7 +64,7 @@ def up_conv_add_layer(bottom, concat, params, kernel_size=4, num_filters=2, stri
         if upconv_shape[1] != out_size:
             upconv = crop_features(upconv, out_size, name=name)
 
-        score_pool = tf.layers.conv2d(inputs=concat, filters=num_filters, kernel_size=1, padding="valid",
+        score_pool = tf.layers.conv2d(inputs=concat, filters=num_filters, kernel_size=1, padding=pad,
                                 data_format="channels_last", activation=None, name="score_layer")
 
         upconv = tf.add(upconv, score_pool)

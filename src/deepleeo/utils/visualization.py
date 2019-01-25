@@ -19,6 +19,7 @@ def plot_rgb_img(raster_array, bands=[1,2,3], contrast=False, title="RGB Composi
     raster_img = skimage.img_as_ubyte(raster_array)
     if contrast:
         for band in bands:
+            #TODO: How to keep the array masked here?
             p2, p98 = np.percentile(raster_img[:, :, band], (2, 98))
             raster_img[:, :, band] = exposure.rescale_intensity(raster_img[:, :, band], in_range=(p2, p98))
 
@@ -47,6 +48,7 @@ def plot_labels(labels_array, class_names, colors=None, title="Labels", figsize=
         plt.imshow(labels_array, cmap=colorMap)
     cbar = plt.colorbar()
     cbar.ax.get_yaxis().set_ticks([])
+    plt.axis('off')
 
     for j, lab in enumerate(class_names):
         cbar.ax.text(1.5, (2 * j + 1) / (num_classes * 2), lab, ha='left')

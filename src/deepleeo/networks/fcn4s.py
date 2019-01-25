@@ -12,7 +12,7 @@ reload(lossf)
 
 #TODO: Refactor this file. Create a class and put the FCN8s, FCN16s and FCN32s in the same file/(function or class)
 #TODO: Refactor this to allow multiple classes and to allow the user to chose the loss function through parameters.
-def fcn8s_description(features, labels, params, mode, config):
+def fcn4s_description(features, labels, params, mode, config):
     tf.logging.set_verbosity(tf.logging.INFO)
     training = mode == tf.estimator.ModeKeys.TRAIN
     evaluating = mode == tf.estimator.ModeKeys.EVAL
@@ -80,6 +80,9 @@ def fcn8s_description(features, labels, params, mode, config):
         fconv7 = tf.layers.dropout(inputs=fconv7, rate=params["dropout_rate"], name="drop_7") # TODO: Put this rate in params
 
     # print("SHAPE FConv_7: ", fconv7.shape)
+
+    # fconv8 = tf.layers.conv2d(inputs=fconv7, filters=1000, kernel_size=1, padding="same",
+    #                             data_format="channels_last", activation=None, name="fc8")
     
     # TODO: Is it suitable to put the sigmoid here? If yes, it should be used in the score pool too
     score_layer = tf.layers.conv2d(inputs=fconv7, filters=num_classes, kernel_size=1, padding="valid",
@@ -97,10 +100,10 @@ def fcn8s_description(features, labels, params, mode, config):
     up_score_2 = layers.up_conv_add_layer(up_score_1, pool3, params=params, kernel_size=4,
                                              num_filters=num_classes, strides=2, pad="same", name="2")
 
-    # up_score_3 = layers.up_conv_add_layer(up_score_2, pool2, params=params, kernel_size=4,
-    #                                       num_filters=num_classes, strides=2, pad="same", name="3")
+    up_score_3 = layers.up_conv_add_layer(up_score_2, pool2, params=params, kernel_size=4,
+                                          num_filters=num_classes, strides=2, pad="same", name="3")
 
-    up_final = layers.up_conv_layer(up_score_2, num_filters=num_classes, kernel_size=8, strides=8,
+    up_final = layers.up_conv_layer(up_score_3, num_filters=num_classes, kernel_size=8, strides=4,
                                     params=params, out_size=height, pad="same", name="final")
 
     # print("SHAPE Up Score Final: ", up_final.shape)
@@ -111,17 +114,16 @@ def fcn8s_description(features, labels, params, mode, config):
 
     output = tf.layers.conv2d(up_final, 1, (1, 1), name="output", activation=tf.nn.sigmoid, padding="same",
                              kernel_initializer=tf.initializers.variance_scaling(scale=0.001, distribution="uniform"))
-    # output = tf.argmax(input=up_final, axis=-1, name="Argmax_Prediction")
 
-    # predictions = {
-    #     "classes": output,#tf.argmax(input=up_score_1, axis=-1, name="Argmax_Prediction"),
+    predictions = {
+        "classes": output,#tf.argmax(input=up_score_1, axis=-1, name="Argmax_Prediction"),
         # "probabilities": probs
-    # }
+    }
 
     if mode == tf.estimator.ModeKeys.PREDICT:
-        return tf.estimator.EstimatorSpec(mode=mode, predictions=output)
-    print("LABELS SHAPE: ", labels.shape)
-    print("OUTPUT SHAPE: ", output.shape)
+        return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
+    # print("LABELS SHAPE: ", labels.shape)
+    # print("OUTPUT SHAPE: ", output.shape)
 
     # labels_1hot = tf.one_hot(tf.cast(labels, tf.uint8), num_classes)
     # labels_1hot = tf.squeeze(labels_1hot)
@@ -131,10 +133,7 @@ def fcn8s_description(features, labels, params, mode, config):
     # print(labels)
     # print(predictions["classes"])
     labels = tf.cast(labels, tf.float32)
-    loss = lossf.twoclass_cost(output, labels)
-    # print("SHAPE_LABELS: ", labels_1hot.shape)
-    # print("SHAPE_up_final: ", up_final.shape)
-    # loss = tf.metrics.mean_iou(labels=labels, predictions=tf.expand_dims(output, -1), num_classes=num_classes)
+    loss = lossf.twoclass_cost(predictions["classes"], labels)
 
     # optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate, name="Optimizer")
     optimizer = tf.contrib.opt.NadamOptimizer(learning_rate, name="Optimizer")
@@ -151,7 +150,7 @@ def fcn8s_description(features, labels, params, mode, config):
         # labels_vis = tf.cast(labels, tf.float32)
         labels_vis = tf.image.grayscale_to_rgb(labels)
 
-        output_vis = tf.cast(output, tf.float32)
+        output_vis = tf.cast(predictions["classes"], tf.float32)
         output_vis = tf.image.grayscale_to_rgb(output_vis)
 
         # labels2plot_vis = tf.image.convert_image_dtype(labels2plot, tf.uint8)
@@ -162,17 +161,6 @@ def fcn8s_description(features, labels, params, mode, config):
         tf.summary.image("labels", labels_vis, max_outputs=params['chips_tensorboard'])
         # tf.summary.image("labels1hot", labels2plot_vis, max_outputs=4)
 
-    with tf.name_scope("quality_metrics"):
-        f1_score = tf.contrib.metrics.f1_score(labels=labels, predictions=output)
-        accuracy = tf.metrics.accuracy(labels=labels, predictions=output)
-        cross_entropy = tf.nn.sigmoid_cross_entropy_with_logits(labels=labels, logits=output)
-        cross_entropy = tf.metrics.mean(cross_entropy)
-        # intersec_over_union = tf.metrics.mean_iou(labels=labels, predictions=output, num_classes=num_classes)
-        accuracy_sum = tf.summary.scalar("accuracy", accuracy[1])
-        f1_score_sum = tf.summary.scalar("f1-score", f1_score[1])
-        cross_entropy_sum = tf.summary.scalar("cross_entropy", cross_entropy[1])
-        loss_sum = tf.summary.scalar("loss", loss)
-        # intersec_over_union_sum = tf.summary.scalar("intersection_over_union", intersec_over_union[1])
 
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
 
@@ -183,13 +171,12 @@ def fcn8s_description(features, labels, params, mode, config):
     #                                               output_dir=config.model_dir,
     #                                               summary_op=tf.summary.merge_all())
 
-    eval_summary_hook = tf.train.SummarySaverHook(save_steps=10,
-                                                  output_dir=config.model_dir+"/eval",
+    eval_summary_hook = tf.train.SummarySaverHook(save_steps=1,
+                                                  output_dir=config.model_dir+"/eval", #TODO: When I change this, it start to plot also the eval chips
                                                   summary_op=tf.summary.merge_all())
 
-    eval_metric_ops = {"eval_metrics/accuracy": accuracy,
-                       "eval_metrics/f1-score": f1_score,
-                       "eval_metrics/cross_entropy": cross_entropy}
+    accuracy = tf.metrics.accuracy(labels=labels, predictions=predictions["classes"])
+    eval_metric_ops = {"accuracy": accuracy}
     # tf.identity(accuracy, "accuracy")
     # tf.summary.scalar("accuracy", accuracy[1])
 
@@ -202,7 +189,7 @@ def fcn8s_description(features, labels, params, mode, config):
 
     #TODO: Review this: How to plot both the train and evaluation loss in the same graph?
     return tf.estimator.EstimatorSpec(mode=mode,
-                                      predictions=output,
+                                      predictions=predictions["classes"],
                                       loss=loss,
                                       train_op=train_op,
                                       eval_metric_ops=eval_metric_ops,

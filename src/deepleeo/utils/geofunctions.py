@@ -14,8 +14,8 @@ def load_image(filepath, no_data=None):
     for i in range(1, img_ds.RasterCount + 1):
         band = img_ds.GetRasterBand(i)
         band_arr = band.ReadAsArray()
-        band_arr[band_arr == no_data] = 0
-        band_arr = np.ma.masked_array(band_arr, band_arr == 0) # TODO: Vefify how to remove this. How to deal with no_data
+        # band_arr[band_arr == no_data] = 0
+        band_arr = np.ma.masked_array(band_arr, band_arr == no_data) # TODO: Vefify how to remove this. How to deal with no_data
         if (img is None):
             img = band_arr
         else:

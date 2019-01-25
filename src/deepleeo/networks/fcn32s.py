@@ -32,13 +32,13 @@ def fcn32s_description(features, labels, params, mode, config):
     # Base Network (VGG_16)
     conv1_1 = layers.conv_pool_layer(bottom=samples, filters=64, params=params, training=training, name="1_1",
                                      pool=False)
-    pool1 = layers.conv_pool_layer(bottom=conv1_1, filters=64, params=params, training=training, name="1_2")
+    conv1_2, pool1 = layers.conv_pool_layer(bottom=conv1_1, filters=64, params=params, training=training, name="1_2")
 
     # print("SHAPE Conv_1: ", pool1.shape)
 
     conv2_1 = layers.conv_pool_layer(bottom=pool1, filters=128, params=params, training=training, name="2_1",
                                      pool=False)
-    pool2 = layers.conv_pool_layer(bottom=conv2_1, filters=128, params=params, training=training, name="2_2")
+    conv2_1, pool2 = layers.conv_pool_layer(bottom=conv2_1, filters=128, params=params, training=training, name="2_2")
 
     # print("SHAPE Conv_2: ", pool2.shape)
 
@@ -46,7 +46,7 @@ def fcn32s_description(features, labels, params, mode, config):
                                      pool=False)
     conv3_2 = layers.conv_pool_layer(bottom=conv3_1, filters=256, params=params, training=training, name="3_2",
                                      pool=False)
-    pool3 = layers.conv_pool_layer(bottom=conv3_2, filters=256, params=params, training=training, name="3_3")
+    conv3_3, pool3 = layers.conv_pool_layer(bottom=conv3_2, filters=256, params=params, training=training, name="3_3")
 
     # print("SHAPE Conv_3: ", pool3.shape)
 
@@ -54,7 +54,7 @@ def fcn32s_description(features, labels, params, mode, config):
                                      pool=False)
     conv4_2 = layers.conv_pool_layer(bottom=conv4_1, filters=512, params=params, training=training, name="4_2",
                                      pool=False)
-    pool4 = layers.conv_pool_layer(bottom=conv4_2, filters=512, params=params, training=training, name="4_3")
+    conv4_3, pool4 = layers.conv_pool_layer(bottom=conv4_2, filters=512, params=params, training=training, name="4_3")
 
     # print("SHAPE Conv_4: ", pool4.shape)
 
@@ -62,7 +62,7 @@ def fcn32s_description(features, labels, params, mode, config):
                                      pool=False)
     conv5_2 = layers.conv_pool_layer(bottom=conv5_1, filters=512, params=params, training=training, name="5_2",
                                      pool=False)
-    pool5 = layers.conv_pool_layer(bottom=conv5_2, filters=512, params=params, training=training, name="5_3")
+    conv5_3, pool5 = layers.conv_pool_layer(bottom=conv5_2, filters=512, params=params, training=training, name="5_3")
 
     # print("SHAPE Conv_5: ", pool5.shape)
 

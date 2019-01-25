@@ -12,7 +12,7 @@ def unet_encoder(samples, params, mode, name_sufix=""):
     # TODO: review the whole implementation, the number of filters and all the parameters
     conv_1 = layers.conv_pool_layer(bottom=samples, filters=64, params=params, training=training,
                                     name="1_1" + name_sufix, pool=False, pad="valid")
-    pool1 = layers.conv_pool_layer(bottom=conv_1, filters=64, params=params, training=training,
+    conv_1_2, pool1 = layers.conv_pool_layer(bottom=conv_1, filters=64, params=params, training=training,
                                    name="1_2" + name_sufix, pad="valid")
 
     # print("SHAPE Conv_1: ", conv_1.shape)
@@ -20,7 +20,7 @@ def unet_encoder(samples, params, mode, name_sufix=""):
 
     conv_2 = layers.conv_pool_layer(bottom=pool1, filters=128, params=params, training=training,
                                     name="2_1" + name_sufix, pool=False, pad="valid")
-    pool2 = layers.conv_pool_layer(bottom=conv_2, filters=128, params=params, training=training,
+    conv_2_1, pool2 = layers.conv_pool_layer(bottom=conv_2, filters=128, params=params, training=training,
                                    name="2_2" + name_sufix, pad="valid")
 
     # print("SHAPE Conv_2: ", conv_2.shape)
@@ -28,7 +28,7 @@ def unet_encoder(samples, params, mode, name_sufix=""):
 
     conv_3 = layers.conv_pool_layer(bottom=pool2, filters=256, params=params, training=training,
                                     name="3_1" + name_sufix, pool=False, pad="valid")
-    pool3 = layers.conv_pool_layer(bottom=conv_3, filters=256, params=params, training=training,
+    conv_3_1, pool3 = layers.conv_pool_layer(bottom=conv_3, filters=256, params=params, training=training,
                                    name="3_2" + name_sufix, pad="valid")
 
     # print("SHAPE Conv_3: ", conv_3.shape)
@@ -36,7 +36,7 @@ def unet_encoder(samples, params, mode, name_sufix=""):
 
     conv_4 = layers.conv_pool_layer(bottom=pool3, filters=512, params=params, training=training,
                                     name="4_1" + name_sufix, pool=False, pad="valid")
-    pool4 = layers.conv_pool_layer(bottom=conv_4, filters=512, params=params, training=training,
+    conv_4_1, pool4 = layers.conv_pool_layer(bottom=conv_4, filters=512, params=params, training=training,
                                    name="4_2" + name_sufix, pad="valid")
 
     # print("SHAPE Conv_4: ", conv_4.shape)

@@ -3,9 +3,13 @@ import tensorflow as tf
 import numpy as np
 from os import path
 import csv
+from tensorflow.python.client import timeline
 
 sys.path.insert(0, path.join(path.dirname(__file__),"../"))
 import utils.filesystem as fs
+import networks.fcn1s as fcn1s
+import networks.fcn2s as fcn2s
+import networks.fcn4s as fcn4s
 import networks.fcn8s as fcn8s
 import networks.fcn32s as fcn32s
 import networks.unet as unet
@@ -27,6 +31,9 @@ def discretize_values(data, numberClass, startValue=0):
 #TODO: Implement in the ModelBuilder a function that computes the output size.
 class ModelBuilder(object):
     predefModels = {
+        "fcn1s": fcn1s.fcn1s_description,
+        "fcn2s": fcn2s.fcn2s_description,
+        "fcn4s": fcn4s.fcn4s_description,
         "fcn8s": fcn8s.fcn8s_description,
         "fcn32s": fcn32s.fcn32s_description,
         "unet": unet.unet_description,
@@ -62,7 +69,7 @@ class ModelBuilder(object):
         # print("UNIQUE LABELS: ", np.unique(train_labels))
         # print("UNIQUE IMAGE: ", np.unique(train_imgs))
 
-        estimator = tf.estimator.Estimator(#model_fn=model_description,
+        estimator = tf.estimator.Estimator(#model_fn=self.model_description,
                                         model_fn=tf.contrib.estimator.replicate_model_fn(self.model_description),
                                         model_dir=output_dir,
                                         params=params)
@@ -70,7 +77,9 @@ class ModelBuilder(object):
         tensors_to_log = {'loss': 'loss'}#,
                           # 'accuracy': 'accuracy'}#,
                           # 'learning_rate': 'learning_rate'}
-        logging_hook = tf.train.LoggingTensorHook(tensors=tensors_to_log, every_n_iter=25)
+        logging_hook = tf.train.LoggingTensorHook(tensors=tensors_to_log, every_n_iter=10)
+
+        print("Labels Shape: ", train_labels.shape)
 
         for epoch in range(1, params["epochs"] + 1):
             print("===============================================")
@@ -93,7 +102,7 @@ class ModelBuilder(object):
 
             print("---------------")
             print("Evaluating...")
-            test_results = estimator.evaluate(input_fn=test_input)#, hooks=[logging_hook], name="Evaluation")
+            test_results = estimator.evaluate(input_fn=test_input, hooks=[logging_hook])
         
         # tf.estimator.train_and_evaluate(estimator,
         #                                 train_spec=tf.estimator.TrainSpec(train_input, hooks=[logging_hook]),
