@@ -155,7 +155,7 @@ def mosaic_images(files, output_file, band_names=None):
     out_ds = None
     input_ds = None
 
-def clip_by_aggregated_polygons(in_raster_path, shape_file, output_path, band_names=None):
+def clip_by_aggregated_polygons(in_raster_path, shape_file, output_path, band_names=None, no_data=None):
     if band_names is None:
         band_names = []
         ds = gdal.Open(in_raster_path)
@@ -165,11 +165,15 @@ def clip_by_aggregated_polygons(in_raster_path, shape_file, output_path, band_na
                 name = "band_" + str(i - 1)
             band_names.append(name)
 
+    if no_data is None:
+        ds = gdal.Open(in_raster_path)
+        no_data = ds.GetRasterBand(1).GetNoDataValue()
+
     with fiona.open(shape_file, "r") as shapefile:
         features = [feature["geometry"] for feature in shapefile]
 
     with rasterio.open(in_raster_path) as src:
-        out_image, out_transform = rasterio.mask.mask(src, features, crop=True)
+        out_image, out_transform = rasterio.mask.mask(src, features, crop=True, nodata=no_data)
         out_meta = src.meta.copy()
 
     out_meta.update({"driver": "GTiff",

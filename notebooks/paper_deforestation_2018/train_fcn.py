@@ -25,7 +25,7 @@ import deepleeo.networks.model_builder as mb
 
 
 # DATA_DIR = os.path.join(os.path.abspath(os.path.dirname("__file__")), '../', 'data_real', 'generated')
-network = "unet"
+network = "fcn1s"
 DATA_DIR = "/home/raian/doutorado/Dados/generated"
 DATASET_FILE = os.path.join(DATA_DIR, 'dataset_286x286_timesstack-2015-2016.npz')#'dataset_1.npz')
 
@@ -114,7 +114,7 @@ print("  -> Validation Labels: ", valid_labels.shape)
 
 
 params = {
-    "epochs": 1000,
+    "epochs": 600,
     "batch_size": 100,
     "learning_rate": 0.0001,
     "l2_reg_rate": 0.5,

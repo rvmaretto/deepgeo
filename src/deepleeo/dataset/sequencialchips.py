@@ -79,7 +79,7 @@ def generate_sequential_chips(img_array, chip_size=286, overlap=(0, 0), remove_n
 
     return struct
 
-def plot_chips(chips, raster_array, bands=[1, 2, 3], contrast=False):
+def plot_chips(chips, raster_array, bands=[1, 2, 3], contrast=False, chipscolor="blue"):
     fig,ax = plt.subplots(1, figsize=(12, 12))
 
     # Display the image
@@ -94,11 +94,13 @@ def plot_chips(chips, raster_array, bands=[1, 2, 3], contrast=False):
     else:
         ax.imshow(raster_img[:, :, bands[0]])
 
+    plt.axis('off')
+
     for coord in chips["coords"]:
         width = coord["y_end"] - coord["y_start"]
         height = coord["x_end"] - coord["x_start"]
         rect = patches.Rectangle((coord["y_start"], coord["x_start"]), width, height,
-                                  edgecolor="blue", facecolor="none")
+                                  edgecolor=chipscolor, facecolor="none")
         ax.add_patch(rect)
 
 
