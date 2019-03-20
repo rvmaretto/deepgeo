@@ -1,4 +1,4 @@
-# DeepGeo: Deep Learning for Geospatial Data Toolbox
+# DeepGeo: Deep Learning for Earth Observation data Toolbox
 
 Functionalities to Deep Learning based classification of Remote Sensing Images
 
