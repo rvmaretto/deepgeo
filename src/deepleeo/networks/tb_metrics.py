@@ -15,9 +15,9 @@ def define_quality_metrics(labels, output, loss):
         metrics["accuracy"] = tf.metrics.accuracy(labels=labels, predictions=output)
         summaries["accuracy"] = tf.summary.scalar("accuracy", metrics["accuracy"][1])
 
-        cross_entropy = tf.nn.sigmoid_cross_entropy_with_logits(labels=labels, logits=output)
-        metrics["cross_entropy"] = tf.metrics.mean(cross_entropy)
-        summaries["cross_entropy"] = tf.summary.scalar("cross_entropy", metrics["cross_entropy"][1])
+        # cross_entropy = tf.losses.softmax_cross_entropy(onehot_labels=labels, logits=output)
+        # metrics["cross_entropy"] = tf.metrics.mean(cross_entropy)
+        # summaries["cross_entropy"] = tf.summary.scalar("cross_entropy", metrics["cross_entropy"][1])
 
         # metrics["intersec_over_union"] = tf.metrics.mean_iou(labels=labels, predictions=output,
         #                                                      num_classes=num_classes)
@@ -30,13 +30,16 @@ def define_quality_metrics(labels, output, loss):
 
 def plot_chips_tensorboard(samples, labels, output, bands_plot=[1,2,3], num_chips=2):
     with tf.name_scope("chips_predictions"):
+        # print("SHAPE_LABELS: ", labels.shape)
+        # print("SHAPE_SAMPLE: ", samples.shape)
+        # print("SHAPE_OUTPUT: ", output.shape)
         input_data_vis = layers.crop_features(samples, output.shape[1])
         bands = tf.constant(bands_plot)
         input_data_vis = tf.transpose(tf.nn.embedding_lookup(tf.transpose(input_data_vis), bands))
         input_data_vis = tf.image.convert_image_dtype(input_data_vis, tf.uint8, saturate=True)
 
-        # labels_vis = tf.cast(labels, tf.float32)
-        labels_vis = tf.image.grayscale_to_rgb(labels)
+        labels_vis = tf.cast(labels, tf.float32)
+        labels_vis = tf.image.grayscale_to_rgb(labels_vis)
 
         output_vis = tf.cast(output, tf.float32)
         output_vis = tf.image.grayscale_to_rgb(output_vis)

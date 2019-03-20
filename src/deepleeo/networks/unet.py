@@ -51,11 +51,12 @@ def unet_encoder(samples, params, mode, name_sufix=""):
     # print("SHAPE Conv_5: ", conv_5_1.shape)
     # print("SHAPE Pool_5: ", conv_5_2.shape)
 
-    return {"conv_1": conv_1,
-            "conv_2": conv_2,
-            "conv_3": conv_3,
-            "conv_4": conv_4,
+    return {"conv_1": conv_1_2,
+            "conv_2": conv_2_1,
+            "conv_3": conv_3_1,
+            "conv_4": conv_4_1,
             "conv_5": conv_5_2}
+    # return conv_1_2, conv_2_1, conv_3_1, conv_4_1, conv_5_2
 
 
 def unet_decoder(features, params, mode):
@@ -131,15 +132,16 @@ def unet_description(features, labels, params, mode, config):
 
     cropped_labels = tf.cast(layers.crop_features(labels, output.shape[1], name="labels"), tf.float32)
 
+    cropped_labels = tf.cast(cropped_labels, tf.float32)
     loss = lossf.twoclass_cost(output, cropped_labels)
 
     optimizer = tf.contrib.opt.NadamOptimizer(learning_rate, name="Optimizer")
     optimizer = tf.contrib.estimator.TowerOptimizer(optimizer) #TODO: Verify if removing this it plots losses together
 
-    tbm.plot_chips_tensorboard(samples, labels, output, bands_plot=params["bands_plot"],
+    tbm.plot_chips_tensorboard(samples, cropped_labels, output, bands_plot=params["bands_plot"],
                                num_chips=params['chips_tensorboard'])
 
-    metrics, summaries = tbm.define_quality_metrics(labels, output, loss)
+    metrics, summaries = tbm.define_quality_metrics(cropped_labels, output, loss)
 
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
 

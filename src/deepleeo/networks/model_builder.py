@@ -3,9 +3,9 @@ import tensorflow as tf
 import numpy as np
 from os import path
 import csv
-from tensorflow.python.client import timeline
 
 sys.path.insert(0, path.join(path.dirname(__file__),"../"))
+import dataset.ds_iterator as ds_it
 import utils.filesystem as fs
 import networks.fcn1s as fcn1s
 import networks.fcn2s as fcn2s
@@ -66,20 +66,32 @@ class ModelBuilder(object):
         data_size, _, _, bands = train_imgs.shape
         params["bands"] = bands
 
-        # print("UNIQUE LABELS: ", np.unique(train_labels))
-        # print("UNIQUE IMAGE: ", np.unique(train_imgs))
+        # Try to update to TF 1.12 and try to use this:
+        # https://www.tensorflow.org/guide/distribute_strategy
+        # strategy = tf.contrib.distribute.MirroredStrategy()
+        # config = tf.estimator.RunConfig(train_distribute=strategy)#, eval_distribute=strategy)
 
+        #TODO: Verify why it is breaking here
+        # with tf.contrib.tfprof.ProfileContext(path.join(output_dir, "profile")) as pctx:
         estimator = tf.estimator.Estimator(#model_fn=self.model_description,
                                         model_fn=tf.contrib.estimator.replicate_model_fn(self.model_description),
                                         model_dir=output_dir,
-                                        params=params)
+                                        params=params)#,
+                                        # config=config)
 
         tensors_to_log = {'loss': 'loss'}#,
                           # 'accuracy': 'accuracy'}#,
                           # 'learning_rate': 'learning_rate'}
         logging_hook = tf.train.LoggingTensorHook(tensors=tensors_to_log, every_n_iter=10)
+        #profiling_hook = tf.train.ProfilerHook(save_steps=10, output_dir=path.join(output_dir))
 
         print("Labels Shape: ", train_labels.shape)
+
+        # train_input = tf.data.Dataset.from_tensor_slices(({"x": train_imgs}, train_labels)).shuffle(buffer_size=2048)
+        # train_input = train_input.shuffle(1000).repeat().batch(params["batch_size"])
+        #
+        # test_input = tf.data.Dataset.from_tensor_slices(({"x": test_imgs}, test_labels)).shuffle(buffer_size=2048)
+        # test_input = test_input.shuffle(1000).repeat().batch(params["batch_size"])
 
         for epoch in range(1, params["epochs"] + 1):
             print("===============================================")
@@ -87,26 +99,40 @@ class ModelBuilder(object):
             train_input = tf.estimator.inputs.numpy_input_fn(x={"data": train_imgs},
                                                             y=train_labels,
                                                             batch_size=params["batch_size"],
-                                                            num_epochs=1,
+                                                            num_epochs=1,#params["epochs"],
                                                             shuffle=True)
+            # train_input, train_init_hook = ds_it.get_input_fn(train_imgs, train_labels, params["batch_size"], shuffle=True)
 
             print("---------------")
             print("Training...")
-            train_results = estimator.train(input_fn=train_input, steps=None, hooks=[logging_hook])
+            train_results = estimator.train(input_fn=train_input,
+                                            steps=None,
+                                            hooks=[logging_hook])#, profiling_hook])
 
             test_input = tf.estimator.inputs.numpy_input_fn(x={"data": test_imgs},
                                                             y=test_labels,
                                                             batch_size=params["batch_size"],
-                                                            num_epochs=1,
+                                                            num_epochs=1,#params["epochs"],
                                                             shuffle=False)
+            
+            # test_input, test_init_hook = ds_it.get_input_fn(test_imgs, test_labels, params["batch_size"], shuffle=True)
 
             print("---------------")
             print("Evaluating...")
-            test_results = estimator.evaluate(input_fn=test_input, hooks=[logging_hook])
-        
+            test_results = estimator.evaluate(input_fn=test_input,
+                                              hooks=[logging_hook])#, profiling_hook])
+
+        # early_stopping = tf.contrib.estimator.stop_if_no_decrease_hook(
+        #     estimator,
+        #     #TODO: Test with a common metric, that has a tuple (value, dict)
+        #     metric_name='loss',
+        #     max_steps_without_decrease=1000,
+        #     eval_dir=path.join(output_dir, "eval"),
+        #     min_steps=100)
+
         # tf.estimator.train_and_evaluate(estimator,
         #                                 train_spec=tf.estimator.TrainSpec(train_input, hooks=[logging_hook]),
-        #                                 eval_spec=tf.estimator.EvalSpec(test_input))
+        #                                 eval_spec=tf.estimator.EvalSpec(test_input, hooks=[logging_hook]))
 
     # def fcn_evaluate(images, labels, params, model_dir):
     #     data_size, _, _, _ = images.shape

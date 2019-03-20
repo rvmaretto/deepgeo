@@ -110,9 +110,10 @@ def fcn8s_description(features, labels, params, mode, config):
     # probs = tf.nn.sigmoid(up_score_1, name="sigmoid")
     # output = tf.argmax(probs, axis=-1, name="argmax_prediction")
 
-    output = tf.layers.conv2d(up_final, 1, (1, 1), name="output", activation=tf.nn.sigmoid, padding="same",
-                             kernel_initializer=tf.initializers.variance_scaling(scale=0.001, distribution="uniform"))
-    # output = tf.argmax(input=up_final, axis=-1, name="Argmax_Prediction")
+    # up_final = tf.layers.conv2d(up_final, num_classes, (1, 1), name="output", activation=tf.nn.sigmoid, padding="same",
+    #                          kernel_initializer=tf.initializers.variance_scaling(scale=0.001, distribution="uniform"))
+    output = tf.nn.softmax(up_final, name="Softmax")
+    output = tf.expand_dims(tf.argmax(input=output, axis=-1, name="Argmax_Prediction"), -1)
 
     # predictions = {
     #     "classes": output,#tf.argmax(input=up_score_1, axis=-1, name="Argmax_Prediction"),
@@ -124,18 +125,16 @@ def fcn8s_description(features, labels, params, mode, config):
     # print("LABELS SHAPE: ", labels.shape)
     # print("OUTPUT SHAPE: ", output.shape)
 
-    # labels_1hot = tf.one_hot(tf.cast(labels, tf.uint8), num_classes)
-    # labels_1hot = tf.squeeze(labels_1hot)
+    labels_1hot = tf.one_hot(tf.cast(labels, tf.uint8), num_classes)
+    labels_1hot = tf.squeeze(labels_1hot)
     # loss = tf.losses.sigmoid_cross_entropy(labels_1hot, output)
-    # loss = tf.losses.softmax_cross_entropy(labels_1hot, probs)
+    loss = tf.losses.softmax_cross_entropy(labels_1hot, up_final)
     # loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=tf.squeeze(labels), logits=output)
     # print(labels)
     # print(predictions["classes"])
-    labels = tf.cast(labels, tf.float32)
-    loss = lossf.twoclass_cost(output, labels)
-    # print("SHAPE_LABELS: ", labels_1hot.shape)
-    # print("SHAPE_up_final: ", up_final.shape)
-    # loss = tf.metrics.mean_iou(labels=labels, predictions=tf.expand_dims(output, -1), num_classes=num_classes)
+    # labels = tf.cast(labels, tf.float32)
+    # loss = lossf.twoclass_cost(output, labels)
+    # loss = lossf.inverse_mean_iou(up_final, labels_1hot, num_classes)
 
     # optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate, name="Optimizer")
     optimizer = tf.contrib.opt.NadamOptimizer(learning_rate, name="Optimizer")
@@ -157,13 +156,13 @@ def fcn8s_description(features, labels, params, mode, config):
     #                                               output_dir=config.model_dir,
     #                                               summary_op=tf.summary.merge_all())
 
-    eval_summary_hook = tf.train.SummarySaverHook(save_steps=10,
+    eval_summary_hook = tf.train.SummarySaverHook(save_steps=10, #Review this. Try to save in the same steps of the quality_metrics
                                                   output_dir=config.model_dir+"/eval",
                                                   summary_op=tf.summary.merge_all())
 
     eval_metric_ops = {"eval_metrics/accuracy": metrics["accuracy"],
-                       "eval_metrics/f1-score": metrics["f1_score"],
-                       "eval_metrics/cross_entropy": metrics["cross_entropy"]}
+                       "eval_metrics/f1-score": metrics["f1_score"]}#,
+                    #    "eval_metrics/cross_entropy": metrics["cross_entropy"]}
 
     # logging_hook = tf.train.LoggingTensorHook({#"batch_probs": probs,
     #                                            "batch_labels": labels,

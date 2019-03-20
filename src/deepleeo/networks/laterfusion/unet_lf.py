@@ -15,26 +15,37 @@ def unet_lf_description(features, labels, params, mode, config):
     # samples = features["data"]
     # timesteps = samples.shape[4]
     timesteps = 2
-    samples = []
+    # samples = []
     # bands_1 = tf.constant([0,1,2,3,4])
     # bands_2 = tf.constant([5,6,7,8,9])
     # samples.append(tf.transpose(tf.nn.embedding_lookup(tf.transpose(features["data"]), bands_1)))
     # samples.append(tf.transpose(tf.nn.embedding_lookup(tf.transpose(features["data"]), bands_2)))
-    samples.append(features["data"][:,:,:,0:5])
-    samples.append(features["data"][:,:,:,5:10])
+    # samples.append(features["data"][:,:,:,0:5])
+    # samples.append(features["data"][:,:,:,5:10])
+    samples_t1 = features["data"][:,:,:,0:5]
+    samples_t2 = features["data"][:,:,:,5:10]
 
     height, width, _ = features["data"][0].shape
 
-    out_encoder = []
-    for i in range(timesteps):
-        name_sufix = "t_" + str(i)
-        out_encoder.append(unet.unet_encoder(samples[i], params, mode, name_sufix))
+    # out_encoder = []
+    # for i in range(timesteps):
+    #     name_sufix = "t_" + str(i)
+    #     out_encoder.append(unet.unet_encoder(samples[i], params, mode, name_sufix))
+    convs_t1 = unet.unet_encoder(samples_t1, params, mode, "t_1")
+    convs_t2 = unet.unet_encoder(samples_t2, params, mode, "t_2")
 
-    with tf.variable_scope("Fusion"):
-        encoded_feat = out_encoder[0]
-        for i in range(1, len(out_encoder)):
-            for k, feat in out_encoder[i].items():
-                encoded_feat[k] = tf.concat([encoded_feat[k], feat], axis=-1, name="Fusion" + k)
+    encoded_feat = {}
+    encoded_feat["conv_1"] = tf.concat([convs_t1["conv_1"], convs_t2["conv_1"]], axis=-1, name="concat_t1")
+    encoded_feat["conv_2"] = tf.concat([convs_t1["conv_2"], convs_t2["conv_2"]], axis=-1, name="concat_t2")
+    encoded_feat["conv_3"] = tf.concat([convs_t1["conv_3"], convs_t2["conv_3"]], axis=-1, name="concat_t3")
+    encoded_feat["conv_4"] = tf.concat([convs_t1["conv_4"], convs_t2["conv_4"]], axis=-1, name="concat_t4")
+    encoded_feat["conv_5"] = tf.concat([convs_t1["conv_5"], convs_t2["conv_5"]], axis=-1, name="concat_t5")
+
+
+    # encoded_feat = out_encoder[0]
+    # for i in range(1, len(out_encoder)):
+    #     for k, feat in out_encoder[i].items():
+    #         encoded_feat[k] = tf.concat([encoded_feat[k], feat], axis=-1, name="Fusion_{}".format(k))
 
     output = unet.unet_decoder(encoded_feat, params, mode)
 
@@ -48,10 +59,10 @@ def unet_lf_description(features, labels, params, mode, config):
     optimizer = tf.contrib.opt.NadamOptimizer(learning_rate, name="Optimizer")
     optimizer = tf.contrib.estimator.TowerOptimizer(optimizer)
 
-    tbm.plot_chips_tensorboard(samples, labels, output, bands_plot=params["bands_plot"],
+    tbm.plot_chips_tensorboard(samples_t2, cropped_labels, output, bands_plot=params["bands_plot"],
                                num_chips=params['chips_tensorboard'])
 
-    metrics, summaries = tbm.define_quality_metrics(labels, output, loss)
+    metrics, summaries = tbm.define_quality_metrics(cropped_labels, output, loss)
 
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
 
@@ -62,8 +73,8 @@ def unet_lf_description(features, labels, params, mode, config):
     #                                               output_dir=config.model_dir,
     #                                               summary_op=tf.summary.merge_all())
 
-    eval_summary_hook = tf.train.SummarySaverHook(save_steps=10,
-                                                  output_dir=config.model_dir + "/eval",
+    eval_summary_hook = tf.train.SummarySaverHook(save_steps=1,
+                                                  output_dir=path.join(config.model_dir, "eval"),
                                                   summary_op=tf.summary.merge_all())
 
     eval_metric_ops = {"eval_metrics/accuracy": metrics["accuracy"],
