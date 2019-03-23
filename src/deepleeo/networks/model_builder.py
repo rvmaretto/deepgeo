@@ -176,7 +176,7 @@ class ModelBuilder(object):
             # predicted_images.append(np.argmax(predict["probabilities"], -1))
             # classif = np.argmax(predict["probabilities"], axis=-1)
             predicted_images.append(discretize_values(predict["classes"],
-                                                      len(params["class_names"]),
+                                                      params["num_classes"],
                                                       0))
 
         return predicted_images

@@ -18,7 +18,7 @@ def fcn8s_description(features, labels, params, mode, config):
     training = mode == tf.estimator.ModeKeys.TRAIN
     evaluating = mode == tf.estimator.ModeKeys.EVAL
 
-    num_classes = len(params["class_names"])
+    num_classes = params["num_classes"]
     #num_channels = hyper_params["bands"]
     samples = features["data"]
     learning_rate = params["learning_rate"]
@@ -112,8 +112,8 @@ def fcn8s_description(features, labels, params, mode, config):
 
     # up_final = tf.layers.conv2d(up_final, num_classes, (1, 1), name="output", activation=tf.nn.sigmoid, padding="same",
     #                          kernel_initializer=tf.initializers.variance_scaling(scale=0.001, distribution="uniform"))
-    output = tf.nn.softmax(up_final, name="Softmax")
-    output = tf.expand_dims(tf.argmax(input=output, axis=-1, name="Argmax_Prediction"), -1)
+    predictions = tf.nn.softmax(up_final, name="Softmax")
+    output = tf.expand_dims(tf.argmax(input=predictions, axis=-1, name="Argmax_Prediction"), -1)
 
     # predictions = {
     #     "classes": output,#tf.argmax(input=up_score_1, axis=-1, name="Argmax_Prediction"),
@@ -128,19 +128,14 @@ def fcn8s_description(features, labels, params, mode, config):
     labels_1hot = tf.one_hot(tf.cast(labels, tf.uint8), num_classes)
     labels_1hot = tf.squeeze(labels_1hot)
     # loss = tf.losses.sigmoid_cross_entropy(labels_1hot, output)
-    loss = tf.losses.softmax_cross_entropy(labels_1hot, up_final)
-    # loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=tf.squeeze(labels), logits=output)
-    # print(labels)
-    # print(predictions["classes"])
-    # labels = tf.cast(labels, tf.float32)
+    # loss = tf.losses.softmax_cross_entropy(labels_1hot, up_final)
     # loss = lossf.twoclass_cost(output, labels)
     # loss = lossf.inverse_mean_iou(up_final, labels_1hot, num_classes)
+    loss = lossf.avg_soft_dice(predictions, labels_1hot, num_classes)
 
     # optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate, name="Optimizer")
     optimizer = tf.contrib.opt.NadamOptimizer(learning_rate, name="Optimizer")
     optimizer = tf.contrib.estimator.TowerOptimizer(optimizer)
-
-    # labels2plot = tf.argmax(labels_1hot, axis=-1)
 
     tbm.plot_chips_tensorboard(samples, labels, output, bands_plot=params["bands_plot"],
                                num_chips=params['chips_tensorboard'])

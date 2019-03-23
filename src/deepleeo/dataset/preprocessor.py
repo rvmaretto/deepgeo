@@ -103,6 +103,7 @@ def standardize_tf(raster_array):
         stand_img = sess.run(tf_img, feed_dict={img: raster_array})
         return np.array(stand_img, dtype=np.float32)
 
+
 def normalize_0_1(raster_array):
     nbands = raster_array.shape[2]
     min = np.ma.min(raster_array)
@@ -117,6 +118,16 @@ def normalize_0_1(raster_array):
             norm_raster_array = np.ma.dstack((norm_raster_array, band_norm))
 
     return np.ma.array(norm_raster_array, dtype=np.float32)
+
+
+def reduce_sr(raster_array, params=None):
+    if params is None:
+        params = {}
+        params["factor"] = 10000
+    if params["factor"] < 1:
+        return np.ma.array((raster_array * params["factor"]), dtype=np.float32)
+    else:
+        return np.ma.array((raster_array / params["factor"]), dtype=np.float32)
 
 # ----------------------------------------------------------------- #
 # Preprocessor class
@@ -133,12 +144,12 @@ class Preprocessor(object):
         "mean_std": standardize_mean_std,
         "median_std": standardize_median_std,
         "tensorflow": standardize_tf,
-        "norm_0-1": normalize_0_1
+        "norm_0-1": normalize_0_1,
+        "reduce_sr": reduce_sr
     }
 
     sint_bands = {}
 
-    #def __init__(self, raster_path, vector_path, no_data=0):
     def __init__(self, raster_path, no_data=0):
         self.raster_path = raster_path
         # self.vector_path = vector_path
@@ -172,7 +183,7 @@ class Preprocessor(object):
     def register_new_idx_func(self, name, function):
         self.predefIndexes[name] = function
 
-    def standardize_image(self, strategy="mean_std", params=None):
+    def standardize_image(self, strategy='reduce_sr', params=None):
         if params is None:
             self.raster_array = self.standardize_functions[strategy](self.raster_array)
         else:

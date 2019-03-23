@@ -15,14 +15,21 @@ class Rasterizer(object):
         self.class_column = class_column
         self.nodata_val = nodata_val
         self.base_raster = gdal.Open(self.raster_path) #gf.load_image(self.raster_path)
-        self.classes_interest = [non_class_name] + classes_interest
+        if not classes_interest is None:
+            self.classes_interest = [non_class_name] + classes_interest
+        else:
+            self.classes_interest = None
         self.non_class = non_class_name
+        self.class_names = []
 
     # def get_base_raster(self):
         # return self.base_raster
 
     def get_class_names(self):
-        return self.classes_interest
+        if self.classes_interest is None:
+            return self.class_names
+        else:
+            return self.classes_interest
 
     def collect_class_names(self):
         vector_ds = ogr.Open(self.vector_path)
@@ -78,10 +85,13 @@ class Rasterizer(object):
                                 dtype=np.int32)
 
         for lid, label in enumerate(self.class_names):
-            if label in self.classes_interest:
-                value = self.classes_interest.index(label)
+            if self.classes_interest is None:
+                value = self.class_names.index(label)
             else:
-                value = self.classes_interest.index(self.non_class)
+                if label in self.classes_interest:
+                    value = self.classes_interest.index(label)
+                else:
+                    value = self.classes_interest.index(self.non_class)
             
             vector_layer.SetAttributeFilter("%s='%s'" % (str(self.class_column), str(label)))
             limg = self.rasterize_label(vector_layer)

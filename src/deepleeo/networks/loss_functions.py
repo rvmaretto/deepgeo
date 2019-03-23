@@ -1,27 +1,5 @@
 import tensorflow as tf
 
-def softmax_loss_cross_entropy(net_score, labels, num_classes, weight_classes=None):
-    with tf.name_scope("Loss"):
-        #TODO: Can I use this one? What is the difference. Can it operate pixelwise??
-        #tf.nn.softmax_cross_entropy_with_logits_v2(labels=labels, logits=up_score)
-        up_score = tf.reshape(net_score, (-1, num_classes))
-        epsilon = tf.constant(value=1e-4)
-        labels = tf.reshape(labels, -1, num_classes)
-
-        softmax = tf.nn.softmax(up_score) + epsilon
-
-        if(weight_classes is None):
-            cross_entropy = tf.reduce_sum(tf.multiply(labels * tf.log(softmax)),
-                                          reduction_indices=[1], name="cross_entropy")
-        else:
-            cross_entropy = tf.reduce_sum(tf.multiply(labels * tf.log(softmax), weight_classes),
-                                          reduction_indices=[1], name="cross_entropy")
-
-        cross_entropy_mean = tf.reduce_mean(cross_entropy, name="xEntropy_mean")
-        tf.add_to_collection("losses", cross_entropy_mean)
-        loss = tf.add_n(tf.get_collection("losses"), name="total_loss")
-
-    return loss
 
 def twoclass_cost(predictions, labels):
     with tf.name_scope('cost'):
@@ -34,12 +12,31 @@ def twoclass_cost(predictions, labels):
 
         return loss
 
+
 def inverse_mean_iou(predictions, labels, num_classes):
     with tf.name_scope('cost'):
         mean_iou, conf_mat = tf.metrics.mean_iou(labels=labels, predictions=predictions, num_classes=num_classes)
         return tf.cast(tf.subtract(1.0, mean_iou), tf.float64)
 
-def inverse_f1_score(predictions, labels):
+
+# def avg_soft_dice(predictions, labels, num_classes):
+#     with tf.name_scope('cost'):
+#         avg_dice = tf.constant(0)
+#         for i in range(num_classes):
+#             intersection = tf.multiply(predictions, labels)
+#             pred_sum = tf.pow(tf.reduce_sum(predictions), 2)
+#             labels_sum = tf.pow(tf.reduce_sum(predictions), 2)
+#             numerator = 2 * tf.reduce_sum(intersection)
+#             denominator = pred_sum + labels_sum
+#             soft_dice = 1 - tf.divide(numerator, denominator)
+#             avg_dice += soft_dice
+#
+#         return avg_dice / num_classes
+
+def avg_soft_dice(predictions, labels, num_classes):
     with tf.name_scope('cost'):
-        f1_score = tf.contrib.metrics.f1_score(labels=labels, predictions=predictions)
-        return (tf.subtract(1.0, f1_score[0]), f1_score[1])
+        epsilon = 1e-6
+        axes = tuple(range(1, len(predictions.shape)-1))
+        numerator = 2. * tf.reduce_sum(tf.multiply(predictions, labels), axes)
+        denominator = tf.reduce_sum(tf.square(predictions) + tf.square(labels), axes)
+        return 1 - tf.reduce_mean(numerator / (denominator + epsilon))
