@@ -36,7 +36,8 @@ def inverse_mean_iou(predictions, labels, num_classes):
 def avg_soft_dice(predictions, labels):
     with tf.name_scope('cost'):
         epsilon = tf.constant(1e-6, dtype=tf.float32)
-        axes = tf.tuple(tf.range(1, tf.subtract(tf.size(predictions.shape), 1)))
-        numerator = tf.multiply(2., tf.reduce_sum(tf.multiply(predictions, labels), axes))
-        denominator = tf.reduce_sum(tf.square(predictions) + tf.square(labels), axes)
-        return tf.subtract(1, tf.divide(tf.reduce_mean(numerator, tf.add(denominator, epsilon))))
+        intersection = tf.reduce_sum(tf.multiply(predictions, labels), axis=[1, 2])
+        numerator = tf.multiply(tf.constant(2., dtype=tf.float32), intersection)
+        denominator = tf.reduce_sum(tf.square(predictions) + tf.square(labels), axis=[1, 2])
+        dice_mean = tf.reduce_mean(tf.divide(numerator, tf.add(denominator, epsilon)))
+        return tf.subtract(tf.constant(1., dtype=tf.float32), dice_mean, name='loss')
