@@ -131,7 +131,7 @@ def fcn8s_description(features, labels, params, mode, config):
     # loss = tf.losses.softmax_cross_entropy(labels_1hot, up_final)
     # loss = lossf.twoclass_cost(output, labels)
     # loss = lossf.inverse_mean_iou(up_final, labels_1hot, num_classes)
-    loss = lossf.avg_soft_dice(predictions, labels_1hot, num_classes)
+    loss = lossf.avg_soft_dice(predictions, labels_1hot)
 
     # optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate, name="Optimizer")
     optimizer = tf.contrib.opt.NadamOptimizer(learning_rate, name="Optimizer")
