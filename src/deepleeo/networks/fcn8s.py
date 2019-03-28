@@ -101,7 +101,7 @@ def fcn8s_description(features, labels, params, mode, config):
     # up_score_3 = layers.up_conv_add_layer(up_score_2, pool2, params=params, kernel_size=4,
     #                                       num_filters=num_classes, strides=2, pad="same", name="3")
 
-    up_final = layers.up_conv_layer(up_score_2, num_filters=num_classes, kernel_size=8, strides=8,
+    logits = layers.up_conv_layer(up_score_2, num_filters=num_classes, kernel_size=8, strides=8,
                                     params=params, out_size=height, pad="same", name="final")
 
     # print("SHAPE Up Score Final: ", up_final.shape)
@@ -112,7 +112,7 @@ def fcn8s_description(features, labels, params, mode, config):
 
     # up_final = tf.layers.conv2d(up_final, num_classes, (1, 1), name="output", activation=tf.nn.sigmoid, padding="same",
     #                          kernel_initializer=tf.initializers.variance_scaling(scale=0.001, distribution="uniform"))
-    predictions = tf.nn.softmax(up_final, name="Softmax")
+    predictions = tf.nn.softmax(logits, name="Softmax")
     output = tf.expand_dims(tf.argmax(input=predictions, axis=-1, name="Argmax_Prediction"), -1)
 
     # predictions = {
@@ -128,9 +128,9 @@ def fcn8s_description(features, labels, params, mode, config):
     labels_1hot = tf.one_hot(tf.cast(labels, tf.uint8), num_classes)
     labels_1hot = tf.squeeze(labels_1hot)
     # loss = tf.losses.sigmoid_cross_entropy(labels_1hot, output)
-    # loss = tf.losses.softmax_cross_entropy(labels_1hot, up_final)
+    # loss = tf.losses.softmax_cross_entropy(labels_1hot, logits)
     # loss = lossf.twoclass_cost(output, labels)
-    # loss = lossf.inverse_mean_iou(up_final, labels_1hot, num_classes)
+    # loss = lossf.inverse_mean_iou(logits, labels_1hot, num_classes)
     loss = lossf.avg_soft_dice(predictions, labels_1hot)
 
     # optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate, name="Optimizer")
@@ -140,7 +140,7 @@ def fcn8s_description(features, labels, params, mode, config):
     tbm.plot_chips_tensorboard(samples, labels, output, bands_plot=params["bands_plot"],
                                num_chips=params['chips_tensorboard'])
 
-    metrics, summaries = tbm.define_quality_metrics(labels, output, loss)
+    metrics, summaries = tbm.define_quality_metrics(labels_1hot, predictions, loss)
 
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
 
@@ -151,13 +151,13 @@ def fcn8s_description(features, labels, params, mode, config):
     #                                               output_dir=config.model_dir,
     #                                               summary_op=tf.summary.merge_all())
 
-    eval_summary_hook = tf.train.SummarySaverHook(save_steps=10, #Review this. Try to save in the same steps of the quality_metrics
+    eval_summary_hook = tf.train.SummarySaverHook(save_steps=10,  # Review this. Try to save in the same steps of the quality_metrics
                                                   output_dir=config.model_dir+"/eval",
                                                   summary_op=tf.summary.merge_all())
 
     eval_metric_ops = {"eval_metrics/accuracy": metrics["accuracy"],
                        "eval_metrics/f1-score": metrics["f1_score"]}#,
-                    #    "eval_metrics/cross_entropy": metrics["cross_entropy"]}
+                       # "eval_metrics/cross_entropy": metrics["cross_entropy"]}
 
     # logging_hook = tf.train.LoggingTensorHook({#"batch_probs": probs,
     #                                            "batch_labels": labels,
@@ -166,7 +166,7 @@ def fcn8s_description(features, labels, params, mode, config):
     #                                            # "unique_predictions": unique_predictions},
     #                                            every_n_iter=25)
 
-    #TODO: Review this: How to plot both the train and evaluation loss in the same graph?
+    # TODO: Review this: How to plot both the train and evaluation loss in the same graph?
     return tf.estimator.EstimatorSpec(mode=mode,
                                       predictions=output,
                                       loss=loss,

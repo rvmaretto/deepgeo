@@ -79,7 +79,7 @@ class ModelBuilder(object):
                                         params=params)#,
                                         # config=config)
 
-        tensors_to_log = {'loss': 'loss'}#,
+        tensors_to_log = {}  # 'loss': 'loss'}#,
                           # 'accuracy': 'accuracy'}#,
                           # 'learning_rate': 'learning_rate'}
         logging_hook = tf.train.LoggingTensorHook(tensors=tensors_to_log, every_n_iter=10)
@@ -99,7 +99,7 @@ class ModelBuilder(object):
             train_input = tf.estimator.inputs.numpy_input_fn(x={"data": train_imgs},
                                                             y=train_labels,
                                                             batch_size=params["batch_size"],
-                                                            num_epochs=1,#params["epochs"],
+                                                            num_epochs=1,  # params["epochs"],
                                                             shuffle=True)
             # train_input, train_init_hook = ds_it.get_input_fn(train_imgs, train_labels, params["batch_size"], shuffle=True)
 

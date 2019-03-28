@@ -65,11 +65,12 @@ print("  -> Validation Labels: ", valid_labels.shape)
 params = {
     "epochs": 3,
     "batch_size": 10,
-    "learning_rate": 0.0001,
+    "learning_rate": 0.001,
     "l2_reg_rate": 0.5,
     "var_scale_factor": 2.0,
     "chips_tensorboard": 2,
     "dropout_rate": 0.5,
+    "loss_func": "weighted_crossentropy",
     "num_classes": len(dataset['classes']),
      "bands_plot": [1,2,3] #[6, 7, 8]
 }
