@@ -5,26 +5,25 @@ from os import path
 sys.path.insert(0, path.join(path.dirname(__file__),"../"))
 import networks.layers as layers
 
-def define_quality_metrics(labels, output, loss):
+def define_quality_metrics(labels_1hot, predictions, labels, output, loss, num_classes):
     metrics = {}
     summaries = {}
-    with tf.name_scope("quality_metrics"):
-        metrics["f1_score"] = tf.contrib.metrics.f1_score(labels=labels, predictions=output)
-        summaries["f1_score"] = tf.summary.scalar("f1-score", metrics["f1_score"][1])
+    with tf.name_scope('quality_metrics'):
+        metrics['f1_score'] = tf.contrib.metrics.f1_score(labels=labels_1hot, predictions=predictions)
+        summaries['f1_score'] = tf.summary.scalar('f1-score', metrics['f1_score'][1])
 
-        metrics["accuracy"] = tf.metrics.accuracy(labels=labels, predictions=output)
-        summaries["accuracy"] = tf.summary.scalar("accuracy", metrics["accuracy"][1])
+        metrics['accuracy'] = tf.metrics.accuracy(labels=labels_1hot, predictions=predictions)
+        summaries['accuracy'] = tf.summary.scalar('accuracy', metrics['accuracy'][1])
 
-        cross_entropy = tf.losses.softmax_cross_entropy(onehot_labels=labels, logits=output)
-        metrics["cross_entropy"] = tf.metrics.mean(cross_entropy)
-        summaries["cross_entropy"] = tf.summary.scalar("cross_entropy", metrics["cross_entropy"][1])
+        cross_entropy = tf.losses.softmax_cross_entropy(onehot_labels=labels_1hot, logits=predictions)
+        metrics['cross_entropy'] = tf.metrics.mean(cross_entropy)
+        summaries['cross_entropy'] = tf.summary.scalar('cross_entropy', metrics['cross_entropy'][1])
 
-        # metrics["intersec_over_union"] = tf.metrics.mean_iou(labels=labels, predictions=output,
-        #                                                      num_classes=num_classes)
-        # summaries["intersec_over_union"] = tf.summary.scalar("intersection_over_union",
-        #                                                      metrics["intersec_over_union"][1])
+        metrics['mean_iou'] = tf.metrics.mean_iou(labels=labels, predictions=output,
+                                                             num_classes=num_classes)
+        summaries['mean_iou'] = tf.summary.scalar('mean_iou', metrics['mean_iou'][0])
 
-        summaries["loss"] = tf.summary.scalar('loss', loss)
+        summaries['loss'] = tf.summary.scalar('loss', loss)
 
     return metrics, summaries
 

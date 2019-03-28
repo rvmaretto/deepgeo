@@ -106,10 +106,6 @@ def fcn8s_description(features, labels, params, mode, config):
 
     # print("SHAPE Up Score Final: ", up_final.shape)
 
-    # probs = tf.nn.softmax(up_score_1, axis=-1, name="softmax")
-    # probs = tf.nn.sigmoid(up_score_1, name="sigmoid")
-    # output = tf.argmax(probs, axis=-1, name="argmax_prediction")
-
     # up_final = tf.layers.conv2d(up_final, num_classes, (1, 1), name="output", activation=tf.nn.sigmoid, padding="same",
     #                          kernel_initializer=tf.initializers.variance_scaling(scale=0.001, distribution="uniform"))
     predictions = tf.nn.softmax(logits, name="Softmax")
@@ -122,8 +118,6 @@ def fcn8s_description(features, labels, params, mode, config):
 
     if mode == tf.estimator.ModeKeys.PREDICT:
         return tf.estimator.EstimatorSpec(mode=mode, predictions=output)
-    # print("LABELS SHAPE: ", labels.shape)
-    # print("OUTPUT SHAPE: ", output.shape)
 
     labels_1hot = tf.one_hot(tf.cast(labels, tf.uint8), num_classes)
     labels_1hot = tf.squeeze(labels_1hot)
@@ -140,7 +134,7 @@ def fcn8s_description(features, labels, params, mode, config):
     tbm.plot_chips_tensorboard(samples, labels, output, bands_plot=params["bands_plot"],
                                num_chips=params['chips_tensorboard'])
 
-    metrics, summaries = tbm.define_quality_metrics(labels_1hot, predictions, loss)
+    metrics, summaries = tbm.define_quality_metrics(labels_1hot, predictions, labels, output, loss, num_classes)
 
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
 
@@ -151,20 +145,22 @@ def fcn8s_description(features, labels, params, mode, config):
     #                                               output_dir=config.model_dir,
     #                                               summary_op=tf.summary.merge_all())
 
-    eval_summary_hook = tf.train.SummarySaverHook(save_steps=10,  # Review this. Try to save in the same steps of the quality_metrics
-                                                  output_dir=config.model_dir+"/eval",
+    eval_metric_ops = {'eval_metrics/accuracy': metrics['accuracy'],
+                       'eval_metrics/f1-score': metrics['f1_score'],
+                       'eval_metrics/cross_entropy': metrics['cross_entropy'],
+                       'eval_metrics/mean_iou': metrics['mean_iou']}
+
+    logging_hook = tf.train.LoggingTensorHook({'loss': loss,
+                                               'accuracy': metrics['accuracy'][1],
+                                               'f1_score': metrics['f1_score'][1],
+                                               'cross_entropy': metrics['cross_entropy'][1],
+                                               'mean_iou': metrics['mean_iou'][0]},
+                                               every_n_iter=25)
+
+    eval_summary_hook = tf.train.SummarySaverHook(save_steps=10,
+                                                  # Review this. Try to save in the same steps of the quality_metrics
+                                                  output_dir=config.model_dir + "/eval",
                                                   summary_op=tf.summary.merge_all())
-
-    eval_metric_ops = {"eval_metrics/accuracy": metrics["accuracy"],
-                       "eval_metrics/f1-score": metrics["f1_score"]}#,
-                       # "eval_metrics/cross_entropy": metrics["cross_entropy"]}
-
-    # logging_hook = tf.train.LoggingTensorHook({#"batch_probs": probs,
-    #                                            "batch_labels": labels,
-    #                                            "batch_predictions": predictions["classes"]},
-    #                                            # "unique_labels": unique_labels,
-    #                                            # "unique_predictions": unique_predictions},
-    #                                            every_n_iter=25)
 
     # TODO: Review this: How to plot both the train and evaluation loss in the same graph?
     return tf.estimator.EstimatorSpec(mode=mode,
@@ -172,5 +168,5 @@ def fcn8s_description(features, labels, params, mode, config):
                                       loss=loss,
                                       train_op=train_op,
                                       eval_metric_ops=eval_metric_ops,
-                                      evaluation_hooks=[eval_summary_hook])#,
-                                      # training_hooks=[train_summary_hook])
+                                      evaluation_hooks=[eval_summary_hook, logging_hook],
+                                      training_hooks=[logging_hook])

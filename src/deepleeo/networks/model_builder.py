@@ -79,10 +79,10 @@ class ModelBuilder(object):
                                         params=params)#,
                                         # config=config)
 
-        tensors_to_log = {}  # 'loss': 'loss'}#,
+        # tensors_to_log = {'loss': 'cost/loss'}#,
                           # 'accuracy': 'accuracy'}#,
                           # 'learning_rate': 'learning_rate'}
-        logging_hook = tf.train.LoggingTensorHook(tensors=tensors_to_log, every_n_iter=10)
+        # logging_hook = tf.train.LoggingTensorHook(tensors=tensors_to_log, every_n_iter=10)
         #profiling_hook = tf.train.ProfilerHook(save_steps=10, output_dir=path.join(output_dir))
 
         print("Labels Shape: ", train_labels.shape)
@@ -106,8 +106,8 @@ class ModelBuilder(object):
             print("---------------")
             print("Training...")
             train_results = estimator.train(input_fn=train_input,
-                                            steps=None,
-                                            hooks=[logging_hook])#, profiling_hook])
+                                            steps=None)
+                                            # hooks=[logging_hook])#, profiling_hook])
 
             test_input = tf.estimator.inputs.numpy_input_fn(x={"data": test_imgs},
                                                             y=test_labels,
@@ -119,8 +119,8 @@ class ModelBuilder(object):
 
             print("---------------")
             print("Evaluating...")
-            test_results = estimator.evaluate(input_fn=test_input,
-                                              hooks=[logging_hook])#, profiling_hook])
+            test_results = estimator.evaluate(input_fn=test_input)#,
+                                              # hooks=[logging_hook])#, profiling_hook])
 
         # early_stopping = tf.contrib.estimator.stop_if_no_decrease_hook(
         #     estimator,
