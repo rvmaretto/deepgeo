@@ -4,14 +4,14 @@ import tensorflow as tf
 
 sys.path.insert(0, path.join(path.dirname(__file__), ".."))
 import networks.unet as unet
-import networks.layers as layers
-import networks.loss_functions as lossf
-import networks.tb_metrics as tbm
+# import networks.layers as layers
+# import networks.loss_functions as lossf
+# import networks.tb_metrics as tbm
 
-def unet_lf_description(features, labels, params, mode, config):
+def unet_lf_description(samples, labels, params, mode, config):
     tf.logging.set_verbosity(tf.logging.INFO)
 
-    learning_rate = params["learning_rate"]
+    # learning_rate = params["learning_rate"]
     # samples = features["data"]
     # timesteps = samples.shape[4]
     timesteps = 2
@@ -22,10 +22,10 @@ def unet_lf_description(features, labels, params, mode, config):
     # samples.append(tf.transpose(tf.nn.embedding_lookup(tf.transpose(features["data"]), bands_2)))
     # samples.append(features["data"][:,:,:,0:5])
     # samples.append(features["data"][:,:,:,5:10])
-    samples_t1 = features["data"][:,:,:,0:5]
-    samples_t2 = features["data"][:,:,:,5:10]
+    samples_t1 = samples[:,:,:,0:5]
+    samples_t2 = samples[:,:,:,5:10]
 
-    height, width, _ = features["data"][0].shape
+    height, width, _ = samples[0].shape
 
     # out_encoder = []
     # for i in range(timesteps):
