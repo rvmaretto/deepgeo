@@ -50,7 +50,7 @@ print("Labels shape: ", dataset["labels"][0].shape, " - DType: ", dataset["label
 # print("UNIQUE LABELS: ", np.unique(dataset["labels"]))
 
 ## Split dataset between train, test and validation data
-train_images, test_images, valid_images, train_labels, test_labels, valid_labels = dsutils.split_dataset(dataset)
+train_images, test_images, valid_images, train_labels, test_labels, valid_labels = dsutils.split_dataset(dataset, perc_test=20)
 
 print("Splitted dataset:")
 print("  -> Train images: ", train_images.shape)
@@ -63,8 +63,8 @@ print("  -> Validation Labels: ", valid_labels.shape)
 
 # # Train the Network
 params = {
-    "epochs": 3,
-    "batch_size": 10,
+    "epochs": 1000,
+    "batch_size": 100,
     "learning_rate": 0.001,
     "l2_reg_rate": 0.5,
     "var_scale_factor": 2.0,
