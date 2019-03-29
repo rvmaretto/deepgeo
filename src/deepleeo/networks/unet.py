@@ -10,6 +10,13 @@ import networks.layers as layers
 def unet_encoder(samples, params, mode, name_sufix=''):
     training = mode == tf.estimator.ModeKeys.TRAIN
 
+    if params['fusion'] == 'early':
+        num_channels = samples.shape[3] / 2
+        samples = tf.layers.conv2d(samples, filters=num_channels, kernel_size=(1,1), strides=1,
+                                   padding='valid', activation=tf.nn.relu,
+                                   kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
+                                   name='early_fusion')
+
     # TODO: review the whole implementation, the number of filters and all the parameters
     conv_1 = layers.conv_pool_layer(bottom=samples, filters=64, params=params, training=training,
                                     name='1_1' + name_sufix, pool=False, pad='valid')
