@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-#TODO: Refactory. Re-implement this method in the following structure:
+# TODO: Refactor. Re-implement this method in the following structure:
 # conv_pool_layer(bottom, filters=[F1,F2,..., FN], poolings=[1,2,...,n], kernel_sizes=[k1, k2, ..., kn])
 def conv_pool_layer(bottom, filters, params, kernel_size=3, training=True, name="", pool=True, pad="same"):
     with tf.variable_scope("Conv_layer_{}".format(name)):

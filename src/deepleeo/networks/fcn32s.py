@@ -13,7 +13,6 @@ reload(lossf)
 
 
 def fcn32s_description(features, labels, params, mode, config):
-    tf.logging.set_verbosity(tf.logging.INFO)
     training = mode == tf.estimator.ModeKeys.TRAIN
     evaluating = mode == tf.estimator.ModeKeys.EVAL
 

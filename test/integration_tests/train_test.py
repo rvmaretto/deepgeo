@@ -19,7 +19,7 @@ reload(gf)
 
 current_path = os.path.abspath(os.path.dirname('__file__'))
 DATA_DIR = os.path.join(current_path, '..', '..', 'data_real', 'generated')
-network = 'fcn8s'
+network = 'unet'
 DATASET_FILE = os.path.join(DATA_DIR, 'samples_dataset_bin.npz')
 
 # model_dir = os.path.join(DATA_DIR, 'tf_logs', "test_%s_%s" % (network, datetime.now().strftime('%d_%m_%Y-%H_%M_%S')))

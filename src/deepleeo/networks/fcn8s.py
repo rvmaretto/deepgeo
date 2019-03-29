@@ -18,7 +18,7 @@ def fcn8s_description(samples, labels, params, mode, config):
     evaluating = mode == tf.estimator.ModeKeys.EVAL
 
     num_classes = params['num_classes']
-    learning_rate = params['learning_rate']
+    # learning_rate = params['learning_rate']
     # tf.identity(learning_rate, "learning_rate")
     # tf.summary.scalar('learning_rate', learning_rate)
 
