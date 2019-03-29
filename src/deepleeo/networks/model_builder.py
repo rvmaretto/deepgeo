@@ -14,8 +14,11 @@ import networks.fcn8s as fcn8s
 import networks.fcn32s as fcn32s
 import networks.unet as unet
 import networks.laterfusion.unet_lf as unet_lf
+import networks.loss_functions as lossf
+import networks.tb_metrics as tbm
+import networks.layers as layers
 
-#TODO: Remove this
+# TODO: Remove this
 def discretize_values(data, numberClass, startValue=0):
     for clazz in range(startValue, (numberClass + 1)):
         if clazz == startValue:
@@ -28,7 +31,7 @@ def discretize_values(data, numberClass, startValue=0):
 
     return data.astype(np.uint8)
 
-#TODO: Implement in the ModelBuilder a function that computes the output size.
+# TODO: Implement in the ModelBuilder a function that computes the output size.
 class ModelBuilder(object):
     predefModels = {
         "fcn1s": fcn1s.fcn1s_description,
@@ -45,8 +48,76 @@ class ModelBuilder(object):
             self.network = model
             self.model_description = self.predefModels[model]
         else:
-            self.network = "custom" #TODO: Change this. Implement a registration for new strategies.
+            self.network = "custom"  # TODO: Change this. Implement a registration for new strategies.
             self.model_description = model
+
+    def __build_model(self, features, labels, params, mode, config):
+        tf.logging.set_verbosity(tf.logging.INFO)
+        samples = features['data']
+
+        logits = self.model_description(samples, labels, params, mode, config)
+
+        if labels.shape[1] != logits.shape[1]:
+            labels = tf.cast(layers.crop_features(labels, logits.shape[1], name="labels"), tf.float32)
+
+        predictions = tf.nn.softmax(logits, name='Softmax')
+        output = tf.expand_dims(tf.argmax(input=predictions, axis=-1, name='Argmax_Prediction'), -1)
+
+        if mode == tf.estimator.ModeKeys.PREDICT:
+            return tf.estimator.EstimatorSpec(mode=mode, predictions=output)
+
+        labels_1hot = tf.one_hot(tf.cast(labels, tf.uint8), params['num_classes'])
+        labels_1hot = tf.squeeze(labels_1hot)
+        # loss = tf.losses.sigmoid_cross_entropy(labels_1hot, output)
+        # loss = tf.losses.softmax_cross_entropy(labels_1hot, logits)
+        # loss = lossf.twoclass_cost(output, labels)
+        # loss = lossf.inverse_mean_iou(logits, labels_1hot, num_classes)
+        loss = lossf.avg_soft_dice(predictions, labels_1hot)
+
+        # optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate, name="Optimizer")
+        optimizer = tf.contrib.opt.NadamOptimizer(params['learning_rate'], name="Optimizer")
+        optimizer = tf.contrib.estimator.TowerOptimizer(optimizer)
+
+        tbm.plot_chips_tensorboard(samples, labels, output, bands_plot=params['bands_plot'],
+                                   num_chips=params['chips_tensorboard'])
+
+        metrics, summaries = tbm.define_quality_metrics(labels_1hot, predictions, labels, output, loss, params['num_classes'])
+
+        update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+
+        with tf.control_dependencies(update_ops):
+            train_op = optimizer.minimize(loss=loss, global_step=tf.train.get_global_step())
+
+        # train_summary_hook = tf.train.SummarySaverHook(save_steps=1,
+        #                                               output_dir=config.model_dir,
+        #                                               summary_op=tf.summary.merge_all())
+
+        eval_metric_ops = {'eval_metrics/accuracy': metrics['accuracy'],
+                           'eval_metrics/f1-score': metrics['f1_score'],
+                           'eval_metrics/cross_entropy': metrics['cross_entropy'],
+                           'eval_metrics/mean_iou': metrics['mean_iou']}
+
+        logging_hook = tf.train.LoggingTensorHook({'loss': loss,
+                                                   'accuracy': metrics['accuracy'][1],
+                                                   'f1_score': metrics['f1_score'][1],
+                                                   'cross_entropy': metrics['cross_entropy'][1],
+                                                   'mean_iou': metrics['mean_iou'][0]},
+                                                  every_n_iter=25)
+
+        eval_summary_hook = tf.train.SummarySaverHook(save_steps=25,
+                                                      # Review this. Try to save in the same steps of the quality_metrics
+                                                      output_dir=config.model_dir + "/eval",
+                                                      summary_op=tf.summary.merge_all())
+
+        # TODO: Review this: How to plot both the train and evaluation loss in the same graph?
+        return tf.estimator.EstimatorSpec(mode=mode,
+                                          predictions=output,
+                                          loss=loss,
+                                          train_op=train_op,
+                                          eval_metric_ops=eval_metric_ops,
+                                          evaluation_hooks=[eval_summary_hook, logging_hook],
+                                          training_hooks=[logging_hook])
+
 
     def train(self, train_imgs, test_imgs, train_labels, test_labels, params, output_dir):
         # tf.set_random_seed(1987)
@@ -64,17 +135,17 @@ class ModelBuilder(object):
                 w.writerow([key, value])
 
         data_size, _, _, bands = train_imgs.shape
-        params["bands"] = bands
+        params['bands'] = bands
 
-        # Try to update to TF 1.12 and try to use this:
+        # Try to update save the dataset as TFRecords and try to use this:
         # https://www.tensorflow.org/guide/distribute_strategy
         # strategy = tf.contrib.distribute.MirroredStrategy()
         # config = tf.estimator.RunConfig(train_distribute=strategy)#, eval_distribute=strategy)
 
-        #TODO: Verify why it is breaking here
+        # TODO: Verify why it is breaking here
         # with tf.contrib.tfprof.ProfileContext(path.join(output_dir, "profile")) as pctx:
         estimator = tf.estimator.Estimator(#model_fn=self.model_description,
-                                        model_fn=tf.contrib.estimator.replicate_model_fn(self.model_description),
+                                        model_fn=tf.contrib.estimator.replicate_model_fn(self.__build_model),
                                         model_dir=output_dir,
                                         params=params)#,
                                         # config=config)
@@ -85,7 +156,6 @@ class ModelBuilder(object):
         # logging_hook = tf.train.LoggingTensorHook(tensors=tensors_to_log, every_n_iter=10)
         #profiling_hook = tf.train.ProfilerHook(save_steps=10, output_dir=path.join(output_dir))
 
-        print("Labels Shape: ", train_labels.shape)
 
         # train_input = tf.data.Dataset.from_tensor_slices(({"x": train_imgs}, train_labels)).shuffle(buffer_size=2048)
         # train_input = train_input.shuffle(1000).repeat().batch(params["batch_size"])
