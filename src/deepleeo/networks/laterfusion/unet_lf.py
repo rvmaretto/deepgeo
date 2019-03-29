@@ -47,44 +47,46 @@ def unet_lf_description(features, labels, params, mode, config):
     #     for k, feat in out_encoder[i].items():
     #         encoded_feat[k] = tf.concat([encoded_feat[k], feat], axis=-1, name="Fusion_{}".format(k))
 
-    output = unet.unet_decoder(encoded_feat, params, mode)
+    logits = unet.unet_decoder(encoded_feat, params, mode)
 
-    if mode == tf.estimator.ModeKeys.PREDICT:
-        return tf.estimator.EstimatorSpec(mode=mode, predictions=output)
+    return logits
 
-    cropped_labels = tf.cast(layers.crop_features(labels, output.shape[1], name="labels"), tf.float32)
-
-    loss = lossf.twoclass_cost(output, cropped_labels)
-
-    optimizer = tf.contrib.opt.NadamOptimizer(learning_rate, name="Optimizer")
-    optimizer = tf.contrib.estimator.TowerOptimizer(optimizer)
-
-    tbm.plot_chips_tensorboard(samples_t2, cropped_labels, output, bands_plot=params["bands_plot"],
-                               num_chips=params['chips_tensorboard'])
-
-    metrics, summaries = tbm.define_quality_metrics(cropped_labels, output, loss)
-
-    update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-
-    with tf.control_dependencies(update_ops):
-        train_op = optimizer.minimize(loss=loss, global_step=tf.train.get_global_step())
-
-    # train_summary_hook = tf.train.SummarySaverHook(save_steps=1,
-    #                                               output_dir=config.model_dir,
+    # if mode == tf.estimator.ModeKeys.PREDICT:
+    #     return tf.estimator.EstimatorSpec(mode=mode, predictions=output)
+    #
+    # cropped_labels = tf.cast(layers.crop_features(labels, output.shape[1], name="labels"), tf.float32)
+    #
+    # loss = lossf.twoclass_cost(output, cropped_labels)
+    #
+    # optimizer = tf.contrib.opt.NadamOptimizer(learning_rate, name="Optimizer")
+    # optimizer = tf.contrib.estimator.TowerOptimizer(optimizer)
+    #
+    # tbm.plot_chips_tensorboard(samples_t2, cropped_labels, output, bands_plot=params["bands_plot"],
+    #                            num_chips=params['chips_tensorboard'])
+    #
+    # metrics, summaries = tbm.define_quality_metrics(cropped_labels, output, loss)
+    #
+    # update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+    #
+    # with tf.control_dependencies(update_ops):
+    #     train_op = optimizer.minimize(loss=loss, global_step=tf.train.get_global_step())
+    #
+    # # train_summary_hook = tf.train.SummarySaverHook(save_steps=1,
+    # #                                               output_dir=config.model_dir,
+    # #                                               summary_op=tf.summary.merge_all())
+    #
+    # eval_summary_hook = tf.train.SummarySaverHook(save_steps=1,
+    #                                               output_dir=path.join(config.model_dir, "eval"),
     #                                               summary_op=tf.summary.merge_all())
-
-    eval_summary_hook = tf.train.SummarySaverHook(save_steps=1,
-                                                  output_dir=path.join(config.model_dir, "eval"),
-                                                  summary_op=tf.summary.merge_all())
-
-    eval_metric_ops = {"eval_metrics/accuracy": metrics["accuracy"],
-                       "eval_metrics/f1-score": metrics["f1_score"],
-                       "eval_metrics/cross_entropy": metrics["cross_entropy"]}
-
-    return tf.estimator.EstimatorSpec(mode=mode,
-                                      predictions=output,
-                                      loss=loss,
-                                      train_op=train_op,
-                                      eval_metric_ops=eval_metric_ops,
-                                      evaluation_hooks=[eval_summary_hook])
-                                      # training_hooks=[train_summary_hook])
+    #
+    # eval_metric_ops = {"eval_metrics/accuracy": metrics["accuracy"],
+    #                    "eval_metrics/f1-score": metrics["f1_score"],
+    #                    "eval_metrics/cross_entropy": metrics["cross_entropy"]}
+    #
+    # return tf.estimator.EstimatorSpec(mode=mode,
+    #                                   predictions=output,
+    #                                   loss=loss,
+    #                                   train_op=train_op,
+    #                                   eval_metric_ops=eval_metric_ops,
+    #                                   evaluation_hooks=[eval_summary_hook])
+    #                                   # training_hooks=[train_summary_hook])
