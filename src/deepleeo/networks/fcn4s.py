@@ -6,10 +6,10 @@ from importlib import reload
 
 sys.path.insert(0, path.join(path.dirname(__file__), '../'))
 import networks.layers as layers
-import networks.loss_functions as lossf
-import networks.tb_metrics as tbm
+# import networks.loss_functions as lossf
+# import networks.tb_metrics as tbm
 reload(layers)
-reload(lossf)
+# reload(lossf)
 
 # TODO: Refactor this file. Create a class and put the FCN8s, FCN16s and FCN32s in the same file/(function or class)
 # TODO: Refactor this to allow multiple classes and to allow the user to chose the loss function through parameters.
