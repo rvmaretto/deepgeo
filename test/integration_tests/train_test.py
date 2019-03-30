@@ -19,7 +19,7 @@ reload(gf)
 
 current_path = os.path.abspath(os.path.dirname('__file__'))
 DATA_DIR = os.path.join(current_path, '..', '..', 'data_real', 'generated')
-network = 'unet'
+network = 'fcn4s'
 DATASET_FILE = os.path.join(DATA_DIR, 'samples_dataset_bin.npz')
 
 # model_dir = os.path.join(DATA_DIR, 'tf_logs', "test_%s_%s" % (network, datetime.now().strftime('%d_%m_%Y-%H_%M_%S')))
@@ -63,8 +63,8 @@ print("  -> Validation Labels: ", valid_labels.shape)
 
 # # Train the Network
 params = {
-    "epochs": 1000,
-    "batch_size": 100,
+    "epochs": 3,
+    "batch_size": 10,
     "learning_rate": 0.001,
     "l2_reg_rate": 0.5,
     "var_scale_factor": 2.0,
