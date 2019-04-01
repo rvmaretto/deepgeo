@@ -101,15 +101,19 @@ print('  -> Test Labels: ', test_labels.shape)
 # In[ ]:
 
 
+# # Train the Network
 params = {
-    'epochs': 1000,
+    'epochs': 600,
     'batch_size': 100,
-    'learning_rate': 0.0001,
+    'learning_rate': 0.001,
     'l2_reg_rate': 0.5,
     'var_scale_factor': 2.0,
     'chips_tensorboard': 2,
     'dropout_rate': 0.5,
-    'class_names': dataset['classes'],
+    'fusion': 'early',
+    'loss_func': 'weighted_crossentropy',
+    'class_weights': [0.1, 0.9],
+    'num_classes': len(dataset['classes']),
      'bands_plot': [1,2,3] #[6, 7, 8]
 }
 
