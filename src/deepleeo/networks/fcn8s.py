@@ -65,13 +65,13 @@ def fcn8s_description(samples, labels, params, mode, config):
     fconv6 = layers.conv_pool_layer(bottom=pool5, filters=4096, kernel_size=7, params=params,
                                     training=training, name="fc6", pool=False)
     if(training):
-        fconv6 = tf.layers.dropout(inputs=fconv6, rate=params["dropout_rate"], name="drop_6") # TODO: Put this rate in params
+        fconv6 = tf.layers.dropout(inputs=fconv6, rate=params["dropout_rate"], name="drop_6")
 
     # print("SHAPE FConv_6: ", fconv6.shape)
     fconv7 = layers.conv_pool_layer(bottom=fconv6, filters=4096, kernel_size=1, params=params,
                                     training=training, name="fc7", pool=False)
     if(training):
-        fconv7 = tf.layers.dropout(inputs=fconv7, rate=params["dropout_rate"], name="drop_7") # TODO: Put this rate in params
+        fconv7 = tf.layers.dropout(inputs=fconv7, rate=params["dropout_rate"], name="drop_7")
 
     # print("SHAPE FConv_7: ", fconv7.shape)
 

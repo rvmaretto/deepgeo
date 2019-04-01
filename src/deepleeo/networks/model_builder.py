@@ -43,6 +43,12 @@ class ModelBuilder(object):
         "unet_lf": unet_lf.unet_lf_description
     }
 
+    predefLosses = {
+        'cross_entropy': tf.losses.softmax_cross_entropy,
+        'weighted_crossentropy': lossf.weighted_cross_entropy,
+        'soft_dice': lossf.avg_soft_dice
+    }
+
     def __init__(self, model):
         if isinstance(model, str):
             self.network = model
@@ -68,11 +74,13 @@ class ModelBuilder(object):
 
         labels_1hot = tf.one_hot(tf.cast(labels, tf.uint8), params['num_classes'])
         labels_1hot = tf.squeeze(labels_1hot)
+
         # loss = tf.losses.sigmoid_cross_entropy(labels_1hot, output)
         # loss = tf.losses.softmax_cross_entropy(labels_1hot, logits)
         # loss = lossf.twoclass_cost(output, labels)
         # loss = lossf.inverse_mean_iou(logits, labels_1hot, num_classes)
-        loss = lossf.avg_soft_dice(logits, labels_1hot)
+        # loss = lossf.avg_soft_dice(logits, labels_1hot)
+        loss = lossf.weighted_cross_entropy(logits, labels_1hot, params['class_weights'], params['num_classes'])
 
         # optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate, name="Optimizer")
         optimizer = tf.contrib.opt.NadamOptimizer(params['learning_rate'], name="Optimizer")
@@ -109,7 +117,6 @@ class ModelBuilder(object):
                                                       output_dir=config.model_dir + "/eval",
                                                       summary_op=tf.summary.merge_all())
 
-        # TODO: Review this: How to plot both the train and evaluation loss in the same graph?
         return tf.estimator.EstimatorSpec(mode=mode,
                                           predictions=output,
                                           loss=loss,
@@ -194,7 +201,6 @@ class ModelBuilder(object):
 
         # early_stopping = tf.contrib.estimator.stop_if_no_decrease_hook(
         #     estimator,
-        #     # TODO: Test with a common metric, that has a tuple (value, dict)
         #     metric_name='cost/loss',
         #     max_steps_without_decrease=1000,
         #     eval_dir=path.join(output_dir, "eval"),
