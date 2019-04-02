@@ -25,9 +25,9 @@ import deepleeo.networks.model_builder as mb
 
 
 # DATA_DIR = os.path.join(os.path.abspath(os.path.dirname('__file__')), '../', 'data_real', 'generated')
-network = 'unet_lf'
+network = 'unet'
 DATA_DIR = '/home/raian/doutorado/Dados/generated'
-DATASET_FILE = os.path.join(DATA_DIR, 'new_dataset_286x286_timesstack-2015-2016.npz')#'dataset_1.npz')
+DATASET_FILE = os.path.join(DATA_DIR, 'dataset_286x286_timesstack-2015-2016.npz')#'dataset_1.npz')
 
 model_dir = os.path.join(DATA_DIR, 'tf_logs', 'test_%s_%s' % (network, datetime.now().strftime('%d_%m_%Y-%H_%M_%S')))
 # model_dir = '/home/raian/doutorado/DeepLeEO/data_real/generated/tf_logs/test_debug'
@@ -112,9 +112,9 @@ params = {
     'dropout_rate': 0.5,
     'fusion': 'early',
     'loss_func': 'weighted_crossentropy',
-    'class_weights': [0.1, 0.9],
+    'class_weights': [1., 3.],
     'num_classes': len(dataset['classes']),
-     'bands_plot': [1,2,3] #[6, 7, 8]
+     'bands_plot': [6, 7, 8]
 }
 
 
