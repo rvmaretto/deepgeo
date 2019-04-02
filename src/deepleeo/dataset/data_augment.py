@@ -8,10 +8,10 @@ def rotate_images(images, angles, data_type=np.float32):
     # config.gpu_options.allow_growth = True
     # config.allow_soft_placement = True
 
-    if(not isinstance(angles, list)):
+    if not isinstance(angles, list):
         angles = [angles]
         
-    if(not isinstance(images, list) and not type(images) is np.ndarray):
+    if not isinstance(images, list) and not type(images) is np.ndarray:
         images = [images]
     
     tf.reset_default_graph()

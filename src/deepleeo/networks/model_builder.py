@@ -33,6 +33,22 @@ def discretize_values(data, numberClass, startValue=0):
 
 # TODO: Implement in the ModelBuilder a function that computes the output size.
 class ModelBuilder(object):
+    default_params = {
+        'epochs': None,
+        'batch_size': 10,
+        'learning_rate': 0.001,
+        'learning_rate_decay': True,
+        'decay_rate': 0.1,
+        'decay_steps': 245,
+        'l2_reg_rate': 0.5,
+        'dropout_rate': 0.5,
+        'var_scale_factor': 2.0,
+        'chips_tensorboard': 2,
+        'fusion': 'none',
+        'loss_func': 'crossentropy',
+        'bands_plot': [0, 1, 2]
+    }
+
     predefModels = {
         "fcn1s": fcn1s.fcn1s_description,
         "fcn2s": fcn2s.fcn2s_description,
@@ -59,6 +75,7 @@ class ModelBuilder(object):
 
     def __build_model(self, features, labels, params, mode, config):
         tf.logging.set_verbosity(tf.logging.INFO)
+        # global_step = tf.Variable(0, name='global_step',trainable=False)
         samples = features['data']
 
         logits = self.model_description(samples, labels, params, mode, config)
@@ -83,6 +100,15 @@ class ModelBuilder(object):
         loss = lossf.weighted_cross_entropy(logits, labels_1hot, params['class_weights'], params['num_classes'])
 
         # optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate, name="Optimizer")
+        params['learning_rate'] = tf.train.exponential_decay(learning_rate=params['learning_rate'],
+                                                             global_step=tf.train.get_global_step(),
+                                                             decay_rate=params['decay_rate'],
+                                                             decay_steps=params['decay_steps'],
+                                                             name='decrease_lr')
+
+        # tf.identity(params['learning_rate'], "learning_rate")
+        tf.summary.scalar('learning_rate', params['learning_rate'])
+
         optimizer = tf.contrib.opt.NadamOptimizer(params['learning_rate'], name="Optimizer")
         optimizer = tf.contrib.estimator.TowerOptimizer(optimizer)
 
@@ -109,7 +135,8 @@ class ModelBuilder(object):
                                                    'accuracy': metrics['accuracy'][1],
                                                    'f1_score': metrics['f1_score'][1],
                                                    'cross_entropy': metrics['cross_entropy'][1],
-                                                   'mean_iou': metrics['mean_iou'][0]},
+                                                   'mean_iou': metrics['mean_iou'][0],
+                                                   'learning_rate': params['learning_rate']},
                                                   every_n_iter=25)
 
         eval_summary_hook = tf.train.SummarySaverHook(save_steps=25,

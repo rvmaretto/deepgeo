@@ -7,9 +7,11 @@ import networks.layers as layers
 # import networks.loss_functions as lossf
 # import networks.tb_metrics as tbm
 
+
 def unet_encoder(samples, params, mode, name_sufix=''):
     training = mode == tf.estimator.ModeKeys.TRAIN
 
+    # TODO: Remove this from here. Put it in the description, before calling the encoder.
     if params['fusion'] == 'early':
         total_channels = samples.get_shape().as_list()[3]
         num_channels = round(total_channels / 2)
