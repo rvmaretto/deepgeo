@@ -100,15 +100,6 @@ class ModelBuilder(object):
         # loss = lossf.avg_soft_dice(logits, labels_1hot)
         loss = lossf.weighted_cross_entropy(logits, labels_1hot, params['class_weights'], params['num_classes'])
 
-        # optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate, name="Optimizer")
-        if params['learning_rate_decay']:
-            params['learning_rate'] = tf.train.exponential_decay(learning_rate=params['learning_rate'],
-                                                                 global_step=tf.train.get_global_step(),
-                                                                 decay_rate=params['decay_rate'],
-                                                                 decay_steps=params['decay_steps'],
-                                                                 name='decrease_lr')
-
-        # tf.identity(params['learning_rate'], "learning_rate")
         tf.summary.scalar('learning_rate', params['learning_rate'])
 
         tbm.plot_chips_tensorboard(samples, labels, output, bands_plot=params['bands_plot'],
@@ -119,6 +110,14 @@ class ModelBuilder(object):
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
 
         if training:
+            if params['learning_rate_decay']:
+                params['learning_rate'] = tf.train.exponential_decay(learning_rate=params['learning_rate'],
+                                                                     global_step=tf.train.get_global_step(),
+                                                                     decay_rate=params['decay_rate'],
+                                                                     decay_steps=params['decay_steps'],
+                                                                     name='decrease_lr')
+
+            # optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate, name="Optimizer")
             optimizer = tf.contrib.opt.NadamOptimizer(params['learning_rate'], name="Optimizer")
             optimizer = tf.contrib.estimator.TowerOptimizer(optimizer)
 
