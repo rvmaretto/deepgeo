@@ -4,19 +4,20 @@
 # In[ ]:
 
 
-import tensorflow as tf
+# import tensorflow as tf
 import numpy as np
 import os
 import sys
-import skimage
-import pylab as plt
+import math
+# import skimage
+# import pylab as plt
 from importlib import reload
 from datetime import datetime
 
 sys.path.insert(0, '../../src')
 import deepleeo.dataset.data_augment as dtaug
 import deepleeo.dataset.utils as dsutils 
-import deepleeo.utils.geofunctions as gf
+# import deepleeo.utils.geofunctions as gf
 import deepleeo.networks.model_builder as mb
 
 # # Load input Dataset
@@ -95,6 +96,24 @@ print('  -> Test Images: ', test_images.shape)
 print('  -> Test Labels: ', test_labels.shape)
 
 
+values, count = np.unique(train_labels, return_counts=True)
+print('Class Values: ', values, '  - Count: ', count)
+
+defor_proportion = count[1] / (count[0] + count[1])
+non_defor_proportion = count[0] / (count[0] + count[1])
+print('Defining weights for classes:')
+print('  -> Deforestation Proportion: ', defor_proportion)
+print('  -> Non deforestation Proportion: ', non_defor_proportion)
+
+print('Ratio: ', non_defor_proportion / defor_proportion)
+
+mean_proportion = (defor_proportion + non_defor_proportion) / 2
+print('  -> Median Proportion: ', mean_proportion)
+weight_defor = 1 / math.sqrt(count[1])#mean_proportion / defor_proportion
+weight_non_defor = 1 / math.sqrt(count[0])#mean_proportion / non_defor_proportion
+
+print('  -> Weights: [', weight_non_defor, ', ', weight_defor, ']')
+
 
 # # Train the Network
 
@@ -115,7 +134,7 @@ params = {
     'dropout_rate': 0.5,
     'fusion': 'early',
     'loss_func': 'weighted_crossentropy',
-    'class_weights': [0.523, 11.384],
+    'class_weights': [weight_non_defor, weight_defor],
     'num_classes': len(dataset['classes']),
      'bands_plot': [6, 7, 8]
 }
