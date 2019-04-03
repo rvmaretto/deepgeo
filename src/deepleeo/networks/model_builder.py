@@ -75,6 +75,7 @@ class ModelBuilder(object):
 
     def __build_model(self, features, labels, params, mode, config):
         tf.logging.set_verbosity(tf.logging.INFO)
+        training = mode == tf.estimator.ModeKeys.TRAIN
         # global_step = tf.Variable(0, name='global_step',trainable=False)
         samples = features['data']
 
@@ -100,17 +101,15 @@ class ModelBuilder(object):
         loss = lossf.weighted_cross_entropy(logits, labels_1hot, params['class_weights'], params['num_classes'])
 
         # optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate, name="Optimizer")
-        params['learning_rate'] = tf.train.exponential_decay(learning_rate=params['learning_rate'],
-                                                             global_step=tf.train.get_global_step(),
-                                                             decay_rate=params['decay_rate'],
-                                                             decay_steps=params['decay_steps'],
-                                                             name='decrease_lr')
+        if params['learning_rate_decay']:
+            params['learning_rate'] = tf.train.exponential_decay(learning_rate=params['learning_rate'],
+                                                                 global_step=tf.train.get_global_step(),
+                                                                 decay_rate=params['decay_rate'],
+                                                                 decay_steps=params['decay_steps'],
+                                                                 name='decrease_lr')
 
         # tf.identity(params['learning_rate'], "learning_rate")
         tf.summary.scalar('learning_rate', params['learning_rate'])
-
-        optimizer = tf.contrib.opt.NadamOptimizer(params['learning_rate'], name="Optimizer")
-        optimizer = tf.contrib.estimator.TowerOptimizer(optimizer)
 
         tbm.plot_chips_tensorboard(samples, labels, output, bands_plot=params['bands_plot'],
                                    num_chips=params['chips_tensorboard'])
@@ -119,8 +118,14 @@ class ModelBuilder(object):
 
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
 
-        with tf.control_dependencies(update_ops):
-            train_op = optimizer.minimize(loss=loss, global_step=tf.train.get_global_step())
+        if training:
+            optimizer = tf.contrib.opt.NadamOptimizer(params['learning_rate'], name="Optimizer")
+            optimizer = tf.contrib.estimator.TowerOptimizer(optimizer)
+
+            with tf.control_dependencies(update_ops):
+                train_op = optimizer.minimize(loss=loss, global_step=tf.train.get_global_step())
+        else:
+            train_op = None
 
         # train_summary_hook = tf.train.SummarySaverHook(save_steps=1,
         #                                               output_dir=config.model_dir,

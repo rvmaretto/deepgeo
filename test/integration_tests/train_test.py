@@ -63,7 +63,7 @@ print('  -> Validation Labels: ', valid_labels.shape)
 
 # # Train the Network
 params = {
-    'epochs': 10,
+    'epochs': 3,
     'batch_size': 10,
     'learning_rate': 0.1,
     'learning_rate_decay': True,
@@ -74,7 +74,7 @@ params = {
     'chips_tensorboard': 2,
     'dropout_rate': 0.5,
     'loss_func': 'weighted_crossentropy',
-    'class_weights': [0.1, 0.9],
+    'class_weights': [1, 1],
     'num_classes': len(dataset['classes']),
      'bands_plot': [1,2,3] #[6, 7, 8]
 }

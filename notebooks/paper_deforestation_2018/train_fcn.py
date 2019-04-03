@@ -105,14 +105,17 @@ print('  -> Test Labels: ', test_labels.shape)
 params = {
     'epochs': 600,
     'batch_size': 100,
-    'learning_rate': 0.001,
+    'learning_rate': 0.1,
+    'learning_rate_decay': True,
+    'decay_rate': 0.1,
+    'decay_steps': 245,
     'l2_reg_rate': 0.5,
     'var_scale_factor': 2.0,
     'chips_tensorboard': 2,
     'dropout_rate': 0.5,
     'fusion': 'early',
     'loss_func': 'weighted_crossentropy',
-    'class_weights': [1., 3.],
+    'class_weights': [0.01, 0.99],
     'num_classes': len(dataset['classes']),
      'bands_plot': [6, 7, 8]
 }
