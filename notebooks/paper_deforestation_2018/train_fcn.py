@@ -115,7 +115,7 @@ params = {
     'dropout_rate': 0.5,
     'fusion': 'early',
     'loss_func': 'weighted_crossentropy',
-    'class_weights': [0.01, 0.99],
+    'class_weights': [0.523, 11.384],
     'num_classes': len(dataset['classes']),
      'bands_plot': [6, 7, 8]
 }
