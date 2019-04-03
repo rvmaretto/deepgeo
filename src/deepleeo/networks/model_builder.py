@@ -76,7 +76,7 @@ class ModelBuilder(object):
     def __build_model(self, features, labels, params, mode, config):
         tf.logging.set_verbosity(tf.logging.INFO)
         training = mode == tf.estimator.ModeKeys.TRAIN
-        # global_step = tf.Variable(0, name='global_step',trainable=False)
+        # global_step = tf.Variable(0, name='global_step', trainable=False)
         samples = features['data']
 
         logits = self.model_description(samples, labels, params, mode, config)
@@ -100,8 +100,6 @@ class ModelBuilder(object):
         # loss = lossf.avg_soft_dice(logits, labels_1hot)
         loss = lossf.weighted_cross_entropy(logits, labels_1hot, params['class_weights'], params['num_classes'])
 
-        tf.summary.scalar('learning_rate', params['learning_rate'])
-
         tbm.plot_chips_tensorboard(samples, labels, output, bands_plot=params['bands_plot'],
                                    num_chips=params['chips_tensorboard'])
 
@@ -109,18 +107,22 @@ class ModelBuilder(object):
 
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
 
+        # TODO: Try to perform the learning rate decay only in the training, not in the evaluation.
+        # if training:
+        #     if params['learning_rate_decay']:
+        params['learning_rate'] = tf.train.exponential_decay(learning_rate=params['learning_rate'],
+                                                             global_step=tf.train.get_global_step(),
+                                                             decay_rate=params['decay_rate'],
+                                                             decay_steps=params['decay_steps'],
+                                                             name='decrease_lr')
+
+        tf.summary.scalar('learning_rate', params['learning_rate'])
+
+        # optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate, name="Optimizer")
+        optimizer = tf.contrib.opt.NadamOptimizer(params['learning_rate'], name="Optimizer")
+        optimizer = tf.contrib.estimator.TowerOptimizer(optimizer)
+
         if training:
-            if params['learning_rate_decay']:
-                params['learning_rate'] = tf.train.exponential_decay(learning_rate=params['learning_rate'],
-                                                                     global_step=tf.train.get_global_step(),
-                                                                     decay_rate=params['decay_rate'],
-                                                                     decay_steps=params['decay_steps'],
-                                                                     name='decrease_lr')
-
-            # optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate, name="Optimizer")
-            optimizer = tf.contrib.opt.NadamOptimizer(params['learning_rate'], name="Optimizer")
-            optimizer = tf.contrib.estimator.TowerOptimizer(optimizer)
-
             with tf.control_dependencies(update_ops):
                 train_op = optimizer.minimize(loss=loss, global_step=tf.train.get_global_step())
         else:

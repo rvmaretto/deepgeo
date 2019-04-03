@@ -74,7 +74,7 @@ params = {
     'chips_tensorboard': 2,
     'dropout_rate': 0.5,
     'loss_func': 'weighted_crossentropy',
-    'class_weights': [1, 1],
+    'class_weights': [1., 1.],
     'num_classes': len(dataset['classes']),
      'bands_plot': [1,2,3] #[6, 7, 8]
 }
