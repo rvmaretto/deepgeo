@@ -92,6 +92,7 @@ print('  -> Test Labels: ', test_labels.shape)
 
 values, count = np.unique(train_labels, return_counts=True)
 print('Class Values: ', values, '  - Count: ', count)
+print('Class Names: ', dataset['classes'])
 
 defor_proportion = count[1] / (count[0] + count[1])
 non_defor_proportion = count[0] / (count[0] + count[1])
@@ -103,8 +104,8 @@ print('Ratio: ', non_defor_proportion / defor_proportion)
 
 mean_proportion = (defor_proportion + non_defor_proportion) / 2
 print('  -> Median Proportion: ', mean_proportion)
-weight_defor = 1 / math.sqrt(count[1])#mean_proportion / defor_proportion
-weight_non_defor = 1 / math.sqrt(count[0])#mean_proportion / non_defor_proportion
+weight_defor = 1 / count[1]#mean_proportion / defor_proportion
+weight_non_defor = 1 / count[0]#mean_proportion / non_defor_proportion
 
 print('  -> Weights: [', weight_non_defor, ', ', weight_defor, ']')
 
