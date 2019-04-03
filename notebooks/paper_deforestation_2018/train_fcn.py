@@ -107,15 +107,15 @@ params = {
     'batch_size': 100,
     'learning_rate': 0.1,
     'learning_rate_decay': True,
-    'decay_rate': 0.1,
-    'decay_steps': 245,
+    'decay_rate': 0.95,
+    'decay_steps': 260,
     'l2_reg_rate': 0.5,
     'var_scale_factor': 2.0,
     'chips_tensorboard': 2,
     'dropout_rate': 0.5,
     'fusion': 'early',
     'loss_func': 'weighted_crossentropy',
-    'class_weights': [0.523, 11.384],
+    'class_weights': [0.5, 5],
     'num_classes': len(dataset['classes']),
      'bands_plot': [6, 7, 8]
 }
