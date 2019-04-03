@@ -104,8 +104,8 @@ print('Ratio: ', non_defor_proportion / defor_proportion)
 
 mean_proportion = (defor_proportion + non_defor_proportion) / 2
 print('  -> Median Proportion: ', mean_proportion)
-weight_defor = 1 - defor_proportion#mean_proportion / defor_proportion
-weight_non_defor = 1 - non_defor_proportion#mean_proportion / non_defor_proportion
+weight_defor = mean_proportion / defor_proportion
+weight_non_defor = mean_proportion / non_defor_proportion
 
 print('  -> Weights: [', weight_non_defor, ', ', weight_defor, ']')
 
@@ -121,15 +121,15 @@ params = {
     'batch_size': 100,
     'learning_rate': 0.1,
     'learning_rate_decay': True,
-    'decay_rate': 0.95,
+    'decay_rate': 0.1,
     'decay_steps': 260,
     'l2_reg_rate': 0.5,
     'var_scale_factor': 2.0,
     'chips_tensorboard': 2,
     'dropout_rate': 0.5,
     'fusion': 'early',
-    'loss_func': 'weighted_crossentropy',
-    'class_weights': [weight_non_defor, weight_defor],
+    # 'loss_func': 'weighted_crossentropy',
+    # 'class_weights': [weight_non_defor, weight_defor],
     'num_classes': len(dataset['classes']),
     'bands_plot': [6, 7, 8]
 }
