@@ -25,11 +25,10 @@ def avg_soft_dice(logits, labels):
         # loss = tf.add_n(tf.get_collection('loss'), name='loss')
         return loss
 
-# TODO: Test this in the server with real weights (1-proportion)
 def weighted_cross_entropy(logits, labels, class_wheights, num_classes):
     with tf.name_scope('cost'):
         class_wheights = tf.reshape(class_wheights, (1, num_classes))
-        weights = tf.reduce_sum(tf.multiply(labels, class_wheights), axis=1)
+        weights = tf.reduce_sum(tf.multiply(labels, class_wheights), axis=-1)
         loss = tf.nn.softmax_cross_entropy_with_logits(labels=labels, logits=logits)
         weighted_loss = tf.reduce_mean(tf.multiply(weights, loss))
         return weighted_loss

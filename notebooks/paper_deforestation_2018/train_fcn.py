@@ -104,8 +104,8 @@ print('Ratio: ', non_defor_proportion / defor_proportion)
 
 mean_proportion = (defor_proportion + non_defor_proportion) / 2
 print('  -> Median Proportion: ', mean_proportion)
-weight_defor = 1 - defor_proportion#mean_proportion / defor_proportion
-weight_non_defor = 1 - non_defor_proportion #mean_proportion / non_defor_proportion
+weight_defor = mean_proportion / defor_proportion
+weight_non_defor = mean_proportion / non_defor_proportion
 
 print('  -> Weights: [', weight_non_defor, ', ', weight_defor, ']')
 
