@@ -117,8 +117,8 @@ class ModelBuilder(object):
 
         tf.summary.scalar('learning_rate', params['learning_rate'])
 
-        # optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate, name="Optimizer")
-        optimizer = tf.contrib.opt.NadamOptimizer(params['learning_rate'], name="Optimizer")
+        optimizer = tf.train.AdamOptimizer(learning_rate=params['learning_rate'], name='Optimizer')
+        # optimizer = tf.contrib.opt.NadamOptimizer(params['learning_rate'], name='Optimizer')
         optimizer = tf.contrib.estimator.TowerOptimizer(optimizer)
 
         if training:
