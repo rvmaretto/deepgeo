@@ -97,8 +97,8 @@ class ModelBuilder(object):
         # loss = tf.losses.softmax_cross_entropy(labels_1hot, logits)
         # loss = lossf.twoclass_cost(output, labels)
         # loss = lossf.inverse_mean_iou(logits, labels_1hot, num_classes)
-        loss = lossf.avg_soft_dice(logits, labels_1hot)
-        # loss = lossf.weighted_cross_entropy(logits, labels_1hot, params['class_weights'], params['num_classes'])
+        # loss = lossf.avg_soft_dice(logits, labels_1hot)
+        loss = lossf.weighted_cross_entropy(logits, labels_1hot, params['class_weights'], params['num_classes'])
 
         tbm.plot_chips_tensorboard(samples, labels, output, bands_plot=params['bands_plot'],
                                    num_chips=params['chips_tensorboard'])
@@ -107,7 +107,6 @@ class ModelBuilder(object):
 
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
 
-        # TODO: Try to perform the learning rate decay only in the training, not in the evaluation.
         # if training:
         #     if params['learning_rate_decay']:
         params['learning_rate'] = tf.train.exponential_decay(learning_rate=params['learning_rate'],
