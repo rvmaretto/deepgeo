@@ -32,3 +32,16 @@ def weighted_cross_entropy(logits, labels, class_wheights, num_classes):
         loss = tf.nn.softmax_cross_entropy_with_logits(labels=labels, logits=logits)
         weighted_loss = tf.reduce_mean(tf.multiply(weights, loss))
         return weighted_loss
+
+
+def weighted_binary_cross_entropy(logits, labels, pos_weight):
+    with tf.name_scope('cost'):
+        weighted_loss = tf.nn.weighted_cross_entropy_with_logits(tf.squeeze(tf.cast(labels, tf.float32)),
+                                                                 tf.squeeze(logits),
+                                                                 pos_weight)
+        loss = tf.reduce_mean(weighted_loss, name='loss')
+        return loss
+
+
+def unknown_loss_error():
+    raise Exception('Unknown loss function!')

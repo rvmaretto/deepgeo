@@ -117,7 +117,7 @@ print('  -> Weights: [', weight_non_defor, ', ', weight_defor, ']')
 
 # # Train the Network
 params = {
-    'epochs': 600,
+    'epochs': 100,
     'batch_size': 100,
     'learning_rate': 0.1,
     'learning_rate_decay': True,
@@ -129,7 +129,7 @@ params = {
     'dropout_rate': 0.5,
     'fusion': 'early',
     'loss_func': 'weighted_crossentropy',
-    'class_weights': [weight_non_defor, weight_defor],
+    'class_weights': weight_defor,#[weight_non_defor, weight_defor],
     'num_classes': len(dataset['classes']),
     'bands_plot': [6, 7, 8]
 }

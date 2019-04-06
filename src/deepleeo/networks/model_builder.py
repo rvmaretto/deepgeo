@@ -59,10 +59,15 @@ class ModelBuilder(object):
         "unet_lf": unet_lf.unet_lf_description
     }
 
-    predefLosses = {
+    losses_switcher = {
         'cross_entropy': tf.losses.softmax_cross_entropy,
         'weighted_crossentropy': lossf.weighted_cross_entropy,
         'soft_dice': lossf.avg_soft_dice
+    }
+
+    predefClassif = {
+        'sigmoid': tf.nn.sigmoid,
+        'softmax': tf.nn.softmax
     }
 
     def __init__(self, model):
@@ -79,26 +84,49 @@ class ModelBuilder(object):
         # global_step = tf.Variable(0, name='global_step', trainable=False)
         samples = features['data']
 
+        if params['num_classes'] == 2:
+            binary = True
+            params['num_classes'] = 1
+
         logits = self.model_description(samples, labels, params, mode, config)
 
         if labels.shape[1] != logits.shape[1]:
             labels = tf.cast(layers.crop_features(labels, logits.shape[1], name="labels"), tf.float32)
 
         predictions = tf.nn.softmax(logits, name='Softmax')
-        output = tf.expand_dims(tf.argmax(input=predictions, axis=-1, name='Argmax_Prediction'), -1)
+        if binary:
+            output = predictions
+        else:
+            output = tf.expand_dims(tf.argmax(input=predictions, axis=-1, name='Argmax_Prediction'), -1)
 
         if mode == tf.estimator.ModeKeys.PREDICT:
             return tf.estimator.EstimatorSpec(mode=mode, predictions=output)
 
-        labels_1hot = tf.one_hot(tf.cast(labels, tf.uint8), params['num_classes'])
-        labels_1hot = tf.squeeze(labels_1hot)
+        if binary:
+            labels_1hot = labels
+        else:
+            labels_1hot = tf.one_hot(tf.cast(labels, tf.uint8), params['num_classes'])
+            labels_1hot = tf.squeeze(labels_1hot)
+
+        # loss_params = {
+        #     'logits': logits,
+        #     'predictions': predictions,
+        #     'output': output,
+        #     'labels_1hot': labels_1hot,
+        #     'labels': labels,
+        #     'class_weights': params['class_weights'],
+        #     'num_classes': params['num_classes']
+        # }
 
         # loss = tf.losses.sigmoid_cross_entropy(labels_1hot, output)
+        loss = lossf.weighted_binary_cross_entropy(logits, labels, params['class_weights'])
         # loss = tf.losses.softmax_cross_entropy(labels_1hot, logits)
         # loss = lossf.twoclass_cost(output, labels)
         # loss = lossf.inverse_mean_iou(logits, labels_1hot, num_classes)
         # loss = lossf.avg_soft_dice(logits, labels_1hot)
-        loss = lossf.weighted_cross_entropy(logits, labels_1hot, params['class_weights'], params['num_classes'])
+        # loss = lossf.weighted_cross_entropy(logits, labels_1hot, params['class_weights'], params['num_classes'])
+        # loss_func = self.losses_switcher.get(params['loss_func'], lossf.unknown_loss_error)
+        # loss = loss_func(loss_params)
 
         tbm.plot_chips_tensorboard(samples, labels, output, bands_plot=params['bands_plot'],
                                    num_chips=params['chips_tensorboard'])

@@ -28,7 +28,7 @@ def define_quality_metrics(labels_1hot, predictions, labels, output, loss, num_c
 
     return metrics, summaries
 
-def plot_chips_tensorboard(samples, labels, output, bands_plot=[1,2,3], num_chips=2):
+def plot_chips_tensorboard(samples, labels, output, bands_plot=[0,1,2], num_chips=2):
     with tf.name_scope("chips_predictions"):
         # print("SHAPE_LABELS: ", labels.shape)
         # print("SHAPE_SAMPLE: ", samples.shape)
