@@ -84,6 +84,7 @@ class ModelBuilder(object):
         # global_step = tf.Variable(0, name='global_step', trainable=False)
         samples = features['data']
 
+        binary = False
         if params['num_classes'] == 2:
             binary = True
             params['num_classes'] = 1
@@ -161,13 +162,13 @@ class ModelBuilder(object):
 
         eval_metric_ops = {'eval_metrics/accuracy': metrics['accuracy'],
                            'eval_metrics/f1-score': metrics['f1_score'],
-                           'eval_metrics/cross_entropy': metrics['cross_entropy'],
+                           # 'eval_metrics/cross_entropy': metrics['cross_entropy'],
                            'eval_metrics/mean_iou': metrics['mean_iou']}
 
         logging_hook = tf.train.LoggingTensorHook({'loss': loss,
                                                    'accuracy': metrics['accuracy'][1],
                                                    'f1_score': metrics['f1_score'][1],
-                                                   'cross_entropy': metrics['cross_entropy'][1],
+                                                   # 'cross_entropy': metrics['cross_entropy'][1],
                                                    'mean_iou': metrics['mean_iou'][0],
                                                    'learning_rate': params['learning_rate']},
                                                   every_n_iter=25)

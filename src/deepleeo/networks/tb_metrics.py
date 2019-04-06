@@ -16,9 +16,9 @@ def define_quality_metrics(labels_1hot, predictions, labels, output, loss, num_c
         metrics['accuracy'] = tf.metrics.accuracy(labels=labels, predictions=output)
         summaries['accuracy'] = tf.summary.scalar('accuracy', metrics['accuracy'][1])
 
-        cross_entropy = tf.losses.softmax_cross_entropy(onehot_labels=labels_1hot, logits=predictions)
-        metrics['cross_entropy'] = tf.metrics.mean(cross_entropy)
-        summaries['cross_entropy'] = tf.summary.scalar('cross_entropy', metrics['cross_entropy'][1])
+        # cross_entropy = tf.losses.softmax_cross_entropy(onehot_labels=labels_1hot, logits=predictions)
+        # metrics['cross_entropy'] = tf.metrics.mean(cross_entropy)
+        # summaries['cross_entropy'] = tf.summary.scalar('cross_entropy', metrics['cross_entropy'][1])
 
         metrics['mean_iou'] = tf.metrics.mean_iou(labels=labels, predictions=output,
                                                              num_classes=num_classes)
