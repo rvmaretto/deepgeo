@@ -84,9 +84,9 @@ class ModelBuilder(object):
         # global_step = tf.Variable(0, name='global_step', trainable=False)
         samples = features['data']
 
-        binary = False
+        params['binary'] = False
         if params['num_classes'] == 2:
-            binary = True
+            params['binary'] = True
             params['num_classes'] = 1
 
         logits = self.model_description(samples, labels, params, mode, config)
@@ -94,7 +94,7 @@ class ModelBuilder(object):
         if labels.shape[1] != logits.shape[1]:
             labels = tf.cast(layers.crop_features(labels, logits.shape[1], name="labels"), tf.float32)
 
-        if binary:
+        if params['binary']:
             predictions = tf.nn.sigmoid(logits, name='Sigmoid')
             output = tf.cast(tf.round(predictions), tf.int32)
         else:
@@ -104,7 +104,7 @@ class ModelBuilder(object):
         if mode == tf.estimator.ModeKeys.PREDICT:
             return tf.estimator.EstimatorSpec(mode=mode, predictions=output)
 
-        if binary:
+        if params['binary']:
             labels_1hot = labels
         else:
             labels_1hot = tf.one_hot(tf.cast(labels, tf.uint8), params['num_classes'])
@@ -133,7 +133,7 @@ class ModelBuilder(object):
         tbm.plot_chips_tensorboard(samples, labels, output, bands_plot=params['bands_plot'],
                                    num_chips=params['chips_tensorboard'])
 
-        metrics, summaries = tbm.define_quality_metrics(labels_1hot, predictions, labels, output, loss, params['num_classes'])
+        metrics, summaries = tbm.define_quality_metrics(labels_1hot, predictions, labels, output, loss, params)
 
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
 
@@ -163,7 +163,7 @@ class ModelBuilder(object):
 
         eval_metric_ops = {'eval_metrics/accuracy': metrics['accuracy'],
                            'eval_metrics/f1-score': metrics['f1_score'],
-                           # 'eval_metrics/cross_entropy': metrics['cross_entropy'],
+                           'eval_metrics/cross_entropy': metrics['cross_entropy'],
                            'eval_metrics/mean_iou': metrics['mean_iou']}
 
         logging_hook = tf.train.LoggingTensorHook({'loss': loss,

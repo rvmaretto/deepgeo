@@ -6,7 +6,7 @@ sys.path.insert(0, path.join(path.dirname(__file__),"../"))
 import networks.layers as layers
 
 
-def define_quality_metrics(labels_1hot, predictions, labels, output, loss, num_classes):
+def define_quality_metrics(labels_1hot, predictions, labels, output, loss, params):
     metrics = {}
     summaries = {}
     with tf.name_scope('quality_metrics'):
@@ -16,12 +16,15 @@ def define_quality_metrics(labels_1hot, predictions, labels, output, loss, num_c
         metrics['accuracy'] = tf.metrics.accuracy(labels=labels, predictions=output)
         summaries['accuracy'] = tf.summary.scalar('accuracy', metrics['accuracy'][1])
 
-        # cross_entropy = tf.losses.softmax_cross_entropy(onehot_labels=labels_1hot, logits=predictions)
-        # metrics['cross_entropy'] = tf.metrics.mean(cross_entropy)
-        # summaries['cross_entropy'] = tf.summary.scalar('cross_entropy', metrics['cross_entropy'][1])
+        if params['binary']:
+            cross_entropy = tf.losses.sigmoid_cross_entropy(labels_1hot, predictions)
+        else:
+            cross_entropy = tf.losses.softmax_cross_entropy(onehot_labels=labels_1hot, logits=predictions)
+        metrics['cross_entropy'] = tf.metrics.mean(cross_entropy)
+        summaries['cross_entropy'] = tf.summary.scalar('cross_entropy', metrics['cross_entropy'][1])
 
         metrics['mean_iou'] = tf.metrics.mean_iou(labels=labels, predictions=output,
-                                                             num_classes=num_classes)
+                                                             num_classes=params['num_classes'])
         summaries['mean_iou'] = tf.summary.scalar('mean_iou', metrics['mean_iou'][0])
 
         summaries['loss'] = tf.summary.scalar('loss', loss)
