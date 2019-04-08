@@ -96,7 +96,7 @@ class ModelBuilder(object):
 
         if binary:
             predictions = tf.nn.sigmoid(logits, name='Sigmoid')
-            output = predictions
+            output = tf.cast(tf.round(predictions), tf.int32)
         else:
             predictions = tf.nn.softmax(logits, name='Softmax')
             output = tf.expand_dims(tf.argmax(input=predictions, axis=-1, name='Argmax_Prediction'), -1)
