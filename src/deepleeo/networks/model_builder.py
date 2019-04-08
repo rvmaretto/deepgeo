@@ -94,10 +94,11 @@ class ModelBuilder(object):
         if labels.shape[1] != logits.shape[1]:
             labels = tf.cast(layers.crop_features(labels, logits.shape[1], name="labels"), tf.float32)
 
-        predictions = tf.nn.softmax(logits, name='Softmax')
         if binary:
+            predictions = tf.nn.sigmoid(logits, name='Sigmoid')
             output = predictions
         else:
+            predictions = tf.nn.softmax(logits, name='Softmax')
             output = tf.expand_dims(tf.argmax(input=predictions, axis=-1, name='Argmax_Prediction'), -1)
 
         if mode == tf.estimator.ModeKeys.PREDICT:
