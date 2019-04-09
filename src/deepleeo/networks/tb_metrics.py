@@ -6,7 +6,7 @@ sys.path.insert(0, path.join(path.dirname(__file__),"../"))
 import networks.layers as layers
 
 
-def define_quality_metrics(labels_1hot, predictions, labels, output, loss, params):
+def define_quality_metrics(labels_1hot, predictions, logits, labels, output, loss, params):
     metrics = {}
     summaries = {}
     with tf.name_scope('quality_metrics'):
@@ -17,29 +17,33 @@ def define_quality_metrics(labels_1hot, predictions, labels, output, loss, param
         summaries['accuracy'] = tf.summary.scalar('accuracy', metrics['accuracy'][1])
 
         if params['binary']:
-            cross_entropy = tf.losses.sigmoid_cross_entropy(labels_1hot, predictions)
+            cross_entropy = tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.cast(labels, tf.float32), logits=logits)
         else:
             cross_entropy = tf.losses.softmax_cross_entropy(onehot_labels=labels_1hot, logits=predictions)
         metrics['cross_entropy'] = tf.metrics.mean(cross_entropy)
         summaries['cross_entropy'] = tf.summary.scalar('cross_entropy', metrics['cross_entropy'][1])
 
-        metrics['mean_iou'] = tf.metrics.mean_iou(labels=labels, predictions=output,
-                                                             num_classes=params['num_classes'])
-        summaries['mean_iou'] = tf.summary.scalar('mean_iou', metrics['mean_iou'][0])
+        # metrics['mean_iou'] = tf.metrics.mean_iou(labels=labels, predictions=predictions,
+        #                                                      num_classes=params['num_classes'])
+        # summaries['mean_iou'] = tf.summary.scalar('mean_iou', metrics['mean_iou'][0])
 
         summaries['loss'] = tf.summary.scalar('loss', loss)
 
     return metrics, summaries
 
-def plot_chips_tensorboard(samples, labels, output, bands_plot=[0,1,2], num_chips=2):
+
+def plot_chips_tensorboard(samples, labels, output, params):
     with tf.name_scope("chips_predictions"):
         # print("SHAPE_LABELS: ", labels.shape)
         # print("SHAPE_SAMPLE: ", samples.shape)
         # print("SHAPE_OUTPUT: ", output.shape)
         input_data_vis = layers.crop_features(samples, output.shape[1])
-        bands = tf.constant(bands_plot)
-        input_data_vis = tf.transpose(tf.nn.embedding_lookup(tf.transpose(input_data_vis), bands))
-        input_data_vis = tf.image.convert_image_dtype(input_data_vis, tf.uint8, saturate=True)
+        plots = []
+        for i in range(0, params['num_compositions']):
+            bands = tf.constant(params['bands_plot'][i])
+            input_data_vis = tf.transpose(tf.nn.embedding_lookup(tf.transpose(input_data_vis), bands))
+            input_data_vis = tf.image.convert_image_dtype(input_data_vis, tf.uint8, saturate=True)
+            tf.summary.image("input_image_c{}".format(i), input_data_vis, max_outputs=params['chips_tensorboard'])
 
         labels_vis = tf.cast(labels, tf.float32)
         labels_vis = tf.image.grayscale_to_rgb(labels_vis)
@@ -50,7 +54,6 @@ def plot_chips_tensorboard(samples, labels, output, bands_plot=[0,1,2], num_chip
         # labels2plot_vis = tf.image.convert_image_dtype(labels2plot, tf.uint8)
         # labels2plot_vis = tf.image.grayscale_to_rgb(tf.expand_dims(labels2plot_vis, axis=-1))
 
-        tf.summary.image("input_image", input_data_vis, max_outputs=num_chips)
-        tf.summary.image("output", output_vis, max_outputs=num_chips)
-        tf.summary.image("labels", labels_vis, max_outputs=num_chips)
+        tf.summary.image("output", output_vis, max_outputs=params['chips_tensorboard'])
+        tf.summary.image("labels", labels_vis, max_outputs=params['chips_tensorboard'])
         # tf.summary.image("labels1hot", labels2plot_vis, max_outputs=num_chips)

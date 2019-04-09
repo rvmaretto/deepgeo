@@ -76,8 +76,8 @@ params = {
     'loss_func': 'weighted_crossentropy',
     'class_weights': 3.,#[1., 1.],
     'num_classes': len(dataset['classes']),
-    'time_steps_plots': 1, #TODO: Use this to implement the plot of several timesteps. The list of bands must have the sime length
-     'bands_plot': [1,2,3] #[6, 7, 8]
+    'num_compositions': 2,
+     'bands_plot': [[1,2,3], [0, 1, 2]]
 }
 
 model = mb.ModelBuilder(network)

@@ -131,7 +131,8 @@ params = {
     'loss_func': 'weighted_crossentropy',
     'class_weights': weight_defor,#[weight_non_defor, weight_defor],
     'num_classes': len(dataset['classes']),
-    'bands_plot': [6, 7, 8]
+    'num_compositions': 2,
+    'bands_plot': [[1, 2, 3], [6, 7, 8]]
 }
 
 

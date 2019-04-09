@@ -130,10 +130,8 @@ class ModelBuilder(object):
         # loss_func = self.losses_switcher.get(params['loss_func'], lossf.unknown_loss_error)
         # loss = loss_func(loss_params)
 
-        tbm.plot_chips_tensorboard(samples, labels, output, bands_plot=params['bands_plot'],
-                                   num_chips=params['chips_tensorboard'])
-
-        metrics, summaries = tbm.define_quality_metrics(labels_1hot, predictions, labels, output, loss, params)
+        tbm.plot_chips_tensorboard(samples, labels, output, params)
+        metrics, summaries = tbm.define_quality_metrics(labels_1hot, predictions, logits, labels, output, loss, params)
 
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
 
@@ -163,14 +161,14 @@ class ModelBuilder(object):
 
         eval_metric_ops = {'eval_metrics/accuracy': metrics['accuracy'],
                            'eval_metrics/f1-score': metrics['f1_score'],
-                           'eval_metrics/cross_entropy': metrics['cross_entropy'],
-                           'eval_metrics/mean_iou': metrics['mean_iou']}
+                           'eval_metrics/cross_entropy': metrics['cross_entropy']}  # ,
+                           # 'eval_metrics/mean_iou': metrics['mean_iou']}
 
         logging_hook = tf.train.LoggingTensorHook({'loss': loss,
                                                    'accuracy': metrics['accuracy'][1],
                                                    'f1_score': metrics['f1_score'][1],
-                                                   # 'cross_entropy': metrics['cross_entropy'][1],
-                                                   'mean_iou': metrics['mean_iou'][0],
+                                                   'cross_entropy': metrics['cross_entropy'][1],
+                                                   # 'mean_iou': metrics['mean_iou'][0],
                                                    'learning_rate': params['learning_rate']},
                                                   every_n_iter=25)
 
