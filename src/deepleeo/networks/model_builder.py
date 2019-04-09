@@ -84,11 +84,6 @@ class ModelBuilder(object):
         # global_step = tf.Variable(0, name='global_step', trainable=False)
         samples = features['data']
 
-        params['binary'] = False
-        if params['num_classes'] == 2:
-            params['binary'] = True
-            params['num_classes'] = 1
-
         logits = self.model_description(samples, labels, params, mode, config)
 
         if labels.shape[1] != logits.shape[1]:
@@ -203,6 +198,11 @@ class ModelBuilder(object):
 
         data_size, _, _, bands = train_imgs.shape
         params['bands'] = bands
+
+        params['binary'] = False
+        if params['num_classes'] == 2:
+            params['binary'] = True
+            params['num_classes'] = 1
 
         # Try to update save the dataset as TFRecords and try to use this:
         # https://www.tensorflow.org/guide/distribute_strategy

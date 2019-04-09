@@ -33,27 +33,24 @@ def define_quality_metrics(labels_1hot, predictions, logits, labels, output, los
 
 
 def plot_chips_tensorboard(samples, labels, output, params):
-    with tf.name_scope("chips_predictions"):
-        # print("SHAPE_LABELS: ", labels.shape)
-        # print("SHAPE_SAMPLE: ", samples.shape)
-        # print("SHAPE_OUTPUT: ", output.shape)
-        input_data_vis = layers.crop_features(samples, output.shape[1])
+    with tf.name_scope("input_chips"):
+        input_data = layers.crop_features(samples, output.shape[1])
         plots = []
         for i in range(0, params['num_compositions']):
             bands = tf.constant(params['bands_plot'][i])
-            input_data_vis = tf.transpose(tf.nn.embedding_lookup(tf.transpose(input_data_vis), bands))
+            input_data_vis = tf.transpose(tf.nn.embedding_lookup(tf.transpose(input_data), bands))
             input_data_vis = tf.image.convert_image_dtype(input_data_vis, tf.uint8, saturate=True)
             tf.summary.image("input_image_c{}".format(i), input_data_vis, max_outputs=params['chips_tensorboard'])
 
+    with tf.name_scope("labels"):
         labels_vis = tf.cast(labels, tf.float32)
         labels_vis = tf.image.grayscale_to_rgb(labels_vis)
+        tf.summary.image("labels", labels_vis, max_outputs=params['chips_tensorboard'])
 
         output_vis = tf.cast(output, tf.float32)
         output_vis = tf.image.grayscale_to_rgb(output_vis)
+        tf.summary.image("output", output_vis, max_outputs=params['chips_tensorboard'])
 
         # labels2plot_vis = tf.image.convert_image_dtype(labels2plot, tf.uint8)
         # labels2plot_vis = tf.image.grayscale_to_rgb(tf.expand_dims(labels2plot_vis, axis=-1))
-
-        tf.summary.image("output", output_vis, max_outputs=params['chips_tensorboard'])
-        tf.summary.image("labels", labels_vis, max_outputs=params['chips_tensorboard'])
         # tf.summary.image("labels1hot", labels2plot_vis, max_outputs=num_chips)
