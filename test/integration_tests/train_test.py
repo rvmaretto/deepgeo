@@ -6,11 +6,11 @@ from importlib import reload
 from shutil import rmtree
 
 sys.path.insert(0, '../../src')
-import deepleeo.dataset.data_augment as dtaug
-import deepleeo.dataset.utils as dsutils
-import deepleeo.networks.model_builder as mb
-import deepleeo.utils.filesystem as fs
-import deepleeo.utils.geofunctions as gf
+import deepgeo.dataset.data_augment as dtaug
+import deepgeo.dataset.utils as dsutils
+import deepgeo.networks.model_builder as mb
+import deepgeo.utils.filesystem as fs
+import deepgeo.utils.geofunctions as gf
 
 reload(dtaug)
 reload(dsutils)

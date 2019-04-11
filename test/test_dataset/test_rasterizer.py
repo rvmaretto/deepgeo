@@ -3,11 +3,11 @@ from os import path
 import sys
 
 sys.path.insert(0, path.join(path.dirname(__file__),"../../src"))
-from deepleeo.dataset import rasterizer
-import deepleeo.utils.filesystem as fs
+from deepgeo.dataset import rasterizer
+import deepgeo.utils.filesystem as fs
+
 
 # TODO: Improve these tests to compare numerically the results
-
 class test_rasterizer():
     def setup(self):
         self.data_dir = path.join(path.dirname(__file__), "../../data")

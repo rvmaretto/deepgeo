@@ -6,10 +6,11 @@ from osgeo import gdal
 from osgeo import ogr
 from matplotlib.colors import ListedColormap
 
-sys.path.insert(0, path.join(path.dirname(__file__),"../../src"))
-import deepleeo.dataset.rasterizer as rstzr
-import deepleeo.dataset.sampleGenerator as sg
-import deepleeo.utils.filesystem as fs
+sys.path.insert(0, path.join(path.dirname(__file__), "../../src"))
+import deepgeo.dataset.rasterizer as rstzr
+import deepgeo.dataset.sampleGenerator as sg
+import deepgeo.utils.filesystem as fs
+
 
 # TODO: Create a method rasterizer.execute, that execute the whole proccess.
 class TestSampleGenerator():

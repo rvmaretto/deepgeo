@@ -9,10 +9,10 @@ from importlib import reload
 from datetime import datetime
 
 sys.path.insert(0, '../../src')
-import deepleeo.dataset.data_augment as dtaug
-import deepleeo.dataset.utils as dsutils 
-# import deepleeo.utils.geofunctions as gf
-import deepleeo.networks.model_builder as mb
+import deepgeo.dataset.data_augment as dtaug
+import deepgeo.dataset.utils as dsutils
+# import deepgeo.utils.geofunctions as gf
+import deepgeo.networks.model_builder as mb
 
 # # Load input Dataset
 
@@ -25,7 +25,7 @@ DATA_DIR = '/home/raian/doutorado/Dados/generated'
 DATASET_FILE = os.path.join(DATA_DIR, 'dataset_286x286_timesstack-2015-2016.npz')#'dataset_1.npz')
 
 model_dir = os.path.join(DATA_DIR, 'tf_logs', 'test_%s_%s' % (network, datetime.now().strftime('%d_%m_%Y-%H_%M_%S')))
-# model_dir = '/home/raian/doutorado/DeepLeEO/data_real/generated/tf_logs/test_debug'
+# model_dir = '/home/raian/doutorado/deepgeo/data_real/generated/tf_logs/test_debug'
 #model_dir = os.path.join(DATA_DIR, 'tf_logs', 'test_unet_lf_17_12_2018-22_39_13')
 
 

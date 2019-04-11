@@ -12,10 +12,10 @@ from importlib import reload
 from datetime import datetime
 
 sys.path.insert(0, '../../src')
-import deepleeo.dataset.data_augment as dtaug
-import deepleeo.dataset.utils as dsutils 
-import deepleeo.utils.geofunctions as gf
-import deepleeo.networks.model_builder as mb
+import deepgeo.dataset.data_augment as dtaug
+import deepgeo.dataset.utils as dsutils
+import deepgeo.utils.geofunctions as gf
+import deepgeo.networks.model_builder as mb
 
 reload(dtaug)
 reload(dsutils)

@@ -6,14 +6,15 @@ import scipy.misc
 import pylab as pl
 from osgeo import gdal
 from osgeo import ogr
-from osgeo import osr #TODO: Verify if it is really necessary? If I get the SRID from the Raster I still need this?
+from osgeo import osr  # TODO: Verify if it is really necessary? If I get the SRID from the Raster I still need this?
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__),"../"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))
 import utils.filesystem as fs
 import dataset.data_augment as daug
 import dataset.sequencialchips as seqchips
 
-#TODO: Review this class to work with strategies.
+
+# TODO: Review this class to work with strategies.
 
 class ChipsGenerator(object):
     strategies = {
@@ -35,7 +36,7 @@ class ChipsGenerator(object):
         else:
             label_interest = self.class_names.index(class_of_interest)
             self.sample_candidates = np.transpose(np.nonzero(np.logical_and(~self.labeled_img.mask,
-                                                                       self.labeled_img == label_interest)))
+                                                                            self.labeled_img == label_interest)))
         indices = np.random.choice(np.arange(len(self.sample_candidates)), quantity, replace=False)
         self.ij_samples = self.sample_candidates[indices]
 
@@ -50,16 +51,16 @@ class ChipsGenerator(object):
         window_coords["leftCol"] = coord[1] - math.ceil(self.win_size / 2)
 
         # TODO: Review this. Is there a better way to do this?
-        if(window_coords["upperLin"] < 0):
+        if window_coords["upperLin"] < 0:
             window_coords["upperLin"] = 0
             window_coords["lowerLin"] = self.win_size
-        if(window_coords["leftCol"] < 0):
+        if window_coords["leftCol"] < 0:
             window_coords["leftCol"] = 0
             window_coords["rightCol"] = self.win_size
-        if(window_coords["lowerLin"] > self.labeled_img.shape[0]):
+        if window_coords["lowerLin"] > self.labeled_img.shape[0]:
             window_coords["lowerLin"] = self.labeled_img.shape[0]
             window_coords["upperLin"] = window_coords["lowerLin"] - self.win_size
-        if(window_coords["rightCol"] > self.labeled_img.shape[1]):
+        if window_coords["rightCol"] > self.labeled_img.shape[1]:
             window_coords["rightCol"] = self.labeled_img.shape[1]
             window_coords["leftCol"] = window_coords["rightCol"] - self.win_size
 
@@ -87,7 +88,8 @@ class ChipsGenerator(object):
                 self.ij_samples[count] = coord
                 window = self.compute_window_coords(coord)
                 sampleImg = self.ref_img[window["upperLin"]:window["lowerLin"], window["leftCol"]:window["rightCol"]]
-                sampleLabel = self.labeled_img[window["upperLin"]:window["lowerLin"], window["leftCol"]:window["rightCol"]]
+                sampleLabel = self.labeled_img[window["upperLin"]:window["lowerLin"],
+                              window["leftCol"]:window["rightCol"]]
 
             self.samples_img.append(sampleImg)
             self.samples_labels.append(sampleLabel)
@@ -113,7 +115,7 @@ class ChipsGenerator(object):
             "classes": self.class_names
         }
 
-    def save_samples_PNG(self, path, colorMap=None, r_g_b=[1,2,3]):
+    def save_samples_PNG(self, path, colorMap=None, r_g_b=[1, 2, 3]):
         for pos in range(len(self.samples_img)):
             samplesDir = os.path.join(path, "sample_imgs")
             labelsDir = os.path.join(path, "sample_labels")
@@ -121,22 +123,22 @@ class ChipsGenerator(object):
             fs.mkdir(labelsDir)
             fileName = "sample" + str(pos) + ".png"
             scipy.misc.imsave(os.path.join(samplesDir, fileName), self.samples_img[pos][:, :, r_g_b])
-            if(colorMap is None):
-                scipy.misc.imsave(os.path.join(labelsDir, fileName), self.samples_labels[pos][:,:,0])
+            if (colorMap is None):
+                scipy.misc.imsave(os.path.join(labelsDir, fileName), self.samples_labels[pos][:, :, 0])
             else:
-                pl.imsave(fname=os.path.join(labelsDir, fileName), arr=self.samples_labels[pos][:,:,0], cmap=colorMap)
+                pl.imsave(fname=os.path.join(labelsDir, fileName), arr=self.samples_labels[pos][:, :, 0], cmap=colorMap)
 
     def save_samples_NPZ(self, path, noDataValue=255):
         if os.path.exists(path):
             os.remove(path)
         # print("UNIQUE: ", np.unique(self.samples_labels))
         np.savez(path,
-                 images = self.samples_img,
-                 labels= np.ma.filled(self.samples_labels, noDataValue),
+                 images=self.samples_img,
+                 labels=np.ma.filled(self.samples_labels, noDataValue),
                  classes=np.array(self.class_names))
 
     def generate_windows_geo_coords(self):
-        if(self.base_raster_path is None):
+        if (self.base_raster_path is None):
             raise RuntimeError("Base raster path is None. It must exists to generate geographic coordinates.")
         else:
             img_ds = gdal.Open(self.base_raster_path)

@@ -3,11 +3,11 @@ import os
 from importlib import reload
 
 sys.path.insert(0, '../../src')
-import deepleeo.dataset.data_augment as dtaug
-import deepleeo.dataset.rasterizer as rstzr
-import deepleeo.dataset.preprocessor as prep
-import deepleeo.dataset.chipsGenerator as cg
-import deepleeo.utils.visualization as vis
+import deepgeo.dataset.data_augment as dtaug
+import deepgeo.dataset.rasterizer as rstzr
+import deepgeo.dataset.preprocessor as prep
+import deepgeo.dataset.chipsGenerator as cg
+import deepgeo.utils.visualization as vis
 
 reload(dtaug)
 reload(rstzr)
