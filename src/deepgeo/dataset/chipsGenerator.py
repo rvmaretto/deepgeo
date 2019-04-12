@@ -10,7 +10,6 @@ from osgeo import osr  # TODO: Verify if it is really necessary? If I get the SR
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))
 import utils.filesystem as fs
-import dataset.data_augment as daug
 import dataset.sequencialchips as seqchips
 
 
@@ -18,7 +17,8 @@ import dataset.sequencialchips as seqchips
 
 class ChipsGenerator(object):
     strategies = {
-        "sequential": seqchips.generate_sequential_chips
+        'sequential': seqchips.generate_sequential_chips
+        # 'random':
     }
 
     def __init__(self, path_img, labeled_img, class_names, base_raster_path=None):
@@ -27,7 +27,7 @@ class ChipsGenerator(object):
         self.class_names = class_names
         self.base_raster_path = base_raster_path
 
-    def compute_sample_indexes(self, quantity, class_of_interest=None):
+    def compute_indexes(self, quantity, class_of_interest=None):
         """
         Sample quantity indices in the labeled image
         """
@@ -45,24 +45,24 @@ class ChipsGenerator(object):
 
     def compute_window_coords(self, coord):
         window_coords = {}
-        window_coords["upperLin"] = coord[0] - math.floor(self.win_size / 2)
-        window_coords["lowerLin"] = coord[0] + math.ceil(self.win_size / 2)
-        window_coords["rightCol"] = coord[1] + math.floor(self.win_size / 2)
-        window_coords["leftCol"] = coord[1] - math.ceil(self.win_size / 2)
+        window_coords['upperLin'] = coord[0] - math.floor(self.win_size / 2)
+        window_coords['lowerLin'] = coord[0] + math.ceil(self.win_size / 2)
+        window_coords['rightCol'] = coord[1] + math.floor(self.win_size / 2)
+        window_coords['leftCol'] = coord[1] - math.ceil(self.win_size / 2)
 
         # TODO: Review this. Is there a better way to do this?
-        if window_coords["upperLin"] < 0:
-            window_coords["upperLin"] = 0
-            window_coords["lowerLin"] = self.win_size
-        if window_coords["leftCol"] < 0:
-            window_coords["leftCol"] = 0
-            window_coords["rightCol"] = self.win_size
-        if window_coords["lowerLin"] > self.labeled_img.shape[0]:
-            window_coords["lowerLin"] = self.labeled_img.shape[0]
-            window_coords["upperLin"] = window_coords["lowerLin"] - self.win_size
-        if window_coords["rightCol"] > self.labeled_img.shape[1]:
-            window_coords["rightCol"] = self.labeled_img.shape[1]
-            window_coords["leftCol"] = window_coords["rightCol"] - self.win_size
+        if window_coords['upperLin'] < 0:
+            window_coords['upperLin'] = 0
+            window_coords['lowerLin'] = self.win_size
+        if window_coords['leftCol'] < 0:
+            window_coords['leftCol'] = 0
+            window_coords['rightCol'] = self.win_size
+        if window_coords['lowerLin'] > self.labeled_img.shape[0]:
+            window_coords['lowerLin'] = self.labeled_img.shape[0]
+            window_coords['upperLin'] = window_coords['lowerLin'] - self.win_size
+        if window_coords['rightCol'] > self.labeled_img.shape[1]:
+            window_coords['rightCol'] = self.labeled_img.shape[1]
+            window_coords['leftCol'] = window_coords['rightCol'] - self.win_size
 
         return window_coords
 
@@ -74,22 +74,17 @@ class ChipsGenerator(object):
         count = 0
         for coord in self.ij_samples:
             window = self.compute_window_coords(coord)
-            sampleImg = self.ref_img[window["upperLin"]:window["lowerLin"], window["leftCol"]:window["rightCol"]]
-            sampleLabel = self.labeled_img[window["upperLin"]:window["lowerLin"], window["leftCol"]:window["rightCol"]]
-            # if np.count_nonzero(sampleLabel.mask) == 0:
-            #     self.samples_img.append(sampleImg)
-            #     self.samples_labels.append(sampleLabel)
-            # else:
-            #     # print("Chip with No data")
-            #     # print(np.unique(sampleLabel))
+            sampleImg = self.ref_img[window['upperLin']:window['lowerLin'], window['leftCol']:window['rightCol']]
+            sampleLabel = self.labeled_img[window['upperLin']:window['lowerLin'], window['leftCol']:window['rightCol']]
+
             while np.count_nonzero(sampleLabel.mask) != 0:
                 indice = np.random.choice(np.arange(len(self.sample_candidates)), 1, replace=False)
                 coord = self.sample_candidates[indice][0]
                 self.ij_samples[count] = coord
                 window = self.compute_window_coords(coord)
-                sampleImg = self.ref_img[window["upperLin"]:window["lowerLin"], window["leftCol"]:window["rightCol"]]
-                sampleLabel = self.labeled_img[window["upperLin"]:window["lowerLin"],
-                              window["leftCol"]:window["rightCol"]]
+                sampleImg = self.ref_img[window['upperLin']:window['lowerLin'], window['leftCol']:window['rightCol']]
+                sampleLabel = self.labeled_img[window['upperLin']:window['lowerLin'],
+                              window['leftCol']:window['rightCol']]
 
             self.samples_img.append(sampleImg)
             self.samples_labels.append(sampleLabel)
@@ -97,31 +92,20 @@ class ChipsGenerator(object):
 
         self.generate_windows_geo_coords()
 
-    def applyDataAugmentation(self, rot_angles=[90, 180, 270], rotation=True, flip=True):
-        rot_imgs = daug.rotate_images(self.samples_img, rot_angles)
-        rot_labels = daug.rotate_images(self.samples_labels, rot_angles)
-        flip_imgs = daug.flip_images(self.samples_img)
-        flip_labels = daug.flip_images(self.samples_labels)
-
-        self.samples_img = np.concatenate(self.samples_img, rot_imgs)
-        self.samples_img = np.concatenate(self.samples_img, flip_imgs)
-        self.samples_labels = np.concatenate(self.samples_labels, rot_labels)
-        self.samples_labels = np.concatenate(self.samples_labels, flip_labels)
-
     def getSamples(self):
         return {
-            "images": self.samples_img,
-            "labels": self.samples_labels,
-            "classes": self.class_names
+            'images': self.samples_img,
+            'labels': self.samples_labels,
+            'classes': self.class_names
         }
 
     def save_samples_PNG(self, path, colorMap=None, r_g_b=[1, 2, 3]):
         for pos in range(len(self.samples_img)):
-            samplesDir = os.path.join(path, "sample_imgs")
-            labelsDir = os.path.join(path, "sample_labels")
+            samplesDir = os.path.join(path, 'sample_imgs')
+            labelsDir = os.path.join(path, 'sample_labels')
             fs.mkdir(samplesDir)
             fs.mkdir(labelsDir)
-            fileName = "sample" + str(pos) + ".png"
+            fileName = 'sample' + str(pos) + '.png'
             scipy.misc.imsave(os.path.join(samplesDir, fileName), self.samples_img[pos][:, :, r_g_b])
             if (colorMap is None):
                 scipy.misc.imsave(os.path.join(labelsDir, fileName), self.samples_labels[pos][:, :, 0])
@@ -138,8 +122,8 @@ class ChipsGenerator(object):
                  classes=np.array(self.class_names))
 
     def generate_windows_geo_coords(self):
-        if (self.base_raster_path is None):
-            raise RuntimeError("Base raster path is None. It must exists to generate geographic coordinates.")
+        if self.base_raster_path is None:
+            raise RuntimeError('Base raster path is None. It must exists to generate geographic coordinates.')
         else:
             img_ds = gdal.Open(self.base_raster_path)
 

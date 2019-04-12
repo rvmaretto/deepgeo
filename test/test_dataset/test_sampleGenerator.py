@@ -41,7 +41,7 @@ class TestSampleGenerator():
     def test_compute_index(self):
         smpGen = sg.SampleGenerator(self.raster_img, self.rasterized_layer, self.class_names, self.pathRaster)
         np.random.seed(0)
-        smpGen.compute_sample_indexes(5)
+        smpGen.compute_indexes(5)
         smpIdxes = smpGen.get_sample_indexes()
         assert_equal(5, len(smpIdxes))
         assert_equal(509, smpIdxes[0][0])
@@ -57,7 +57,7 @@ class TestSampleGenerator():
 
     def test_extract_windows(self):
         smpGen = sg.SampleGenerator(self.raster_img, self.rasterized_layer, self.class_names, self.pathRaster)
-        smpGen.compute_sample_indexes(5)
+        smpGen.compute_indexes(5)
         smpGen.extract_windows(win_size=5)
         samples = smpGen.getSamples()
         
@@ -73,7 +73,7 @@ class TestSampleGenerator():
     def test_save_samples_PNG_without_cmap_and_bands(self):
         output_path = path.join(self.output_dir, "generated_samples")
         smpGen = sg.SampleGenerator(self.raster_img, self.rasterized_layer, self.class_names, self.pathRaster)
-        smpGen.compute_sample_indexes(quantity=5)
+        smpGen.compute_indexes(quantity=5)
         smpGen.extract_windows(win_size=5)
         smpGen.save_samples_PNG(output_path)
         assert_true(path.exists(output_path))
@@ -88,7 +88,7 @@ class TestSampleGenerator():
     def test_save_samples_PNG_without_cmap_with_bands(self):
         output_path = path.join(self.output_dir, "generated_samples")
         smpGen = sg.SampleGenerator(self.raster_img, self.rasterized_layer, self.class_names, self.pathRaster)
-        smpGen.compute_sample_indexes(quantity=5)
+        smpGen.compute_indexes(quantity=5)
         smpGen.extract_windows(win_size=5)
         smpGen.save_samples_PNG(output_path, r_g_b=[5,4,3])
         assert_true(path.exists(output_path))
@@ -103,7 +103,7 @@ class TestSampleGenerator():
     def test_save_samples_PNG_all_parameters(self):
         output_path = path.join(self.output_dir, "generated_samples")
         smpGen = sg.SampleGenerator(self.raster_img, self.rasterized_layer, self.class_names, self.pathRaster)
-        smpGen.compute_sample_indexes(quantity=5)
+        smpGen.compute_indexes(quantity=5)
         smpGen.extract_windows(win_size=5)
 
         colorMap = ListedColormap(["red", "green", "blue", "yellow"])
@@ -120,7 +120,7 @@ class TestSampleGenerator():
     def test_save_samples_NPZ(self):
         output_path = path.join(self.output_dir, "samples_dataset.npz")
         smpGen = sg.SampleGenerator(self.raster_img, self.rasterized_layer, self.class_names, self.pathRaster)
-        smpGen.compute_sample_indexes(quantity=5)
+        smpGen.compute_indexes(quantity=5)
         smpGen.extract_windows(win_size=5)
 
         smpGen.save_samples_NPZ(output_path)
@@ -130,7 +130,7 @@ class TestSampleGenerator():
     def test_save_samples_SHP(self):
         output_path = path.join(self.output_dir, "samples.shp")
         smpGen = sg.SampleGenerator(self.raster_img, self.rasterized_layer, self.class_names, self.pathRaster)
-        smpGen.compute_sample_indexes(quantity=5)
+        smpGen.compute_indexes(quantity=5)
         smpGen.extract_windows(win_size=5)
 
         smpGen.save_samples_SHP(output_path)

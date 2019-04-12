@@ -79,7 +79,7 @@ vis.plot_image_histogram(raster_img, cmap=["green", "red", "cyan", "blue", "yell
 
 
 chpGen = cg.ChipsGenerator(raster_img, rasterized_layer, class_names, raster_file)
-chpGen.compute_sample_indexes(number_of_samples)
+chpGen.compute_indexes(number_of_samples)
 chpGen.extract_windows(window_size)
 # samples = chpGen.getSamples()
 # print("Generated ", len(samples["images"]), " image samples.")
