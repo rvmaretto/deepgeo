@@ -35,6 +35,7 @@ def generate_multi_raster_structure(path_images, band_names=None, no_data=None):
         "band_names": [],
         "raster_arrays": []
     }
+
     for img_path in path_images:
         multi_raster_struct["file_paths"].append(img_path)
 
@@ -58,7 +59,7 @@ def generate_multi_raster_structure(path_images, band_names=None, no_data=None):
             band_arr[band_arr == no_data] = 0
             band_arr = np.ma.masked_array(band_arr,
                                           band_arr == 0)  # TODO: Vefify how to remove this. How to deal with no_data
-            if (img is None):
+            if img is None:
                 img = band_arr
             else:
                 img = np.ma.dstack((img, band_arr))
@@ -117,12 +118,12 @@ def reproj_shape_to_raster(path_in_shp, path_raster, path_out_shp):
     # Opens the base raster
     base_tiff = gdal.Open(path_raster)
 
-    #shapefile with the from projection
+    # shapefile with the from projection
     driver = ogr.GetDriverByName("ESRI Shapefile")
     in_ds =   driver.Open(path_in_shp, 1)
     in_layer = in_ds.GetLayer()
 
-    #set spatial reference and transformation
+    # set spatial reference and transformation
     sourceprj = in_layer.GetSpatialRef()
     targetprj = osr.SpatialReference(wkt = base_tiff.GetProjection())
     # create the CoordinateTransformation

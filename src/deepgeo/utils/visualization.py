@@ -10,7 +10,8 @@ from descartes import PolygonPatch
 from shapely.wkb import loads
 from osgeo import ogr
 
-def plot_rgb_img(raster_array, bands=[1,2,3], contrast=False, title="RGB Composition", figsize=(10, 10)):
+
+def plot_rgb_img(raster_array, bands=[1, 2, 3], contrast=False, title="RGB Composition", figsize=(10, 10)):
     if len(bands) != 3 and len(bands) != 1:
         raise AttributeError("Parameter bands must have size 3 or 1.")
 
@@ -29,6 +30,7 @@ def plot_rgb_img(raster_array, bands=[1,2,3], contrast=False, title="RGB Composi
         plt.imshow(raster_img[:,:,bands[0]])
     plt.axis('off')
     plt.show()
+
 
 def plot_labels(labels_array, class_names, colors=None, title="Labels", figsize=(10, 10)):
     plt.figure(figsize=figsize)

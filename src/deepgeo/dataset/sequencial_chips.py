@@ -7,7 +7,6 @@ import skimage
 from skimage import exposure
 
 
-#TODO: How to put this as an strategy to the chipGenerator?
 def generate_sequential_chips(img_array, chip_size=286, overlap=(0, 0), remove_no_data=True):
     x_size, y_size, nbands = img_array.shape
     # print("Raster size: (", x_size, ", ", y_size, ", ", nbands, ")")
