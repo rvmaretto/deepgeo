@@ -7,6 +7,16 @@ import skimage
 from skimage import exposure
 
 
+class SequentialChipGenerator(object):
+    def __init__(self, params):
+        self.ref_img = params['raster_array']
+        self.labeled_img = params['shp_input']
+        self.win_size = params['win_size']
+        self.class_of_interest = params['class_of_interest']
+        self.overlap = params['overlap']
+        self.remove_no_data = params['remove_no_data']  # TODO: Allow here to define the threshold percentage of no_data to remove the chip
+
+
 def generate_sequential_chips(img_array, chip_size=286, overlap=(0, 0), remove_no_data=True):
     x_size, y_size, nbands = img_array.shape
     # print("Raster size: (", x_size, ", ", y_size, ", ", nbands, ")")
