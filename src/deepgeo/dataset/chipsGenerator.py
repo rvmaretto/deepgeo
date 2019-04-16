@@ -11,24 +11,24 @@ from osgeo import osr  # TODO: Verify if it is really necessary? If I get the SR
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))
 import utils.filesystem as fs
 import dataset.sequencialchips as seqchips
+import dataset.random_chips as rdmchips
 
-
-# TODO: Review this class to work with strategies.
 
 class ChipsGenerator(object):
     strategies = {
-        'sequential': seqchips.generate_sequential_chips
-        # 'random':
+        'sequential': seqchips.generate_sequential_chips,
+        'random': rdmchips.RandomChipGenerator
     }
 
-    def __init__(self, path_img, labeled_img, class_names, base_raster_path=None):
+    def __init__(self, path_img, labeled_img, class_names, strategy='sequential', base_raster_path=None):
+        self.strategy = strategy
         self.ref_img = path_img
         self.labeled_img = labeled_img
         self.class_names = class_names
         self.base_raster_path = base_raster_path
 
-    def get_sample_indexes(self):
-        return self.ij_samples
+    def generate_chips(self):
+        chips_struct = self.strategies[self.strategy](self.parameters).generate_chips()
 
     def getSamples(self):
         return {
