@@ -1,77 +1,109 @@
-import matplotlib.patches as patches
-import matplotlib.pyplot as plt
 import numpy as np
+import os
+import sys
 import gdal
 import osr
-import skimage
-from skimage import exposure
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+import common.utils as utils
 
 
 class SequentialChipGenerator(object):
+    mandatory_params = ['raster_array', 'win_size']
+    default_params = {'labels_array': None,
+                      'overlap': (0, 0),
+                      'class_of_interest': None,
+                      'remove_no_data': None}  # TODO: Allow here to define the threshold percentage of no_data pixels to remove the chip
+
     def __init__(self, params):
-        self.ref_img = params['raster_array']
-        self.labeled_img = params['shp_input']
+        params = utils.check_dict_parameters(params, self.mandatory_params, self.default_params)
+        self.img_array = params['raster_array']
+        self.labeled_array = params['labels_array']
         self.win_size = params['win_size']
-        self.class_of_interest = params['class_of_interest']
         self.overlap = params['overlap']
-        self.remove_no_data = params['remove_no_data']  # TODO: Allow here to define the threshold percentage of no_data to remove the chip
+        self.class_of_interest = params['class_of_interest']
+        self.remove_no_data = params['remove_no_data']
+
+    def compute_indexes(self):
+        row_size, col_size, nbands = self.img_array.shape
+        if self.labeled_array is not None:
+            lbl_row_size, lbl_col_size, _ = self.labeled_array.shape
+
+            if row_size != lbl_row_size or col_size != lbl_col_size:
+                raise AssertionError('Raster and labels have different sizes (rows and columns)!')
+
+        self.win_coords = []
+        for col_start in range(0, col_size, self.win_size - self.overlap[0]):
+            col_end = col_start + self.win_size
+
+            if col_end > col_size:
+                col_end = col_size
+                col_start = col_end - self.win_size
+                # print('ROW_START = ', row_start, 'ROW_END = ', row_end)
+
+            for row_start in range(0, row_size, self.win_size - self.overlap[1]):
+                row_end = row_start + self.win_size
+
+                if row_end > row_size:
+                    row_end = row_size
+                    row_start = row_end - self.win_size
+                    # print('COL_START = ', col_start, 'COL_END = ', col_end)
+
+                self.win_coords.append({'upper_row': row_start, 'lower_row': row_end, 'left_col': col_start, 'right_col': col_end})
+
+    def extract_windows(self, win_coord):
+        sample_img = self.img_array[win_coord['upper_row']:win_coord['lower_row'],
+                                    win_coord['left_col']:win_coord['right_col']]
+        if self.labeled_array is not None:
+            sample_lbl = self.labeled_array[win_coord['upper_row']:win_coord['lower_row'],
+                                               win_coord['left_col']:win_coord['right_col']]
+        else:
+            sample_lbl = None
+        return sample_img, sample_lbl, win_coord
+
+    def generate_chips(self):
+        self.compute_indexes()
+        samples_img, samples_labels, windows = zip(*map(self.extract_windows, self.win_coords))
+
+        if self.labeled_array is not None:
+            return {'chips': samples_img,
+                    'labels': samples_labels,
+                    'win_coords': windows}
+        else:
+            return {'chips': samples_img,
+                    'win_coords': windows}
 
 
-def generate_sequential_chips(img_array, chip_size=286, overlap=(0, 0), remove_no_data=True):
-    x_size, y_size, nbands = img_array.shape
-    # print("Raster size: (", x_size, ", ", y_size, ", ", nbands, ")")
-
-    struct = {"chips": [], "coords": []}
-    for y_start in range(0, y_size, chip_size - overlap[0]):
-        y_end = y_start + chip_size
-
-        if y_end > y_size:
-            y_end = y_size
-            y_start = y_end - chip_size
-            # print("XSTART = ", x_start, "XEND = ", x_end)
-
-        for x_start in range(0, x_size, chip_size - overlap[1]):
-            x_end = x_start + chip_size
-
-            if x_end > x_size:
-                x_end = x_size
-                x_start = x_end - chip_size
-                # print("YSTART = ", y_start, "YEND = ", y_end)
-
-            chip_array = img_array[x_start:x_end, y_start:y_end, :]
-
-            struct["chips"].append(chip_array)
-            struct["coords"].append({"x_start": x_start, "x_end": x_end, "y_start": y_start, "y_end": y_end})
-
-    return struct
-
-
-def plot_chips(chips, raster_array, bands=[1, 2, 3], contrast=False, chipscolor="blue"):
-    fig,ax = plt.subplots(1, figsize=(12, 12))
-
-    # Display the image
-    raster_img = skimage.img_as_ubyte(raster_array)
-    if contrast:
-        for band in bands:
-            p2, p98 = np.percentile(raster_img[:, :, band], (2, 98))
-            raster_img[:, :, band] = exposure.rescale_intensity(raster_img[:, :, band], in_range=(p2, p98))
-
-    if len(bands) == 3:
-        ax.imshow(raster_img[:, :, bands])
-    else:
-        ax.imshow(raster_img[:, :, bands[0]])
-
-    plt.axis('off')
-
-    for coord in chips["coords"]:
-        width = coord["y_end"] - coord["y_start"]
-        height = coord["x_end"] - coord["x_start"]
-        rect = patches.Rectangle((coord["y_start"], coord["x_start"]), width, height,
-                                  edgecolor=chipscolor, facecolor="none")
-        ax.add_patch(rect)
+# def generate_sequential_chips(img_array, chip_size=286, overlap=(0, 0), remove_no_data=True):
+#     x_size, y_size, nbands = img_array.shape
+#     # print('Raster size: (', x_size, ', ', y_size, ', ', nbands, ')')
+#
+#     struct = {'chips': [], 'coords': []}
+#     for y_start in range(0, y_size, chip_size - overlap[0]):
+#         y_end = y_start + chip_size
+#
+#         if y_end > y_size:
+#             y_end = y_size
+#             y_start = y_end - chip_size
+#             # print('XSTART = ', x_start, 'XEND = ', x_end)
+#
+#         for x_start in range(0, x_size, chip_size - overlap[1]):
+#             x_end = x_start + chip_size
+#
+#             if x_end > x_size:
+#                 x_end = x_size
+#                 x_start = x_end - chip_size
+#                 # print('YSTART = ', y_start, 'YEND = ', y_end)
+#
+#             chip_array = img_array[x_start:x_end, y_start:y_end, :]
+#
+#             struct['chips'].append(chip_array)
+#             struct['coords'].append({'x_start': x_start, 'x_end': x_end, 'y_start': y_start, 'y_end': y_end})
+#
+#     return struct
 
 
-def write_chips(output_path, base_raster, pred_struct, output_format="GTiff", dataType=gdal.GDT_UInt16):
+def write_chips(output_path, base_raster, pred_struct, output_format='GTiff', dataType=gdal.GDT_UInt16):
     driver = gdal.GetDriverByName(output_format)
     base_ds = gdal.Open(base_raster)
 
@@ -87,9 +119,9 @@ def write_chips(output_path, base_raster, pred_struct, output_format="GTiff", da
     out_ds.SetProjection(srs.ExportToWkt())
     out_band = out_ds.GetRasterBand(1)
 
-    for idx in range(1, len(pred_struct["chips"])):
-        chip = pred_struct["chips"][idx]
+    for idx in range(1, len(pred_struct['chips'])):
+        chip = pred_struct['chips'][idx]
         chip = np.squeeze(chip)
-        out_band.WriteArray(chip, pred_struct["coords"][idx]["y_start"], pred_struct["coords"][idx]["x_start"])
+        out_band.WriteArray(chip, pred_struct['coords'][idx]['y_start'], pred_struct['coords'][idx]['x_start'])
 
     out_band.FlushCache()

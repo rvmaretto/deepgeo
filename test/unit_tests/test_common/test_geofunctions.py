@@ -3,15 +3,16 @@ from os import path
 import sys
 # import gdal
 
-sys.path.insert(0, path.join(path.dirname(__file__),"../../src"))
-import utils.geofunctions as gf
+sys.path.insert(0, path.join(path.dirname(__file__), '..', '..', '..', 'src'))
+import deepgeo.common.geofunctions as gf
+
 
 class test_geofunctions():
 
     def setup(self):
-        self.data_dir = path.join(path.dirname(__file__), "../../data")
-        self.pathVector = path.join(self.data_dir, "prodes_shp_crop.shp")
-        self.pathRaster = path.join(self.data_dir, "raster_R6G5B4.tif")
+        self.data_dir = path.join(path.dirname(__file__), '..', '..', '..', 'data')
+        self.pathVector = path.join(self.data_dir, 'prodes_shp_crop.shp')
+        self.pathRaster = path.join(self.data_dir, 'raster_R6G5B4.tif')
 
     def test_load_image(self):
         img = gf.load_image(self.pathRaster)

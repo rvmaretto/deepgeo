@@ -9,8 +9,8 @@ sys.path.insert(0, '../../src')
 import deepgeo.dataset.data_augment as dtaug
 import deepgeo.dataset.utils as dsutils
 import deepgeo.networks.model_builder as mb
-import deepgeo.utils.filesystem as fs
-import deepgeo.utils.geofunctions as gf
+import deepgeo.common.filesystem as fs
+import deepgeo.common.geofunctions as gf
 
 reload(dtaug)
 reload(dsutils)

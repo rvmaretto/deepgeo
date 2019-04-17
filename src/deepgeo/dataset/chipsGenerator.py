@@ -9,16 +9,16 @@ from osgeo import ogr
 from osgeo import osr  # TODO: Verify if it is really necessary? If I get the SRID from the Raster I still need this?
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))
-import utils.filesystem as fs
-import dataset.sequencialchips as seqchips
+import common.filesystem as fs
+import dataset.sequential_chips as seqchips
 import dataset.random_chips as rdmchips
 
 
 class ChipsGenerator(object):
-    strategies = {
-        'sequential': seqchips.generate_sequential_chips,
-        'random': rdmchips.RandomChipGenerator
-    }
+    # strategies = {
+    #     'sequential': seqchips.generate_sequential_chips,
+    #     'random': rdmchips.RandomChipGenerator
+    # }
 
     def __init__(self, path_img, labeled_img, class_names, strategy='sequential', base_raster_path=None):
         self.strategy = strategy

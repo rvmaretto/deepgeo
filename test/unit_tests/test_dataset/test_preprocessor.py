@@ -1,17 +1,17 @@
 from nose.tools import *
 from os import path
 import sys
-import warnings
+# import warnings
 
-sys.path.insert(0, path.join(path.dirname(__file__), ''../../src''))
+sys.path.insert(0, path.join(path.dirname(__file__), '..', '..', '..', 'src'))
 import deepgeo.dataset.preprocessor as prep
-import deepgeo.utils.filesystem as fs
+import deepgeo.common.filesystem as fs
 
 
 # TODO: Improve these tests to compare numerically the results
-class test_preprocessor():
+class TestPreprocessor():
     def setup(self):
-        self.data_dir = path.join(path.dirname(__file__), '../../data)
+        self.data_dir = path.join(path.dirname(__file__), '..', '..', '..', 'data')
         self.pathVector = path.join(self.data_dir, 'prodes_shp_crop.shp')
         self.pathRaster = path.join(self.data_dir, 'raster_B1_B7.tif')
         self.class_column = 'agregClass'
@@ -49,7 +49,7 @@ class test_preprocessor():
         def subtraction(raster, param):
             return raster[:,:,param['b1']] - raster[:,:,param['b2']]
 
-        self.preproc.register_new_func('func', subtraction)
+        self.preproc.register_new_idx_func('func', subtraction)
         new_raster = self.preproc.compute_indexes({
             'func': {
                 'b1': 4,

@@ -1,14 +1,15 @@
-import skimage
-import pylab as plt
-import seaborn as sns
 import numpy as np
 import os
-from skimage import exposure
-from matplotlib.colors import ListedColormap
-# from shapely.geometry import Polygon
+import matplotlib.patches as patches
+import matplotlib.pyplot as plt
+import seaborn as sns
+import skimage
 from descartes import PolygonPatch
-from shapely.wkb import loads
+from matplotlib.colors import ListedColormap
 from osgeo import ogr
+from shapely.wkb import loads
+from skimage import exposure
+# from shapely.geometry import Polygon
 
 
 def plot_rgb_img(raster_array, bands=[1, 2, 3], contrast=False, title="RGB Composition", figsize=(10, 10)):
@@ -57,6 +58,7 @@ def plot_labels(labels_array, class_names, colors=None, title="Labels", figsize=
 
     cbar.ax.get_yaxis().labelpad = 15
 
+
 # TODO: How to plot the raster together? Decrease the blank space from the origin to the data
 def plot_vector_file(path_file, edge_color="black", face_color="red"):
     fig = plt.figure(figsize=(10, 10))
@@ -81,6 +83,7 @@ def plot_vector_file(path_file, edge_color="black", face_color="red"):
         parcel = layer.GetNextFeature()
 
     out_ds.Destroy()
+
 
 def plot_image_histogram(raster_array, cmap=None, nbins = 256, title="Histogram", legend=None):
     fig = plt.figure(figsize=(12, 8))
@@ -114,6 +117,7 @@ def plot_image_histogram(raster_array, cmap=None, nbins = 256, title="Histogram"
 
     plt.show()
 
+
 def plot_image_histogram_lines(raster_array, cmap=None, title="Histogram", legend=None):
     fig = plt.figure(figsize=(12, 8))
     plt.title(title, fontsize=15)
@@ -142,3 +146,30 @@ def plot_image_histogram_lines(raster_array, cmap=None, title="Histogram", legen
         sns.kdeplot(raster_array.ravel(), color=cmap(0), label=legend[0])
 
     plt.show()
+
+
+def plot_chips(chips, raster_array=None, bands=[1, 2, 3], contrast=False, chipscolor='blue'):
+    fig, ax = plt.subplots(1, figsize=(12, 12))
+
+    # Display the image
+    if raster_array is not None:
+        # raster_img = skimage.img_as_ubyte(raster_array)
+        raster_img = raster_array
+        if contrast:
+            for band in bands:
+                p2, p98 = np.percentile(raster_img[:, :, band], (2, 98))
+                raster_img[:, :, band] = exposure.rescale_intensity(raster_img[:, :, band], in_range=(p2, p98))
+
+        if len(bands) == 3:
+            ax.imshow(raster_img[:, :, bands])
+        else:
+            ax.imshow(raster_img[:, :, bands[0]])
+
+        plt.axis('off')
+
+    for coord in chips['win_coords']:
+        width = coord['lower_row'] - coord['upper_row']
+        height = coord['right_col'] - coord['left_col']
+        rect = patches.Rectangle((coord['left_col'], coord['upper_row']), width, height,
+                                  edgecolor=chipscolor, facecolor='none')
+        ax.add_patch(rect)

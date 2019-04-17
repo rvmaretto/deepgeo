@@ -4,8 +4,9 @@ import sys
 import tensorflow as tf
 from os import path
 
-sys.path.insert(0, path.join(path.dirname(__file__),"../"))
-import utils.geofunctions as gf
+sys.path.insert(0, path.join(path.dirname(__file__), '..'))
+import common.geofunctions as gf
+
 
 # ----------------------------------------------------------------- #
 # Predefined Indexes
@@ -22,6 +23,7 @@ def compute_NDVI(np_raster, parameters):
         ndvi = np.ma.true_divide(np.ma.subtract(nir, red), np.ma.add(nir, red))
 
     return ndvi
+
 
 def compute_EVI(np_raster, parameters):
     if parameters is None:
@@ -44,6 +46,7 @@ def compute_EVI(np_raster, parameters):
 
     return evi
 
+
 def compute_EVI2(np_raster, parameters):
     if parameters is None:
         raise AttributeError("Attribute 'parameters' is None.")
@@ -63,6 +66,7 @@ def compute_EVI2(np_raster, parameters):
 # ----------------------------------------------------------------- #
 # Predefined Standardization Functions
 # ----------------------------------------------------------------- #
+
 
 def standardize_median_std(raster_array):
     nbands = raster_array.shape[2]
@@ -88,7 +92,7 @@ def standardize_mean_std(raster_array):
         mean = np.ma.mean(band_norm)
         stddev = np.ma.std(band_norm)
         band_norm = (band_norm - mean) / stddev
-        if (norm_raster_array is None):
+        if norm_raster_array is None:
             norm_raster_array = band_norm
         else:
             norm_raster_array = np.ma.dstack((norm_raster_array, band_norm))
@@ -132,6 +136,7 @@ def reduce_sr(raster_array, params=None):
 # ----------------------------------------------------------------- #
 # Preprocessor class
 # ----------------------------------------------------------------- #
+
 
 class Preprocessor(object):
     predefIndexes = {

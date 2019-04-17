@@ -5,8 +5,8 @@ from os import path
 import csv
 
 sys.path.insert(0, path.join(path.dirname(__file__),"../"))
-import dataset.ds_iterator as ds_it
-import utils.filesystem as fs
+# import dataset.ds_iterator as ds_it
+import common.filesystem as fs
 import networks.fcn1s as fcn1s
 import networks.fcn2s as fcn2s
 import networks.fcn4s as fcn4s

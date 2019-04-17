@@ -1,11 +1,21 @@
 import math
+import os
+import sys
 import numpy as np
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+import common.utils as utils
 
 
 class RandomChipGenerator(object):
+    mandatory_params = ['raster_array', 'labels_array', 'win_size', 'quantity']
+    default_params = {'class_of_interest': None,
+                      'remove_no_data': None}
+
     def __init__(self, params):
+        params = utils.check_dict_parameters(params, self.mandatory_params, self.default_params)
         self.ref_img = params['raster_array']
-        self.labeled_img = params['shp_input']
+        self.labeled_img = params['labels_array']
         self.win_size = params['win_size']
         self.class_of_interest = params['class_of_interest']
         self.quantity = params['quantity']
@@ -25,31 +35,31 @@ class RandomChipGenerator(object):
 
     def compute_window_coords(self, coord):
         window_coords = {}
-        window_coords['upperLin'] = coord[0] - math.floor(self.win_size / 2)
-        window_coords['lowerLin'] = coord[0] + math.ceil(self.win_size / 2)
-        window_coords['rightCol'] = coord[1] + math.floor(self.win_size / 2)
-        window_coords['leftCol'] = coord[1] - math.ceil(self.win_size / 2)
+        window_coords['upper_row'] = coord[0] - math.floor(self.win_size / 2)
+        window_coords['lower_row'] = coord[0] + math.ceil(self.win_size / 2)
+        window_coords['right_col'] = coord[1] + math.floor(self.win_size / 2)
+        window_coords['left_col'] = coord[1] - math.ceil(self.win_size / 2)
 
         # TODO: Review this. Is there a better way to do this?
-        if window_coords['upperLin'] < 0:
-            window_coords['upperLin'] = 0
-            window_coords['lowerLin'] = self.win_size
-        if window_coords['leftCol'] < 0:
-            window_coords['leftCol'] = 0
-            window_coords['rightCol'] = self.win_size
-        if window_coords['lowerLin'] > self.labeled_img.shape[0]:
-            window_coords['lowerLin'] = self.labeled_img.shape[0]
-            window_coords['upperLin'] = window_coords['lowerLin'] - self.win_size
-        if window_coords['rightCol'] > self.labeled_img.shape[1]:
-            window_coords['rightCol'] = self.labeled_img.shape[1]
-            window_coords['leftCol'] = window_coords['rightCol'] - self.win_size
+        if window_coords['upper_row'] < 0:
+            window_coords['upper_row'] = 0
+            window_coords['lower_row'] = self.win_size
+        if window_coords['left_col'] < 0:
+            window_coords['left_col'] = 0
+            window_coords['right_col'] = self.win_size
+        if window_coords['lower_row'] > self.labeled_img.shape[0]:
+            window_coords['lower_row'] = self.labeled_img.shape[0]
+            window_coords['upper_row'] = window_coords['lower_row'] - self.win_size
+        if window_coords['right_col'] > self.labeled_img.shape[1]:
+            window_coords['right_col'] = self.labeled_img.shape[1]
+            window_coords['left_col'] = window_coords['right_col'] - self.win_size
 
         return window_coords
 
     def extract_windows(self, coord):
         window = self.compute_window_coords(coord)
-        sample_img = self.ref_img[window['upperLin']:window['lowerLin'], window['leftCol']:window['rightCol']]
-        sample_label = self.labeled_img[window['upperLin']:window['lowerLin'], window['leftCol']:window['rightCol']]
+        sample_img = self.ref_img[window['upper_row']:window['lower_row'], window['left_col']:window['right_col']]
+        sample_label = self.labeled_img[window['upper_row']:window['lower_row'], window['left_col']:window['right_col']]
 
         return sample_img, sample_label, window
 
@@ -66,17 +76,17 @@ class RandomChipGenerator(object):
     # count = 0
     # for coord in self.ij_samples:
     #     window = self.compute_window_coords(coord)
-    #     sampleImg = self.ref_img[window['upperLin']:window['lowerLin'], window['leftCol']:window['rightCol']]
-    #     sampleLabel = self.labeled_img[window['upperLin']:window['lowerLin'], window['leftCol']:window['rightCol']]
+    #     sampleImg = self.ref_img[window['upper_row']:window['lower_row'], window['left_col']:window['right_col']]
+    #     sampleLabel = self.labeled_img[window['upper_row']:window['lower_row'], window['left_col']:window['right_col']]
     #
     #     while np.count_nonzero(sampleLabel.mask) != 0:
     #         indice = np.random.choice(np.arange(len(self.sample_candidates)), 1, replace=False)
     #         coord = self.sample_candidates[indice][0]
     #         self.ij_samples[count] = coord
     #         window = self.compute_window_coords(coord)
-    #         sampleImg = self.ref_img[window['upperLin']:window['lowerLin'], window['leftCol']:window['rightCol']]
-    #         sampleLabel = self.labeled_img[window['upperLin']:window['lowerLin'],
-    #                       window['leftCol']:window['rightCol']]
+    #         sampleImg = self.ref_img[window['upper_row']:window['lower_row'], window['left_col']:window['right_col']]
+    #         sampleLabel = self.labeled_img[window['upper_row']:window['lower_row'],
+    #                       window['left_col']:window['right_col']]
     #
     #     self.samples_img.append(sampleImg)
     #     self.samples_labels.append(sampleLabel)
