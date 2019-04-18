@@ -4,16 +4,17 @@ import sys
 from osgeo import gdal
 from osgeo import ogr
 
-#sys.path.insert(0, path.join(path.dirname(__file__),"../"))
-#import utils.geofunctions as gf
+# sys.path.insert(0, path.join(path.dirname(__file__),"../"))
+# import utils.geofunctions as gf
+
 
 class Rasterizer(object):
-    def __init__(self, vector_file, in_raster_file, class_column="class", classes_interest=None,
-                 non_class_name="non_class", nodata_val=255):        
+    def __init__(self, vector_file, in_raster_file, class_column='class', classes_interest=None,
+                 non_class_name='non_class'):  # , nodata_val=255):
         self.vector_path = vector_file
         self.raster_path = in_raster_file
         self.class_column = class_column
-        self.nodata_val = nodata_val
+        self.no_data = 0
         self.base_raster = gdal.Open(self.raster_path) #gf.load_image(self.raster_path)
         if not classes_interest is None:
             self.classes_interest = [non_class_name] + classes_interest
@@ -61,8 +62,8 @@ class Rasterizer(object):
         mem_raster.SetProjection(self.base_raster.GetProjection())
         mem_raster.SetGeoTransform(self.base_raster.GetGeoTransform())
         mem_band = mem_raster.GetRasterBand(1)
-        mem_band.Fill(self.nodata_val)
-        mem_band.SetNoDataValue(self.nodata_val)
+        mem_band.Fill(self.no_data)
+        mem_band.SetNoDataValue(self.no_data)
 
         err = gdal.RasterizeLayer(
             mem_raster,
@@ -86,12 +87,12 @@ class Rasterizer(object):
 
         for lid, label in enumerate(self.class_names):
             if self.classes_interest is None:
-                value = self.class_names.index(label)
+                value = self.class_names.index(label) + 1
             else:
                 if label in self.classes_interest:
                     value = self.classes_interest.index(label)
                 else:
-                    value = self.classes_interest.index(self.non_class)
+                    value = self.classes_interest.index(self.non_class) + 1
             
             vector_layer.SetAttributeFilter("%s='%s'" % (str(self.class_column), str(label)))
             limg = self.rasterize_label(vector_layer)
@@ -110,10 +111,10 @@ class Rasterizer(object):
 
     def save_labeled_raster_to_gtiff(self, path_tiff):
         driver = gdal.GetDriverByName('GTiff')
-        out_xSize = self.base_raster.GetRasterBand(1).XSize
-        out_ySize = self.base_raster.GetRasterBand(1).YSize
-        output_ds = driver.Create(path_tiff, out_xSize, out_ySize, 1)
+        out_x_size = self.base_raster.GetRasterBand(1).XSize
+        out_y_size = self.base_raster.GetRasterBand(1).YSize
+        output_ds = driver.Create(path_tiff, out_x_size, out_y_size, 1)
         output_ds.SetProjection(self.base_raster.GetProjection())
         output_ds.SetGeoTransform(self.base_raster.GetGeoTransform())
         output_band = output_ds.GetRasterBand(1)
-        output_band.WriteArray(np.ma.filled(self.labeled_raster[:,:,0], self.nodata_val))
+        output_band.WriteArray(np.ma.filled(self.labeled_raster[:, :, 0], self.no_data))
