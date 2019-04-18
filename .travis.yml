@@ -1,5 +1,5 @@
 language: python
-rvm:
+python:
   - "3.5"
 install:
   - sudo apt-get update
@@ -19,12 +19,13 @@ install:
   - conda info -a
 
   # Replace dep1 dep2 ... with your dependencies
-  - conda create -q -n test-environment python=3.5
+  - conda create -q -n test-environment python=3.5 anaconda
   - source activate test-environment
-  - pip install tensorflow-gpu
+  - pip install tensorflow
   - conda install gdal
   - pip install nose
   - pip install matplotlib
   - pip install pillow
   - pip install scipy
-script: nosetests
+  - pip install sklearn
+script: nosetests -vv
