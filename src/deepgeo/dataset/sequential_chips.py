@@ -1,8 +1,10 @@
+import gdal
+import math
 import numpy as np
+import osr
 import os
 import sys
-import gdal
-import osr
+
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 import common.utils as utils
@@ -13,7 +15,8 @@ class SequentialChipGenerator(object):
     default_params = {'labels_array': None,
                       'overlap': (0, 0),
                       'class_of_interest': None,
-                      'remove_no_data': None}  # TODO: Allow here to define the threshold percentage of no_data pixels to remove the chip
+                      'perc_discard_nd': None,  # TODO: Allow here to define the threshold percentage of no_data pixels to remove the chip
+                      'no_data': 0}
 
     def __init__(self, params):
         params = utils.check_dict_parameters(params, self.mandatory_params, self.default_params)
@@ -22,7 +25,8 @@ class SequentialChipGenerator(object):
         self.win_size = params['win_size']
         self.overlap = params['overlap']
         self.class_of_interest = params['class_of_interest']
-        self.remove_no_data = params['remove_no_data']
+        self.perc_discard_nd = params['perc_discard_nd']
+        self.no_data = params['no_data']
 
     def compute_indexes(self):
         row_size, col_size, nbands = self.img_array.shape
@@ -63,15 +67,23 @@ class SequentialChipGenerator(object):
 
     def generate_chips(self):
         self.compute_indexes()
-        samples_img, samples_labels, windows = zip(*map(self.extract_windows, self.win_coords))
+        samples_img, samples_labels, windows = [list(a) for a in zip(*map(self.extract_windows, self.win_coords))]
 
         if self.labeled_array is not None:
+            # if self.perc_discard_nd is not None:
+            #     positions_remove = []
+            #     total_pixels = math.pow(self.win_size, 2)
+            #     for i in range(0, len(samples_labels)):
+            #         perc_no_data = np.count_nonzero(samples_labels[i].mask == 0) / total_pixels
+            #         if perc_no_data > self.perc_discard_nd:
+            #             positions_remove.append(i)
             return {'chips': samples_img,
                     'labels': samples_labels,
                     'win_coords': windows}
         else:
             return {'chips': samples_img,
                     'win_coords': windows}
+
 
 
 # def generate_sequential_chips(img_array, chip_size=286, overlap=(0, 0), remove_no_data=True):
