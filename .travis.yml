@@ -19,13 +19,13 @@ install:
   - conda info -a
 
   # Replace dep1 dep2 ... with your dependencies
-  - conda create -q -n test-environment python=3.5
+  - conda create -q -n test-environment python=3.5 anaconda
   - source activate test-environment
   - pip install tensorflow
-  - conda install gdal -c conda-forge
+  - conda install gdal
   - pip install nose
   - pip install matplotlib
   - pip install pillow
   - pip install scipy
   - pip install sklearn
-script: nosetests
+script: nosetests -vv
