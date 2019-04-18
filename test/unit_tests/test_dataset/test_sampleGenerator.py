@@ -59,7 +59,7 @@
 #         smpGen = sg.SampleGenerator(self.raster_img, self.rasterized_layer, self.class_names, self.pathRaster)
 #         smpGen.compute_indexes(5)
 #         smpGen.extract_windows(win_size=5)
-#         samples = smpGen.getSamples()
+#         samples = smpGen.get_samples()
 #
 #         for window in samples["img_samples"]:
 #             assert_equal(5, window.shape[0])
