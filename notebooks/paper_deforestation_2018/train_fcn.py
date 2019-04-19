@@ -17,7 +17,7 @@ import deepgeo.networks.model_builder as mb
 # DATA_DIR = os.path.join(os.path.abspath(os.path.dirname('__file__')), '../', 'data_real', 'generated')
 network = 'unet'
 DATA_DIR = '/home/raian/doutorado/Dados/generated'
-DATASET_FILE = os.path.join(DATA_DIR, 'dataset_286x286_timesstack-2015-2016.npz')
+DATASET_FILE = os.path.join(DATA_DIR, 'new_dataset_286x286_timesstack-2013-2017.npz')
 
 model_dir = os.path.join(DATA_DIR, 'tf_logs', network,
                          'test_%s_%s' % (network, datetime.now().strftime('%d_%m_%Y-%H_%M_%S')))
@@ -80,8 +80,8 @@ values, count = np.unique(train_labels, return_counts=True)
 print('Class Values: ', values, '  - Count: ', count)
 print('Class Names: ', dataset['classes'])
 
-defor_proportion = count[1] / (count[0] + count[1])
-non_defor_proportion = count[0] / (count[0] + count[1])
+defor_proportion = count[2] / (count[1] + count[2])
+non_defor_proportion = count[1] / (count[1] + count[2])
 print('Defining weights for classes:')
 print('  -> Deforestation Proportion: ', defor_proportion)
 print('  -> Non deforestation Proportion: ', non_defor_proportion)
@@ -104,7 +104,7 @@ print('  -> Weights: [', weight_non_defor, ', ', weight_defor, ']')
 # # Train the Network
 params = {
     'epochs': 100,
-    'batch_size': 100,
+    'batch_size': 30,
     'learning_rate': 0.1,
     'learning_rate_decay': True,
     'decay_rate': 0.95,
@@ -115,7 +115,7 @@ params = {
     # 'dropout_rate': 0.5,  # TODO: Put a bool parameter to apply or not Dropout
     'fusion': 'early',
     'loss_func': 'weighted_crossentropy',
-    'class_weights': weight_defor,  # [weight_non_defor, weight_defor],
+    'class_weights': [0, weight_non_defor, weight_defor],
     'num_classes': len(dataset['classes']),
     'num_compositions': 2,
     'bands_plot': [[1, 2, 3], [6, 7, 8]],

@@ -116,12 +116,12 @@ class ModelBuilder(object):
         # }
 
         # loss = tf.losses.sigmoid_cross_entropy(labels_1hot, output)
-        loss = lossf.weighted_binary_cross_entropy(logits, labels, params['class_weights'])
+        # loss = lossf.weighted_binary_cross_entropy(logits, labels, params['class_weights'])
         # loss = tf.losses.softmax_cross_entropy(labels_1hot, logits)
         # loss = lossf.twoclass_cost(output, labels)
         # loss = lossf.inverse_mean_iou(logits, labels_1hot, num_classes)
         # loss = lossf.avg_soft_dice(logits, labels_1hot)
-        # loss = lossf.weighted_cross_entropy(logits, labels_1hot, params['class_weights'], params['num_classes'])
+        loss = lossf.weighted_cross_entropy(logits, labels_1hot, params['class_weights'], params['num_classes'])
         # loss_func = self.losses_switcher.get(params['loss_func'], lossf.unknown_loss_error)
         # loss = loss_func(loss_params)
 
@@ -142,7 +142,7 @@ class ModelBuilder(object):
 
         optimizer = tf.train.AdamOptimizer(learning_rate=params['learning_rate'], name='Optimizer')
         # optimizer = tf.contrib.opt.NadamOptimizer(params['learning_rate'], name='Optimizer')
-        optimizer = tf.contrib.estimator.TowerOptimizer(optimizer)
+        # optimizer = tf.contrib.estimator.TowerOptimizer(optimizer)
 
         if training:
             with tf.control_dependencies(update_ops):
@@ -211,8 +211,8 @@ class ModelBuilder(object):
 
         # TODO: Verify why it is breaking here
         # with tf.contrib.tfprof.ProfileContext(path.join(output_dir, "profile")) as pctx:
-        estimator = tf.estimator.Estimator(#model_fn=self.model_description,
-                                        model_fn=tf.contrib.estimator.replicate_model_fn(self.__build_model),
+        estimator = tf.estimator.Estimator(model_fn=self.__build_model,
+                                        #model_fn=tf.contrib.estimator.replicate_model_fn(self.__build_model),
                                         model_dir=output_dir,
                                         params=params)#,
                                         # config=config)
