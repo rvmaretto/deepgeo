@@ -90,7 +90,7 @@ class Rasterizer(object):
                 value = self.class_names.index(label) + 1
             else:
                 if label in self.classes_interest:
-                    value = self.classes_interest.index(label)
+                    value = self.classes_interest.index(label) + 1
                 else:
                     value = self.classes_interest.index(self.non_class) + 1
             
