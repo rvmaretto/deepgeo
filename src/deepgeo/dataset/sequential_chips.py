@@ -67,7 +67,7 @@ class SequentialChipGenerator(object):
 
     def generate_chips(self):
         self.compute_indexes()
-        samples_img, samples_labels, windows = [list(a) for a in zip(*map(self.extract_windows, self.win_coords))]
+        samples_img, samples_labels, windows = [np.asarray(a) for a in zip(*map(self.extract_windows, self.win_coords))]
 
         if self.labeled_array is not None:
             # if self.perc_discard_nd is not None:
