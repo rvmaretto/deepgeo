@@ -1,17 +1,12 @@
-# import tensorflow as tf
 import numpy as np
 import os
 import sys
-import math
-# import skimage
-# import pylab as plt
 from importlib import reload
 from datetime import datetime
 
 sys.path.insert(0, '../../src')
 import deepgeo.dataset.data_augment as dtaug
 import deepgeo.dataset.utils as dsutils
-# import deepgeo.utils.geofunctions as gf
 import deepgeo.networks.model_builder as mb
 
 # # Load input Dataset
@@ -22,23 +17,14 @@ import deepgeo.networks.model_builder as mb
 # DATA_DIR = os.path.join(os.path.abspath(os.path.dirname('__file__')), '../', 'data_real', 'generated')
 network = 'unet'
 DATA_DIR = '/home/raian/doutorado/Dados/generated'
-DATASET_FILE = os.path.join(DATA_DIR, 'dataset_286x286_timesstack-2015-2016.npz')#'dataset_1.npz')
+DATASET_FILE = os.path.join(DATA_DIR, 'dataset_286x286_timesstack-2015-2016.npz')
 
-model_dir = os.path.join(DATA_DIR, 'tf_logs', 'test_%s_%s' % (network, datetime.now().strftime('%d_%m_%Y-%H_%M_%S')))
+model_dir = os.path.join(DATA_DIR, 'tf_logs', network,
+                         'test_%s_%s' % (network, datetime.now().strftime('%d_%m_%Y-%H_%M_%S')))
 # model_dir = '/home/raian/doutorado/deepgeo/data_real/generated/tf_logs/test_debug'
 #model_dir = os.path.join(DATA_DIR, 'tf_logs', 'test_unet_lf_17_12_2018-22_39_13')
 
-
 # In[ ]:
-
-
-# raster_path = os.path.join(DATA_DIR, '..', 'Landsat8_225064_17072016_R6G5B4_clip.tif')
-raster_path = os.path.join(DATA_DIR, 'stacked_mosaic_2016_2017.tif')
-# raster_path = os.path.join(DATA_DIR, 'stacked_mosaic_2016_2017.tif')
-
-
-# In[ ]:
-
 
 dataset = np.load(DATASET_FILE)
 
@@ -122,17 +108,18 @@ params = {
     'learning_rate': 0.1,
     'learning_rate_decay': True,
     'decay_rate': 0.95,
-    'decay_steps': 260,
-    'l2_reg_rate': 0.5,
-    'var_scale_factor': 2.0,
+    'decay_steps': 1286,
+    'l2_reg_rate': 0.0005,
+    # 'var_scale_factor': 2.0,  # TODO: Put the initializer as parameter
     'chips_tensorboard': 2,
-    'dropout_rate': 0.5,
+    # 'dropout_rate': 0.5,  # TODO: Put a bool parameter to apply or not Dropout
     'fusion': 'early',
     'loss_func': 'weighted_crossentropy',
-    'class_weights': weight_defor,#[weight_non_defor, weight_defor],
+    'class_weights': weight_defor,  # [weight_non_defor, weight_defor],
     'num_classes': len(dataset['classes']),
     'num_compositions': 2,
-    'bands_plot': [[1, 2, 3], [6, 7, 8]]
+    'bands_plot': [[1, 2, 3], [6, 7, 8]],
+    'Notes': 'Testing smaller L2 reg. rate. Changing Variance scale to Xavier initializer. Removing dropout.'
 }
 
 

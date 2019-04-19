@@ -15,9 +15,9 @@ def unet_encoder(samples, params, mode, name_sufix=''):
     if params['fusion'] == 'early':
         total_channels = samples.get_shape().as_list()[3]
         num_channels = round(total_channels / 2)
-        samples = tf.layers.conv2d(samples, filters=num_channels, kernel_size=(1,1), strides=1,
+        samples = tf.layers.conv2d(samples, filters=num_channels, kernel_size=(1, 1), strides=1,
                                    padding='valid', activation=tf.nn.relu,
-                                   kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
+                                   kernel_initializer=tf.contrib.layers.xavier_initializer(),
                                    name='time_fusion')
 
     # TODO: review the whole implementation, the number of filters and all the parameters
@@ -115,15 +115,16 @@ def unet_decoder(features, params, mode):
     # print('SHAPE conv_9: ', conv_9.shape)
     # print('SHAPE conv_9_1: ', conv_9_1.shape)
 
-    dropout = tf.layers.dropout(conv_9_1, rate=params['dropout_rate'], training=training, name='dropout')
+    # dropout = tf.layers.dropout(conv_9_1, rate=params['dropout_rate'], training=training, name='dropout')
 
-    logits = tf.layers.conv2d(dropout, params['num_classes'], (1, 1), activation=tf.nn.relu, padding='valid',
-                              kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
+    logits = tf.layers.conv2d(conv_9_1, params['num_classes'], (1, 1), activation=tf.nn.relu, padding='valid',
+                              kernel_initializer=tf.contrib.layers.xavier_initializer(),
                               name='logits')
 
     # print('LOGITS SHAPE: ', logits.shape)
 
     return logits
+
 
 def unet_description(samples, labels, params, mode, config):
     # tf.logging.set_verbosity(tf.logging.INFO)
@@ -137,43 +138,3 @@ def unet_description(samples, labels, params, mode, config):
     logits = unet_decoder(encoded_feat, params, mode)
 
     return logits
-    # if mode == tf.estimator.ModeKeys.PREDICT:
-    #     return tf.estimator.EstimatorSpec(mode=mode, predictions=output)
-
-    # cropped_labels = tf.cast(layers.crop_features(labels, output.shape[1], name='labels'), tf.float32)
-
-    # cropped_labels = tf.cast(cropped_labels, tf.float32)
-    # loss = lossf.twoclass_cost(output, cropped_labels)
-    #
-    # optimizer = tf.contrib.opt.NadamOptimizer(learning_rate, name='Optimizer')
-    # optimizer = tf.contrib.estimator.TowerOptimizer(optimizer) #TODO: Verify if removing this it plots losses together
-    #
-    # tbm.plot_chips_tensorboard(samples, cropped_labels, output, bands_plot=params['bands_plot'],
-    #                            num_chips=params['chips_tensorboard'])
-    #
-    # metrics, summaries = tbm.define_quality_metrics(cropped_labels, output, loss)
-    #
-    # update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-    #
-    # with tf.control_dependencies(update_ops):
-    #     train_op = optimizer.minimize(loss=loss, global_step=tf.train.get_global_step())
-    #
-    # # train_summary_hook = tf.train.SummarySaverHook(save_steps=1,
-    # #                                               output_dir=config.model_dir,
-    # #                                               summary_op=tf.summary.merge_all())
-    #
-    # eval_summary_hook = tf.train.SummarySaverHook(save_steps=10,
-    #                                               output_dir=config.model_dir + '/eval',
-    #                                               summary_op=tf.summary.merge_all())
-    #
-    # eval_metric_ops = {'eval_metrics/accuracy': metrics['accuracy'],
-    #                    'eval_metrics/f1-score': metrics['f1_score'],
-    #                    'eval_metrics/cross_entropy': metrics['cross_entropy']}
-    #
-    # return tf.estimator.EstimatorSpec(mode=mode,
-    #                                   predictions=output,
-    #                                   loss=loss,
-    #                                   train_op=train_op,
-    #                                   eval_metric_ops=eval_metric_ops,
-    #                                   evaluation_hooks=[eval_summary_hook])
-    #                                   # training_hooks=[train_summary_hook])

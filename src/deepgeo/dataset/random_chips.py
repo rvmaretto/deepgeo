@@ -65,7 +65,7 @@ class RandomChipGenerator(object):
 
     def generate_chips(self):
         self.compute_indexes()
-        samples_img, samples_label, windows = zip(*map(self.extract_windows, self.ij_samples))
+        samples_img, samples_label, windows = [np.asarray(a) for a in zip(*map(self.extract_windows, self.ij_samples))]
         return {'chips': samples_img,
                 'labels': samples_label,
                 'win_coords': windows}

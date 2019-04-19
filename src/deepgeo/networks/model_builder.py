@@ -165,9 +165,9 @@ class ModelBuilder(object):
                                                    'cross_entropy': metrics['cross_entropy'][1],
                                                    # 'mean_iou': metrics['mean_iou'][0],
                                                    'learning_rate': params['learning_rate']},
-                                                  every_n_iter=25)
+                                                  every_n_iter=100)
 
-        eval_summary_hook = tf.train.SummarySaverHook(save_steps=25,
+        eval_summary_hook = tf.train.SummarySaverHook(save_steps=100,
                                                       # Review this. Try to save in the same steps of the quality_metrics
                                                       output_dir=config.model_dir + "/eval",
                                                       summary_op=tf.summary.merge_all())

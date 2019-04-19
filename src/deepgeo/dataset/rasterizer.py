@@ -23,9 +23,6 @@ class Rasterizer(object):
         self.non_class = non_class_name
         self.class_names = []
 
-    # def get_base_raster(self):
-        # return self.base_raster
-
     def get_class_names(self):
         if self.classes_interest is None:
             return self.class_names
