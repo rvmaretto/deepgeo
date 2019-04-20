@@ -96,6 +96,21 @@ weight_non_defor = mean_proportion / non_defor_proportion
 print('  -> Weights: [', weight_non_defor, ', ', weight_defor, ']')
 
 
+# TODO: Finish this implementation.
+# def compute_weights_mean_proportion(batch_array, classes, classes_zero=['no_data']):
+#     weights = []
+#     proportions = []
+#
+#
+#     for i in range(0, len(classes)):
+#         values, count = np.unique(batch_array, return_counts=True)
+#         # TODO: COmpute proportions and weights in separated for, to filter the.
+#     if classes[i] not in classes_zero:
+#         prop = count[i] /
+#     else:
+#         weights.append(0)
+
+
 # # Train the Network
 
 # In[ ]:
@@ -104,7 +119,7 @@ print('  -> Weights: [', weight_non_defor, ', ', weight_defor, ']')
 # # Train the Network
 params = {
     'epochs': 100,
-    'batch_size': 30,
+    'batch_size': 40,
     'learning_rate': 0.1,
     'learning_rate_decay': True,
     'decay_rate': 0.95,
