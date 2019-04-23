@@ -59,21 +59,21 @@ def flip_images(images, data_type=np.float32):
     flipped_imgs = []
     tf.reset_default_graph()
     
-    with tf.device('/cpu:0'): #TODO: REmove this. Try to distribute on the GPUs according to the available mem
-        tf_img = tf.placeholder(data_type, shape=images[0].shape)
-        tf_img1 = tf.image.flip_left_right(tf_img)
-        tf_img2 = tf.image.flip_up_down(tf_img)
-        tf_img3 = tf.image.transpose_image(tf_img)
+    # with tf.device('/cpu:0'): #TODO: REmove this. Try to distribute on the GPUs according to the available mem
+    tf_img = tf.placeholder(data_type, shape=images[0].shape)
+    tf_img1 = tf.image.flip_left_right(tf_img)
+    tf_img2 = tf.image.flip_up_down(tf_img)
+    tf_img3 = tf.image.transpose_image(tf_img)
 
-        # with tf.Session(config=config) as sess:
-        with tf.Session() as sess:
-            sess.run(tf.global_variables_initializer())
+    # with tf.Session(config=config) as sess:
+    with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
 
-            for img in images:
-                flipped = sess.run([tf_img1, tf_img2, tf_img3], feed_dict={tf_img: img})
-                flipped_imgs.extend(flipped)
+        for img in images:
+            flipped = sess.run([tf_img1, tf_img2, tf_img3], feed_dict={tf_img: img})
+            flipped_imgs.extend(flipped)
 
-            sess.close()
+        sess.close()
 
-        flipped_imgs = np.array(flipped_imgs, dtype=data_type)
-        return flipped_imgs
+    flipped_imgs = np.array(flipped_imgs, dtype=data_type)
+    return flipped_imgs
