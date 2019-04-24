@@ -1,11 +1,6 @@
-import math
-# import sys
-import numpy as np
 import tensorflow as tf
-# from os import path
-
-# sys.path.insert(0, path.join(path.dirname(__file__), '../'))
-# import common.utils as utils
+import math
+import numpy as np
 
 
 # Methods based on https://medium.com/ymedialabs-innovation/data-augmentation-techniques-in-cnn-using-tensorflow-371ae43d5be9#f8ea
@@ -29,7 +24,6 @@ def rotate_images(images, angles, data_type=np.float32):
     # print(images[0].shape)
     # print(tf_shape)
 
-    rotated_imgs = []
 
     # TODO: Links bellow can help to distribute on the GPUs:
     # https://stackoverflow.com/questions/38559755/how-to-get-current-available-gpus-in-tensorflow
@@ -42,6 +36,7 @@ def rotate_images(images, angles, data_type=np.float32):
 
     # with tf.Session(config=config) as sess:
     with tf.Session() as sess:
+        rotated_imgs = []
         sess.run(tf.global_variables_initializer())
         for angle in angles:
             radian_angle = angle * math.pi / 180
