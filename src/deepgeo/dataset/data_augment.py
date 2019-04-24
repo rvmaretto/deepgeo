@@ -1,11 +1,11 @@
 import math
-import sys
+# import sys
 import numpy as np
 import tensorflow as tf
-from os import path
+# from os import path
 
-sys.path.insert(0, path.join(path.dirname(__file__), '../'))
-import common.utils as utils
+# sys.path.insert(0, path.join(path.dirname(__file__), '../'))
+# import common.utils as utils
 
 
 # Methods based on https://medium.com/ymedialabs-innovation/data-augmentation-techniques-in-cnn-using-tensorflow-371ae43d5be9#f8ea
@@ -35,23 +35,23 @@ def rotate_images(images, angles, data_type=np.float32):
     # https://stackoverflow.com/questions/38559755/how-to-get-current-available-gpus-in-tensorflow
     # https://www.tensorflow.org/guide/using_gpu
     # http://blog.s-schoener.com/2017-12-15-parallel-tensorflow-intro/
-    with tf.device(utils.get_available_gpus()):  # TODO: Remove this. Try to distribute on the GPUs according to the available mem
-        img = tf.placeholder(data_type, shape=tf_shape)
-        radian = tf.placeholder(tf.float32, shape=len(images))
-        tf_img = tf.contrib.image.rotate(img, radian)
+    # with tf.device('/cpu:0'):  # TODO: Remove this. Try to distribute on the GPUs according to the available mem
+    img = tf.placeholder(data_type, shape=tf_shape)
+    radian = tf.placeholder(tf.float32, shape=len(images))
+    tf_img = tf.contrib.image.rotate(img, radian)
 
-        # with tf.Session(config=config) as sess:
-        with tf.Session() as sess:
-            sess.run(tf.global_variables_initializer())
-            for angle in angles:
-                radian_angle = angle * math.pi / 180
-                radian_list = [radian_angle] * len(images)
-                rot_img = sess.run(tf_img, feed_dict={img: images,
-                                                      radian: radian_list})
-                rotated_imgs.extend(rot_img)
+    # with tf.Session(config=config) as sess:
+    with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
+        for angle in angles:
+            radian_angle = angle * math.pi / 180
+            radian_list = [radian_angle] * len(images)
+            rot_img = sess.run(tf_img, feed_dict={img: images,
+                                                  radian: radian_list})
+            rotated_imgs.extend(rot_img)
 
-            sess.close()
-        return np.array(rotated_imgs, dtype=data_type)
+        sess.close()
+    return np.array(rotated_imgs, dtype=data_type)
 
 
 def flip_images(images, data_type=np.float32):
