@@ -15,11 +15,11 @@ import deepgeo.networks.model_builder as mb
 
 
 # DATA_DIR = os.path.join(os.path.abspath(os.path.dirname('__file__')), '../', 'data_real', 'generated')
-network = 'unet'
+network = 'unet_lf'
 DATA_DIR = '/home/raian/doutorado/Dados/generated'
 DATASET_FILE = os.path.join(DATA_DIR, 'new_dataset_286x286_timesstack-2013-2017.npz')
 
-model_dir = os.path.join(DATA_DIR, 'tf_logs', network,
+model_dir = os.path.join(DATA_DIR, 'tf_logs', 'experiments', network,
                          'test_%s_%s' % (network, datetime.now().strftime('%d_%m_%Y-%H_%M_%S')))
 # model_dir = '/home/raian/doutorado/deepgeo/data_real/generated/tf_logs/test_debug'
 #model_dir = os.path.join(DATA_DIR, 'tf_logs', 'test_unet_lf_17_12_2018-22_39_13')
@@ -128,7 +128,7 @@ params = {
     # 'var_scale_factor': 2.0,  # TODO: Put the initializer as parameter
     'chips_tensorboard': 2,
     # 'dropout_rate': 0.5,  # TODO: Put a bool parameter to apply or not Dropout
-    'fusion': 'early',
+    'fusion': 'late',
     'loss_func': 'weighted_crossentropy',
     'class_weights': [0, weight_non_defor, weight_defor],
     'num_classes': len(dataset['classes']),
