@@ -15,7 +15,7 @@ import deepgeo.networks.model_builder as mb
 
 
 # DATA_DIR = os.path.join(os.path.abspath(os.path.dirname('__file__')), '../', 'data_real', 'generated')
-network = 'unet_lf'
+network = 'unet'
 DATA_DIR = '/home/raian/doutorado/Dados/generated'
 DATASET_FILE = os.path.join(DATA_DIR, 'new_dataset_286x286_timesstack-2013-2017.npz')
 
@@ -76,39 +76,18 @@ print('  -> Test Images: ', test_images.shape)
 print('  -> Test Labels: ', test_labels.shape)
 
 
-values, count = np.unique(train_labels, return_counts=True)
-print('Class Values: ', values, '  - Count: ', count)
-print('Class Names: ', dataset['classes'])
+# TODO: Put this in the __get_loss() in the model builder. Or create a class Losses.
+def compute_weights_mean_proportion(batch_array, classes, classes_zero=['no_data']):
+    values, count = np.unique(batch_array, return_counts=True)
+    count = [count[i] if classes[i] not in classes_zero else 0 for i in range(0, len(count))]
+    total = sum(count)
+    proportions = [i / total for i in count]
+    mean_prop = sum(proportions)/ (len(proportions) - len(classes_zero))
+    weights = [mean_prop / i if i != 0 else 0 for i in proportions]
+    return weights
 
-defor_proportion = count[2] / (count[1] + count[2])
-non_defor_proportion = count[1] / (count[1] + count[2])
-print('Defining weights for classes:')
-print('  -> Deforestation Proportion: ', defor_proportion)
-print('  -> Non deforestation Proportion: ', non_defor_proportion)
-
-print('Ratio: ', non_defor_proportion / defor_proportion)
-
-mean_proportion = (defor_proportion + non_defor_proportion) / 2
-print('  -> Median Proportion: ', mean_proportion)
-weight_defor = mean_proportion / defor_proportion
-weight_non_defor = mean_proportion / non_defor_proportion
-
-print('  -> Weights: [', weight_non_defor, ', ', weight_defor, ']')
-
-
-# TODO: Finish this implementation.
-# def compute_weights_mean_proportion(batch_array, classes, classes_zero=['no_data']):
-#     weights = []
-#     proportions = []
-#
-#
-#     for i in range(0, len(classes)):
-#         values, count = np.unique(batch_array, return_counts=True)
-#         # TODO: COmpute proportions and weights in separated for, to filter the.
-#     if classes[i] not in classes_zero:
-#         prop = count[i] /
-#     else:
-#         weights.append(0)
+weights_train = compute_weights_mean_proportion(train_labels, dataset['classes'])
+weights_eval = compute_weights_mean_proportion(test_labels, dataset['classes'])
 
 
 # # Train the Network
@@ -130,11 +109,11 @@ params = {
     # 'dropout_rate': 0.5,  # TODO: Put a bool parameter to apply or not Dropout
     'fusion': 'late',
     'loss_func': 'weighted_crossentropy',
-    'class_weights': [0, weight_non_defor, weight_defor],
+    'class_weights': {'train': weights_train, 'eval': weights_eval},
     'num_classes': len(dataset['classes']),
     'num_compositions': 2,
     'bands_plot': [[1, 2, 3], [6, 7, 8]],
-    'Notes': 'Testing smaller L2 reg. rate. Changing Variance scale to Xavier initializer. Removing dropout.'
+    'Notes': 'Different weights for train and eval. Testing smaller L2 reg. rate. Changing Variance scale to Xavier initializer. Removing dropout.'
 }
 
 

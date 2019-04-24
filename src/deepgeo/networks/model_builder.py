@@ -121,7 +121,8 @@ class ModelBuilder(object):
         # loss = lossf.twoclass_cost(output, labels)
         # loss = lossf.inverse_mean_iou(logits, labels_1hot, num_classes)
         # loss = lossf.avg_soft_dice(logits, labels_1hot)
-        loss = lossf.weighted_cross_entropy(logits, labels_1hot, params['class_weights'], params['num_classes'])
+        loss = lossf.weighted_cross_entropy(logits, labels_1hot, params['class_weights'], params['num_classes'],
+                                            training)
         # loss_func = self.losses_switcher.get(params['loss_func'], lossf.unknown_loss_error)
         # loss = loss_func(loss_params)
 
