@@ -4,7 +4,7 @@ import numpy as np
 from os import path
 import csv
 
-sys.path.insert(0, path.join(path.dirname(__file__),"../"))
+sys.path.insert(0, path.join(path.dirname(__file__), '../'))
 # import dataset.ds_iterator as ds_it
 import common.filesystem as fs
 import networks.fcn1s as fcn1s
