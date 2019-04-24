@@ -42,16 +42,16 @@ def rotate_images(images, angles, data_type=np.float32):
             tf_img = tf.contrib.image.rotate(img, radian)
 
             # with tf.Session(config=config) as sess:
-        with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
-            sess.run(tf.global_variables_initializer())
-            for angle in angles:
-                radian_angle = angle * math.pi / 180
-                radian_list = [radian_angle] * len(images)
-                rot_img = sess.run(tf_img, feed_dict={img: images,
-                                                      radian: radian_list})
-                rotated_imgs.extend(rot_img)
+            with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
+                sess.run(tf.global_variables_initializer())
+                for angle in angles:
+                    radian_angle = angle * math.pi / 180
+                    radian_list = [radian_angle] * len(images)
+                    rot_img = sess.run(tf_img, feed_dict={img: images,
+                                                          radian: radian_list})
+                    rotated_imgs.extend(rot_img)
 
-            sess.close()
+                sess.close()
         return np.array(rotated_imgs, dtype=data_type)
 
 
