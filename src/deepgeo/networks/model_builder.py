@@ -295,8 +295,9 @@ class ModelBuilder(object):
         for predict, dummy in zip(predictions, images):
             # predicted_images.append(np.argmax(predict["probabilities"], -1))
             # classif = np.argmax(predict["probabilities"], axis=-1)
-            predicted_images.append(discretize_values(predict["classes"],
-                                                      params["num_classes"],
-                                                      0))
+            # predicted_images.append(discretize_values(predict["classes"],
+            #                                           params["num_classes"],
+            #                                           0))
+            predicted_images.append(predict)
 
         return predicted_images

@@ -98,6 +98,7 @@ weights_eval = compute_weights_mean_proportion(test_labels, dataset['classes'])
 params = {
     'epochs': 100,
     'batch_size': 40,
+    'filter_reduction': 0.5,
     'learning_rate': 0.1,
     'learning_rate_decay': True,
     'decay_rate': 0.95,
