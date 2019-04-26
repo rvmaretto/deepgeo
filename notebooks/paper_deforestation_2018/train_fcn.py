@@ -86,13 +86,12 @@ def compute_weights_mean_proportion(batch_array, classes, classes_zero=['no_data
     weights = [mean_prop / i if i != 0 else 0 for i in proportions]
     return weights
 
+
 weights_train = compute_weights_mean_proportion(train_labels, dataset['classes'])
 weights_eval = compute_weights_mean_proportion(test_labels, dataset['classes'])
 
 
 # # Train the Network
-
-# In[ ]:
 
 
 # # Train the Network
@@ -102,12 +101,12 @@ params = {
     'learning_rate': 0.1,
     'learning_rate_decay': True,
     'decay_rate': 0.95,
-    'decay_steps': 1286,
+    # 'decay_steps': 1286,
     'l2_reg_rate': 0.0005,
     # 'var_scale_factor': 2.0,  # TODO: Put the initializer as parameter
     'chips_tensorboard': 2,
     # 'dropout_rate': 0.5,  # TODO: Put a bool parameter to apply or not Dropout
-    'fusion': 'late',
+    'fusion': 'early',
     'loss_func': 'weighted_crossentropy',
     'class_weights': {'train': weights_train, 'eval': weights_eval},
     'num_classes': len(dataset['classes']),
@@ -115,9 +114,6 @@ params = {
     'bands_plot': [[1, 2, 3], [6, 7, 8]],
     'Notes': 'Different weights for train and eval. Testing smaller L2 reg. rate. Changing Variance scale to Xavier initializer. Removing dropout.'
 }
-
-
-# In[ ]:
 
 
 reload(mb)

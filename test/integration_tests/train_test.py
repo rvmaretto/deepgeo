@@ -60,24 +60,40 @@ print('  -> Train Labels: ', train_labels.shape)
 print('  -> Test Labels: ', test_labels.shape)
 print('  -> Validation Labels: ', valid_labels.shape)
 
+def compute_weights_mean_proportion(batch_array, classes, classes_zero=['no_data']):
+    values, count = np.unique(batch_array, return_counts=True)
+    count = [count[i] if classes[i] not in classes_zero else 0 for i in range(0, len(count))]
+    total = sum(count)
+    proportions = [i / total for i in count]
+    mean_prop = sum(proportions)/ (len(proportions) - len(classes_zero))
+    weights = [mean_prop / i if i != 0 else 0 for i in proportions]
+    return weights
+
+weights_train = compute_weights_mean_proportion(train_labels, dataset['classes'])
+weights_eval = compute_weights_mean_proportion(test_labels, dataset['classes'])
+
+print(weights_train)
+print(weights_eval)
+
 
 # # Train the Network
 params = {
-    'epochs': 3,
-    'batch_size': 10,
+    'epochs': 5,
+    'batch_size': 8,
     'learning_rate': 0.1,
     'learning_rate_decay': True,
-    'decay_rate': 0.1,
-    'decay_steps': 245,
-    'l2_reg_rate': 0.5,
-    'var_scale_factor': 2.0,
+    'decay_rate': 0.95,
+    # 'decay_steps': 1286,
+    'l2_reg_rate': 0.0005,
+    # 'var_scale_factor': 2.0,  # TODO: Put the initializer as parameter
     'chips_tensorboard': 2,
-    'dropout_rate': 0.5,
+    'dropout_rate': 0.5,  # TODO: Put a bool parameter to apply or not Dropout
+    'fusion': 'late',
     'loss_func': 'weighted_crossentropy',
-    'class_weights': 3.,#[1., 1.],
+    'class_weights': {'train': weights_train, 'eval': weights_eval},
     'num_classes': len(dataset['classes']),
     'num_compositions': 2,
-     'bands_plot': [[1,2,3], [0, 1, 2]]
+     'bands_plot': [[1, 2, 3], [0, 1, 2]]
 }
 
 model = mb.ModelBuilder(network)

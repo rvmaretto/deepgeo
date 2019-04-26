@@ -1,11 +1,11 @@
+import math
 import sys
-import tensorflow as tf
 import numpy as np
 from os import path
+import tensorflow as tf
 import csv
 
 sys.path.insert(0, path.join(path.dirname(__file__), '../'))
-# import dataset.ds_iterator as ds_it
 import common.filesystem as fs
 import networks.fcn1s as fcn1s
 import networks.fcn2s as fcn2s
@@ -17,6 +17,7 @@ import networks.laterfusion.unet_lf as unet_lf
 import networks.loss_functions as lossf
 import networks.tb_metrics as tbm
 import networks.layers as layers
+
 
 # TODO: Remove this
 def discretize_values(data, numberClass, startValue=0):
@@ -89,21 +90,14 @@ class ModelBuilder(object):
         if labels.shape[1] != logits.shape[1]:
             labels = tf.cast(layers.crop_features(labels, logits.shape[1], name="labels"), tf.float32)
 
-        if params['binary']:
-            predictions = tf.nn.sigmoid(logits, name='Sigmoid')
-            output = tf.cast(tf.round(predictions), tf.int32)
-        else:
-            predictions = tf.nn.softmax(logits, name='Softmax')
-            output = tf.expand_dims(tf.argmax(input=predictions, axis=-1, name='Argmax_Prediction'), -1)
+        predictions = tf.nn.softmax(logits, name='Softmax')
+        output = tf.expand_dims(tf.argmax(input=predictions, axis=-1, name='Argmax_Prediction'), -1)
 
         if mode == tf.estimator.ModeKeys.PREDICT:
             return tf.estimator.EstimatorSpec(mode=mode, predictions=output)
 
-        if params['binary']:
-            labels_1hot = labels
-        else:
-            labels_1hot = tf.one_hot(tf.cast(labels, tf.uint8), params['num_classes'])
-            labels_1hot = tf.squeeze(labels_1hot)
+        labels_1hot = tf.one_hot(tf.cast(labels, tf.uint8), params['num_classes'])
+        labels_1hot = tf.squeeze(labels_1hot)
 
         # loss_params = {
         #     'logits': logits,
@@ -126,18 +120,17 @@ class ModelBuilder(object):
         # loss_func = self.losses_switcher.get(params['loss_func'], lossf.unknown_loss_error)
         # loss = loss_func(loss_params)
 
-        tbm.plot_chips_tensorboard(samples, labels, output, params)
+        tbm.plot_chips_tensorboard(samples, labels, predictions[:, :, :, 2], params)
         metrics, summaries = tbm.define_quality_metrics(labels_1hot, predictions, logits, labels, output, loss, params)
 
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
 
-        # if training:
-        #     if params['learning_rate_decay']:
-        params['learning_rate'] = tf.train.exponential_decay(learning_rate=params['learning_rate'],
-                                                             global_step=tf.train.get_global_step(),
-                                                             decay_rate=params['decay_rate'],
-                                                             decay_steps=params['decay_steps'],
-                                                             name='decrease_lr')
+        if params['learning_rate_decay']:
+            params['learning_rate'] = tf.train.exponential_decay(learning_rate=params['learning_rate'],
+                                                                 global_step=tf.train.get_global_step(),
+                                                                 decay_rate=params['decay_rate'],
+                                                                 decay_steps=params['decay_steps'],
+                                                                 name='decrease_lr')
 
         tf.summary.scalar('learning_rate', params['learning_rate'])
 
@@ -151,9 +144,9 @@ class ModelBuilder(object):
         else:
             train_op = None
 
-        # train_summary_hook = tf.train.SummarySaverHook(save_steps=1,
-        #                                               output_dir=config.model_dir,
-        #                                               summary_op=tf.summary.merge_all())
+        train_summary_hook = tf.train.SummarySaverHook(save_steps=100,
+                                                       output_dir=config.model_dir,
+                                                       summary_op=tf.summary.merge_all())
 
         eval_metric_ops = {'eval_metrics/accuracy': metrics['accuracy'],
                            'eval_metrics/f1-score': metrics['f1_score'],
@@ -169,7 +162,6 @@ class ModelBuilder(object):
                                                   every_n_iter=100)
 
         eval_summary_hook = tf.train.SummarySaverHook(save_steps=100,
-                                                      # Review this. Try to save in the same steps of the quality_metrics
                                                       output_dir=config.model_dir + "/eval",
                                                       summary_op=tf.summary.merge_all())
 
@@ -179,8 +171,7 @@ class ModelBuilder(object):
                                           train_op=train_op,
                                           eval_metric_ops=eval_metric_ops,
                                           evaluation_hooks=[eval_summary_hook, logging_hook],
-                                          training_hooks=[logging_hook])
-
+                                          training_hooks=[train_summary_hook, logging_hook])
 
     def train(self, train_imgs, test_imgs, train_labels, test_labels, params, output_dir):
         # tf.set_random_seed(1987)
@@ -199,11 +190,7 @@ class ModelBuilder(object):
 
         data_size, _, _, bands = train_imgs.shape
         params['bands'] = bands
-
-        params['binary'] = False
-        if params['num_classes'] == 2:
-            params['binary'] = True
-            params['num_classes'] = 1
+        params['decay_steps'] = math.ceil(data_size / params['batch_size'])
 
         # Try to update save the dataset as TFRecords and try to use this:
         # https://www.tensorflow.org/guide/distribute_strategy
@@ -218,10 +205,6 @@ class ModelBuilder(object):
                                         params=params)#,
                                         # config=config)
 
-        # tensors_to_log = {'loss': 'cost/loss'}#,
-                          # 'accuracy': 'accuracy'}#,
-                          # 'learning_rate': 'learning_rate'}
-        # logging_hook = tf.train.LoggingTensorHook(tensors=tensors_to_log, every_n_iter=10)
         #profiling_hook = tf.train.ProfilerHook(save_steps=10, output_dir=path.join(output_dir))
 
 
@@ -235,17 +218,17 @@ class ModelBuilder(object):
             print("===============================================")
             print("Epoch ", epoch)
             train_input = tf.estimator.inputs.numpy_input_fn(x={"data": train_imgs},
-                                                            y=train_labels,
-                                                            batch_size=params["batch_size"],
-                                                            num_epochs=1,  # params["epochs"],
-                                                            shuffle=True)
+                                                             y=train_labels,
+                                                             batch_size=params["batch_size"],
+                                                             num_epochs=1,  # params["epochs"],
+                                                             shuffle=True)
             # train_input, train_init_hook = ds_it.get_input_fn(train_imgs, train_labels, params["batch_size"], shuffle=True)
 
             print("---------------")
             print("Training...")
             train_results = estimator.train(input_fn=train_input,
                                             steps=None)
-                                            # hooks=[logging_hook])#, profiling_hook])
+                                            # hooks=[profiling_hook])
 
             test_input = tf.estimator.inputs.numpy_input_fn(x={"data": test_imgs},
                                                             y=test_labels,

@@ -1,5 +1,5 @@
 from sklearn import model_selection
-import numpy as np
+
 
 def split_dataset(dataset, perc_test=30, perc_val=0, random_seed=None):
     train_images, test_images, train_labels, test_labels = model_selection.train_test_split(

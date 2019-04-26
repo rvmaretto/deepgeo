@@ -70,7 +70,7 @@ def fcn8s_description(samples, labels, params, mode, config):
     # print("SHAPE FConv_6: ", fconv6.shape)
     fconv7 = layers.conv_pool_layer(bottom=fconv6, filters=4096, kernel_size=1, params=params,
                                     training=training, name="fc7", pool=False)
-    if(training):
+    if training:
         fconv7 = tf.layers.dropout(inputs=fconv7, rate=params["dropout_rate"], name="drop_7")
 
     # print("SHAPE FConv_7: ", fconv7.shape)
@@ -80,7 +80,6 @@ def fcn8s_description(samples, labels, params, mode, config):
 
     if (training):
         score_layer = tf.layers.dropout(inputs=score_layer, rate=params["dropout_rate"], name="drop_8")
-
 
     up_score_1 = layers.up_conv_add_layer(score_layer, pool4, params=params, kernel_size=4,
                                              num_filters=num_classes, strides=2, pad="same", name="1")

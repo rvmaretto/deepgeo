@@ -16,10 +16,7 @@ def define_quality_metrics(labels_1hot, predictions, logits, labels, output, los
         metrics['accuracy'] = tf.metrics.accuracy(labels=labels, predictions=output)
         summaries['accuracy'] = tf.summary.scalar('accuracy', metrics['accuracy'][1])
 
-        if params['binary']:
-            cross_entropy = tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.cast(labels, tf.float32), logits=logits)
-        else:
-            cross_entropy = tf.losses.softmax_cross_entropy(onehot_labels=labels_1hot, logits=predictions)
+        cross_entropy = tf.losses.softmax_cross_entropy(onehot_labels=labels_1hot, logits=predictions)
         metrics['cross_entropy'] = tf.metrics.mean(cross_entropy)
         summaries['cross_entropy'] = tf.summary.scalar('cross_entropy', metrics['cross_entropy'][1])
 
