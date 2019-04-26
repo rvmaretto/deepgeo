@@ -120,7 +120,7 @@ class ModelBuilder(object):
         # loss_func = self.losses_switcher.get(params['loss_func'], lossf.unknown_loss_error)
         # loss = loss_func(loss_params)
 
-        tbm.plot_chips_tensorboard(samples, labels, predictions[:, :, :, 2], params)
+        tbm.plot_chips_tensorboard(samples, labels, tf.expand_dims(predictions[:, :, :, 2], -1), params)
         metrics, summaries = tbm.define_quality_metrics(labels_1hot, predictions, logits, labels, output, loss, params)
 
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
