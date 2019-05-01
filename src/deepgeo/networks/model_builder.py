@@ -214,32 +214,32 @@ class ModelBuilder(object):
         # test_input = tf.data.Dataset.from_tensor_slices(({"x": test_imgs}, test_labels)).shuffle(buffer_size=2048)
         # test_input = test_input.shuffle(1000).repeat().batch(params["batch_size"])
 
-        for epoch in range(1, params["epochs"] + 1):
-            print("===============================================")
-            print("Epoch ", epoch)
-            train_input = tf.estimator.inputs.numpy_input_fn(x={"data": train_imgs},
+        for epoch in range(1, params['epochs'] + 1):
+            print('===============================================')
+            print('Epoch ', epoch)
+            train_input = tf.estimator.inputs.numpy_input_fn(x={'data': train_imgs},
                                                              y=train_labels,
-                                                             batch_size=params["batch_size"],
+                                                             batch_size=params['batch_size'],
                                                              num_epochs=1,  # params["epochs"],
                                                              shuffle=True)
             # train_input, train_init_hook = ds_it.get_input_fn(train_imgs, train_labels, params["batch_size"], shuffle=True)
 
-            print("---------------")
-            print("Training...")
+            print('---------------')
+            print('Training...')
             train_results = estimator.train(input_fn=train_input,
                                             steps=None)
                                             # hooks=[profiling_hook])
 
-            test_input = tf.estimator.inputs.numpy_input_fn(x={"data": test_imgs},
+            test_input = tf.estimator.inputs.numpy_input_fn(x={'data': test_imgs},
                                                             y=test_labels,
-                                                            batch_size=params["batch_size"],
+                                                            batch_size=params['batch_size'],
                                                             num_epochs=1,#params["epochs"],
                                                             shuffle=False)
             
             # test_input, test_init_hook = ds_it.get_input_fn(test_imgs, test_labels, params["batch_size"], shuffle=True)
 
-            print("---------------")
-            print("Evaluating...")
+            print('---------------')
+            print('Evaluating...')
             test_results = estimator.evaluate(input_fn=test_input)#,
                                               # hooks=[logging_hook])#, profiling_hook])
 
@@ -254,41 +254,33 @@ class ModelBuilder(object):
         #                                 train_spec=tf.estimator.TrainSpec(train_input, hooks=[logging_hook]),
         #                                 eval_spec=tf.estimator.EvalSpec(test_input, hooks=[logging_hook]))
 
-    # def fcn_evaluate(images, labels, params, model_dir):
-    #     data_size, _, _, _ = images.shape
-    #
-    #     tf.logging.set_verbosity(tf.logging.WARN)
-    #
-    #     estimator = tf.estimator.Estimator(model_fn=tf.contrib.estimator.replicate_model_fn(fcn32_VGG_description),
-    #                                        model_dir=model_dir,
-    #                                        params=params)
-    #     logging_hook = tf.train.LoggingTensorHook(tensors={}, every_n_iter=data_size)
-    #
-    #     input_imgs
+    def evaluate(self, images, labels, params, model_dir):
+        data_size, _, _, _ = images.shape
+
+        tf.logging.set_verbosity(tf.logging.WARN)
+
+        estimator = tf.estimator.Estimator(model_fn=tf.contrib.estimator.replicate_model_fn(self.__build_model),
+                                           # model_fn=self.__build_model,
+                                           model_dir=model_dir,
+                                           params=params)
+        logging_hook = tf.train.LoggingTensorHook(tensors={}, every_n_iter=data_size)
 
     def predict(self, images, params, model_dir):
         tf.logging.set_verbosity(tf.logging.WARN)
 
-        if params["multi_gpu"]:
-            estimator = tf.estimator.Estimator(model_fn=tf.contrib.estimator.replicate_model_fn(self.model_description),
-                                            model_dir=model_dir,
-                                            params=params)
-        else:
-            estimator = tf.estimator.Estimator(model_fn=self.model_description,
-                                            model_dir=model_dir,
-                                            params=params)
+        estimator = tf.estimator.Estimator(model_fn=tf.contrib.estimator.replicate_model_fn(self.__build_model),
+                                           # model_fn=self.__build_model,
+                                           model_dir=model_dir,
+                                           params=params)
 
-        if not isinstance(images, np.ndarray):
-            images = np.stack(images).astype(np.float32)
-
-        data_size, _, _ ,_ = images.shape
-        input_fn = tf.estimator.inputs.numpy_input_fn(x={"data": images},
-                                                    batch_size=params["batch_size"],
-                                                    shuffle=False)
+        data_size, _, _, _ = images.shape
+        input_fn = tf.estimator.inputs.numpy_input_fn(x={'data': images},
+                                                      batch_size=params['batch_size'],
+                                                      shuffle=False)
 
         predictions = estimator.predict(input_fn=input_fn)
 
-        print("Classifying image with structure ", str(images.shape), "...")
+        print('Classifying image with structure ', str(images.shape), '...')
 
         predicted_images = []
 

@@ -167,3 +167,29 @@ def reproj_shape_to_raster(path_in_shp, path_raster, path_out_shp):
 
     out_ds = None
     in_ds = None
+
+
+def write_chips(output_path, base_raster, pred_struct, overlap=[0, 0], output_format='GTiff', dataType=gdal.GDT_UInt16):
+    driver = gdal.GetDriverByName(output_format)
+    base_ds = gdal.Open(base_raster)
+
+    x_start, pixel_width, _, y_start, _, pixel_height = base_ds.GetGeoTransform()
+    x_size = base_ds.RasterXSize
+    y_size = base_ds.RasterYSize
+
+    srs = osr.SpatialReference()
+    srs.ImportFromWkt(base_ds.GetProjectionRef())
+
+    out_ds = driver.Create(output_path, x_size, y_size, 1, dataType)
+    out_ds.SetGeoTransform((x_start, pixel_width, 0, y_start, 0, pixel_height))
+    out_ds.SetProjection(srs.ExportToWkt())
+    out_band = out_ds.GetRasterBand(1)
+
+    for idx in range(1, len(pred_struct['chips'])):
+        chip = pred_struct['chips'][idx]
+        chip = np.squeeze(chip)
+        x_start = pred_struct['coords'][idx]['x_start'] - overlap[0]
+        y_start = pred_struct['coords'][idx]['y_start'] - overlap[1]
+        out_band.WriteArray(chip, y_start, x_start)
+
+    out_band.FlushCache()

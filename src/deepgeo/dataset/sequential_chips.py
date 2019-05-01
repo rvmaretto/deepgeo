@@ -79,10 +79,12 @@ class SequentialChipGenerator(object):
             #             positions_remove.append(i)
             return {'chips': samples_img,
                     'labels': samples_labels,
-                    'win_coords': windows}
+                    'win_coords': windows,
+                    'overlap': self.overlap}
         else:
             return {'chips': samples_img,
-                    'win_coords': windows}
+                    'win_coords': windows,
+                    'overlap': self.overlap}
 
 
 
@@ -113,27 +115,3 @@ class SequentialChipGenerator(object):
 #             struct['coords'].append({'x_start': x_start, 'x_end': x_end, 'y_start': y_start, 'y_end': y_end})
 #
 #     return struct
-
-
-def write_chips(output_path, base_raster, pred_struct, output_format='GTiff', dataType=gdal.GDT_UInt16):
-    driver = gdal.GetDriverByName(output_format)
-    base_ds = gdal.Open(base_raster)
-
-    x_start, pixel_width, _, y_start, _, pixel_height = base_ds.GetGeoTransform()
-    x_size = base_ds.RasterXSize
-    y_size = base_ds.RasterYSize
-
-    srs = osr.SpatialReference()
-    srs.ImportFromWkt(base_ds.GetProjectionRef())
-
-    out_ds = driver.Create(output_path, x_size, y_size, 1, dataType)
-    out_ds.SetGeoTransform((x_start, pixel_width, 0, y_start, 0, pixel_height))
-    out_ds.SetProjection(srs.ExportToWkt())
-    out_band = out_ds.GetRasterBand(1)
-
-    for idx in range(1, len(pred_struct['chips'])):
-        chip = pred_struct['chips'][idx]
-        chip = np.squeeze(chip)
-        out_band.WriteArray(chip, pred_struct['coords'][idx]['y_start'], pred_struct['coords'][idx]['x_start'])
-
-    out_band.FlushCache()
