@@ -87,14 +87,14 @@ class ModelBuilder(object):
 
         logits = self.model_description(samples, labels, params, mode, config)
 
-        if labels.shape[1] != logits.shape[1]:
-            labels = tf.cast(layers.crop_features(labels, logits.shape[1], name="labels"), tf.float32)
-
         predictions = tf.nn.softmax(logits, name='Softmax')
         output = tf.expand_dims(tf.argmax(input=predictions, axis=-1, name='Argmax_Prediction'), -1)
 
         if mode == tf.estimator.ModeKeys.PREDICT:
             return tf.estimator.EstimatorSpec(mode=mode, predictions=output)
+
+        if labels.shape[1] != logits.shape[1]:
+            labels = tf.cast(layers.crop_features(labels, logits.shape[1], name="labels"), tf.float32)
 
         labels_1hot = tf.one_hot(tf.cast(labels, tf.uint8), params['num_classes'])
         labels_1hot = tf.squeeze(labels_1hot)
