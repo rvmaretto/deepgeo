@@ -16,7 +16,6 @@ def conv_pool_layer(bottom, filters, params, kernel_size=3, training=True, name=
             kernel_initializer=tf.contrib.layers.xavier_initializer(),  # tf.initializers.variance_scaling(scale=params['var_scale_factor'], distribution='uniform'),
             name='convolution_{}'.format(name)
         )
-        print('TRAINING: ', training)
         norm = tf.layers.batch_normalization(inputs=conv, training=training, name='batch_norm_{}'.format(name))
         relu = tf.nn.relu(norm, name='relu_{}'.format(name))
 

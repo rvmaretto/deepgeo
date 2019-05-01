@@ -91,7 +91,7 @@ class ModelBuilder(object):
         output = tf.expand_dims(tf.argmax(input=predictions, axis=-1, name='Argmax_Prediction'), -1)
 
         if mode == tf.estimator.ModeKeys.PREDICT:
-            return tf.estimator.EstimatorSpec(mode=mode, predictions=output)
+            return tf.estimator.EstimatorSpec(mode=mode, predictions={'classes': output})
 
         if labels.shape[1] != logits.shape[1]:
             labels = tf.cast(layers.crop_features(labels, logits.shape[1], name="labels"), tf.float32)
@@ -278,18 +278,19 @@ class ModelBuilder(object):
                                                       batch_size=params['batch_size'],
                                                       shuffle=False)
 
-        predictions = estimator.predict(input_fn=input_fn)
+        # predictions = estimator.predict(input_fn=input_fn)
 
         print('Classifying image with structure ', str(images.shape), '...')
 
         predicted_images = []
 
-        for predict, dummy in zip(predictions, images):
+        for predict in estimator.predict(input_fn):
+            # for predict, dummy in zip(predictions, images):
             # predicted_images.append(np.argmax(predict["probabilities"], -1))
             # classif = np.argmax(predict["probabilities"], axis=-1)
             # predicted_images.append(discretize_values(predict["classes"],
             #                                           params["num_classes"],
             #                                           0))
-            predicted_images.append(predict)
+            predicted_images.append(predict['classes'])
 
         return predicted_images
