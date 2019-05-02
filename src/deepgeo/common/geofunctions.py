@@ -169,7 +169,7 @@ def reproj_shape_to_raster(path_in_shp, path_raster, path_out_shp):
     in_ds = None
 
 
-def write_pred_chips(output_path, base_raster, pred_struct, output_format='GTiff', dataType=gdal.GDT_UInt16):
+def write_pred_chips(output_path, base_raster, pred_struct, output_format='GTiff', data_type=gdal.GDT_UInt16):
     driver = gdal.GetDriverByName(output_format)
     base_ds = gdal.Open(base_raster)
 
@@ -180,7 +180,7 @@ def write_pred_chips(output_path, base_raster, pred_struct, output_format='GTiff
     srs = osr.SpatialReference()
     srs.ImportFromWkt(base_ds.GetProjectionRef())
 
-    out_ds = driver.Create(output_path, x_size, y_size, 1, dataType)
+    out_ds = driver.Create(output_path, x_size, y_size, 1, data_type)
     out_ds.SetGeoTransform((x_start, pixel_width, 0, y_start, 0, pixel_height))
     out_ds.SetProjection(srs.ExportToWkt())
     out_band = out_ds.GetRasterBand(1)
