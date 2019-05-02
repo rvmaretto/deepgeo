@@ -8,6 +8,7 @@ import sklearn
 
 sys.path.insert(0, path.join(path.dirname(__file__), '../'))
 import common.filesystem as fs
+import dataset.utils as dsutils
 import networks.fcn1s as fcn1s
 import networks.fcn2s as fcn2s
 import networks.fcn4s as fcn4s
@@ -273,7 +274,7 @@ class ModelBuilder(object):
         for predict, label in zip(estimator.predict(input_fn), expect_labels):
             predictions_lst.append(predict['classes'])
             size_x, size_y, _ = predict['classes'].shape
-            label = layers.crop_features(label, size_x)
+            label = dsutils.crop_np_chip(label, size_x)
             crop_labels.append(label)
         print('total:', len(predictions_lst))
         predictions = np.array(predictions_lst, dtype=np.int32)
