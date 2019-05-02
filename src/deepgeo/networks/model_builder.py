@@ -258,8 +258,8 @@ class ModelBuilder(object):
     def validate(self, images, expect_labels, params, model_dir):
         tf.logging.set_verbosity(tf.logging.WARN)
 
-        estimator = tf.estimator.Estimator(model_fn=tf.contrib.estimator.replicate_model_fn(self.__build_model),
-                                           # model_fn=self.__build_model,
+        estimator = tf.estimator.Estimator(#model_fn=tf.contrib.estimator.replicate_model_fn(self.__build_model),
+                                           model_fn=self.__build_model,
                                            model_dir=model_dir,
                                            params=params)
 
@@ -268,7 +268,16 @@ class ModelBuilder(object):
                                                       batch_size=params['batch_size'],
                                                       shuffle=False)
 
-        predictions = list(estimator.predict(input_fn))
+        predictions_lst = []
+        crop_labels = []
+        for predict, label in zip(estimator.predict(input_fn), expect_labels):
+            predictions_lst.append(predict['classes'])
+            size_x, size_y, _ = predict['classes'].shape
+            label = layers.crop_features(label, size_x)
+            crop_labels.append(label)
+        print('total:', len(predictions_lst))
+        predictions = np.array(predictions_lst, dtype=np.int32)
+        print('shape:', predictions.shape)
         f1_score = sklearn.metrics.f1_score(predictions, expect_labels, average=None)
         precision = sklearn.metrics.precision_score(predictions, expect_labels, average=None)
         recall = sklearn.metrics.recall_score(predictions, expect_labels, average=None)
