@@ -4,6 +4,7 @@ import numpy as np
 from os import path
 import tensorflow as tf
 import csv
+import sklearn
 
 sys.path.insert(0, path.join(path.dirname(__file__), '../'))
 import common.filesystem as fs
@@ -254,16 +255,43 @@ class ModelBuilder(object):
         #                                 train_spec=tf.estimator.TrainSpec(train_input, hooks=[logging_hook]),
         #                                 eval_spec=tf.estimator.EvalSpec(test_input, hooks=[logging_hook]))
 
-    def evaluate(self, images, labels, params, model_dir):
-        data_size, _, _, _ = images.shape
-
+    def validate(self, images, expect_labels, params, model_dir):
         tf.logging.set_verbosity(tf.logging.WARN)
 
         estimator = tf.estimator.Estimator(model_fn=tf.contrib.estimator.replicate_model_fn(self.__build_model),
                                            # model_fn=self.__build_model,
                                            model_dir=model_dir,
                                            params=params)
-        logging_hook = tf.train.LoggingTensorHook(tensors={}, every_n_iter=data_size)
+
+        data_size, _, _, _ = images.shape
+        input_fn = tf.estimator.inputs.numpy_input_fn(x={'data': images},
+                                                      batch_size=params['batch_size'],
+                                                      shuffle=False)
+
+        predictions = list(estimator.predict(input_fn))
+        f1_score = sklearn.metrics.f1_score(predictions, expect_labels, average=None)
+        precision = sklearn.metrics.precision_score(predictions, expect_labels, average=None)
+        recall = sklearn.metrics.recall_score(predictions, expect_labels, average=None)
+
+        print('<<------------------------------------------------------------>>')
+        print('<<------------------ Validation Results ---------------------->>')
+        print('<<------------------------------------------------------------>>')
+
+        print('F1-Score:')
+        for i in range(0, len(params['class_names'])):
+            print('  -> ', str(params['class_names'][i]), ': ', f1_score[i])
+
+        print('Precision:')
+        for i in range(0, len(params['class_names'])):
+            print('  -> ', str(params['class_names'][i]), ': ', precision[i])
+
+        print('Recall:')
+        for i in range(0, len(params['class_names'])):
+            print('  -> ', str(params['class_names'][i]), ': ', f1_score[i])
+
+        print('Recall:')
+        for i in range(0, len(params['class_names'])):
+            print('  -> ', str(params['class_names'][i]), ': ', recall[i])
 
     def predict(self, chip_struct, params, model_dir):
         tf.logging.set_verbosity(tf.logging.WARN)
@@ -278,6 +306,8 @@ class ModelBuilder(object):
         input_fn = tf.estimator.inputs.numpy_input_fn(x={'data': images},
                                                       batch_size=params['batch_size'],
                                                       shuffle=False)
+
+
 
         # predictions = estimator.predict(input_fn=input_fn)
 
