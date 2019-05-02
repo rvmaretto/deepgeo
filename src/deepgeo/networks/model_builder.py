@@ -265,8 +265,9 @@ class ModelBuilder(object):
                                            params=params)
         logging_hook = tf.train.LoggingTensorHook(tensors={}, every_n_iter=data_size)
 
-    def predict(self, images, params, model_dir):
+    def predict(self, chip_struct, params, model_dir):
         tf.logging.set_verbosity(tf.logging.WARN)
+        images = chip_struct['chips']
 
         estimator = tf.estimator.Estimator(model_fn=tf.contrib.estimator.replicate_model_fn(self.__build_model),
                                            # model_fn=self.__build_model,
@@ -282,7 +283,7 @@ class ModelBuilder(object):
 
         print('Classifying image with structure ', str(images.shape), '...')
 
-        predicted_images = []
+        chip_struct['predict'] = []
 
         for predict in estimator.predict(input_fn):
             # for predict, dummy in zip(predictions, images):
@@ -291,6 +292,6 @@ class ModelBuilder(object):
             # predicted_images.append(discretize_values(predict["classes"],
             #                                           params["num_classes"],
             #                                           0))
-            predicted_images.append(predict['classes'])
+            chip_struct['predict'].append(predict['classes'])
 
-        return predicted_images
+        return chip_struct

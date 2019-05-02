@@ -169,7 +169,7 @@ def reproj_shape_to_raster(path_in_shp, path_raster, path_out_shp):
     in_ds = None
 
 
-def write_chips(output_path, base_raster, pred_struct, output_format='GTiff', dataType=gdal.GDT_UInt16):
+def write_pred_chips(output_path, base_raster, pred_struct, output_format='GTiff', dataType=gdal.GDT_UInt16):
     driver = gdal.GetDriverByName(output_format)
     base_ds = gdal.Open(base_raster)
 
