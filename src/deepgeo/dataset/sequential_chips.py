@@ -79,11 +79,11 @@ class SequentialChipGenerator(object):
             #             positions_remove.append(i)
             return {'chips': samples_img,
                     'labels': samples_labels,
-                    'win_coords': windows,
+                    'coords': windows,
                     'overlap': self.overlap}
         else:
             return {'chips': samples_img,
-                    'win_coords': windows,
+                    'coords': windows,
                     'overlap': self.overlap}
 
 

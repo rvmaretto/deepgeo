@@ -167,7 +167,7 @@ def plot_chips(chips, raster_array=None, bands=[1, 2, 3], contrast=False, chipsc
 
         plt.axis('off')
 
-    for coord in chips['win_coords']:
+    for coord in chips['coords']:
         width = coord['lower_row'] - coord['upper_row']
         height = coord['right_col'] - coord['left_col']
         rect = patches.Rectangle((coord['left_col'], coord['upper_row']), width, height,
