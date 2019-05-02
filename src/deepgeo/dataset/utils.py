@@ -1,4 +1,5 @@
 from sklearn import model_selection
+import numpy as np
 
 
 def split_dataset(dataset, perc_test=30, perc_val=0, random_seed=None):
@@ -17,3 +18,13 @@ def split_dataset(dataset, perc_test=30, perc_val=0, random_seed=None):
     )
 
     return train_images, test_images, valid_images, train_labels, test_labels, valid_labels
+
+
+def crop_np_chip(chip, out_size, name=''):
+    feat_shape = chip.shape
+    np.cast(out_size, np.int32)
+    offsets = [0, np.cast((int(feat_shape[1]) - int(out_size)) / 2, np.int32),
+               np.cast((int(feat_shape[2]) - int(out_size)) / 2, np.int32), 0]
+    size = [-1, out_size, out_size, feat_shape[3]]
+    chip = np.slice(chip, offsets, size)
+    return chip
