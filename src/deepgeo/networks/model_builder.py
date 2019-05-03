@@ -275,13 +275,13 @@ class ModelBuilder(object):
         predictions_lst = []
         crop_labels = []
         for predict, label in zip(estimator.predict(input_fn), expect_labels):
-            predictions_lst.append(np.reshape(predict['classes'], -1))
+            predictions_lst.append(predict['classes'])
             size_x, size_y, _ = predict['classes'].shape
             label = dsutils.crop_np_chip(label, size_x)
-            crop_labels.append(np.reshape(label, -1))
+            crop_labels.append(label)
         print('total:', len(predictions_lst))
-        predictions = np.array(predictions_lst, dtype=np.int32)
-        crop_labels = np.array(crop_labels, dtype=np.int32)
+        predictions = np.array(np.reshape(predictions_lst, -1), dtype=np.int32)
+        crop_labels = np.array(np.reshape(crop_labels, -1), dtype=np.int32)
         print('shape:', predictions.shape)
         print('shape labels:', crop_labels.shape)
         f1_score = sklearn.metrics.f1_score(predictions, crop_labels, average=None)
