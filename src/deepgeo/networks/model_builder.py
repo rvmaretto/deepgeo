@@ -284,7 +284,7 @@ class ModelBuilder(object):
         crop_labels = np.array(crop_labels, dtype=np.int32)
         # print('shape:', predictions.shape)
         # print('shape labels:', crop_labels.shape)
-        # f1_score = sklearn.metrics.f1_score(predictions, crop_labels, labels=[1, 2], average=None)
+        f1_score = sklearn.metrics.f1_score(predictions, crop_labels, labels=[1, 2], average=None)
         precision = sklearn.metrics.precision_score(predictions, crop_labels, average=None)
         recall = sklearn.metrics.recall_score(predictions, crop_labels, average=None)
 
@@ -292,9 +292,9 @@ class ModelBuilder(object):
         print('<<------------------ Validation Results ---------------------->>')
         print('<<------------------------------------------------------------>>')
 
-        # print('F1-Score:')
-        # for i in range(0, len(params['class_names'])):
-        #     print('  -> ', str(params['class_names'][i]), ': ', f1_score[i])
+        print('F1-Score:')
+        for i in range(0, len(params['class_names'])):
+            print('  -> ', str(params['class_names'][i]), ': ', f1_score[i])
 
         print('Precision:')
         for i in range(0, len(params['class_names'])):
