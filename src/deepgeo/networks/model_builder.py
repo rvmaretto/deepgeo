@@ -6,10 +6,9 @@ import sklearn
 import sys
 import os
 
-import src.deepgeo.common.visualization as vis
-
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../'))
 import common.filesystem as fs
+import common.visualization as vis
 import dataset.utils as dsutils
 import networks.fcn1s as fcn1s
 import networks.fcn2s as fcn2s
