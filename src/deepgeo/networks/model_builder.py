@@ -288,8 +288,9 @@ class ModelBuilder(object):
         precision = sklearn.metrics.precision_score(crop_labels, predictions, average=None)
         recall = sklearn.metrics.recall_score(crop_labels, predictions, average=None)
         classification_report = sklearn.metrics.classification_report(crop_labels, predictions,
-                                                                      target_names=params['classes'])
+                                                                      target_names=params['class_names'])
         confusion_matrix = sklearn.metrics.confusion_matrix(crop_labels, predictions, labels=[1, 2])
+        confusion_matrix = confusion_matrix.astype('float') / confusion_matrix.sum(axis=1)[:, np.newaxis]
 
         print('<<------------------------------------------------------------>>')
         print('<<------------------ Validation Results ---------------------->>')
@@ -309,14 +310,15 @@ class ModelBuilder(object):
 
         print('Classification Report:\n', classification_report)
 
-        print('Confusion Matrix: ', confusion_matrix)
+        print('Confusion Matrix:\n', confusion_matrix)
 
         fig, ax = plt.subplots()
-        img = ax.imshow(confusion_matrix, interpolation='nearest', cmap=plt.cm.Blues)
+        img = ax.imshow(confusion_matrix, interpolation='nearest', cmap=plt.cm.Greens)
         ax.figure.colorbar(img, ax=ax)
         ax.set(xticks=np.arange(confusion_matrix.shape[1]),
                yticks=np.arange(confusion_matrix.shape[0]),
-               xticklabels=params['classes'].remove('no_data'),
+               xticklabels=params['class_names'][1:3],
+               yticklabels=params['class_names'][1:3],
                title='Confusion Matrix',
                ylabel='True Label',
                xlabel='Predicted Label')
@@ -326,7 +328,7 @@ class ModelBuilder(object):
                  rotation_mode="anchor")
 
         # Loop over data dimensions and create text annotations.
-        fmt = 'd'  # '.2f' if normalize else 'd'
+        fmt = '.2f'  
         thresh = confusion_matrix.max() / 2.
         for i in range(confusion_matrix.shape[0]):
             for j in range(confusion_matrix.shape[1]):
