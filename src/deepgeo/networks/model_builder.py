@@ -304,15 +304,15 @@ class ModelBuilder(object):
 
         out_str += 'Precision:' + os.linesep
         for i in range(0, len(precision)):
-            out_str += '  - ', str(params['class_names'][i]), ': ', str(precision[i]) + os.linesep
+            out_str += '  - ' + str(params['class_names'][i]) + ': ' + str(precision[i]) + os.linesep
         
         out_str += 'Recall:' + os.linesep
         for i in range(0, len(recall)):
-            out_str += '  - ', str(params['class_names'][i]), ': ', str(recall[i]) + os.linesep
+            out_str += '  - ' + str(params['class_names'][i]) + ': ' + str(recall[i]) + os.linesep
 
-        out_str += 'Classification Report:\n', str(classification_report) + os.linesep
+        out_str += 'Classification Report:' + os.linesep + str(classification_report) + os.linesep
 
-        out_str += 'Confusion Matrix:\n', str(confusion_matrix) + os.linesep
+        out_str += 'Confusion Matrix:' + os.linesep + str(confusion_matrix) + os.linesep
 
         fs.mkdir(os.path.join(model_dir, 'validation'))
         print(out_str)
@@ -344,8 +344,8 @@ class ModelBuilder(object):
                         ha="center", va="center",
                         color="white" if confusion_matrix[i, j] > thresh else "black")
         fig.tight_layout()
+        plt.savefig(os.path.join(model_dir, 'validation', 'validation_confusion_matrix.png'))
         plt.show()
-
 
 def predict(self, chip_struct, params, model_dir):
         tf.logging.set_verbosity(tf.logging.WARN)
