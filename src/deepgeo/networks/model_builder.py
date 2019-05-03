@@ -284,9 +284,9 @@ class ModelBuilder(object):
         crop_labels = np.array(crop_labels, dtype=np.int32)
         # print('shape:', predictions.shape)
         # print('shape labels:', crop_labels.shape)
-        f1_score = sklearn.metrics.f1_score(predictions, crop_labels, labels=[1, 2], average=None)
-        precision = sklearn.metrics.precision_score(predictions, crop_labels, average=None)
-        recall = sklearn.metrics.recall_score(predictions, crop_labels, average=None)
+        f1_score = sklearn.metrics.f1_score(predictions, crop_labels, average='weighted')
+        # precision = sklearn.metrics.precision_score(predictions, crop_labels, average=None)
+        # recall = sklearn.metrics.recall_score(predictions, crop_labels, average=None)
 
         print('<<------------------------------------------------------------>>')
         print('<<------------------ Validation Results ---------------------->>')
@@ -296,13 +296,13 @@ class ModelBuilder(object):
         for i in range(0, len(params['class_names'])):
             print('  -> ', str(params['class_names'][i]), ': ', f1_score[i])
 
-        print('Precision:')
-        for i in range(0, len(params['class_names'])):
-            print('  -> ', str(params['class_names'][i]), ': ', precision[i])
-
-        print('Recall:')
-        for i in range(0, len(params['class_names'])):
-            print('  -> ', str(params['class_names'][i]), ': ', recall[i])
+        # print('Precision:')
+        # for i in range(0, len(params['class_names'])):
+        #     print('  -> ', str(params['class_names'][i]), ': ', precision[i])
+        #
+        # print('Recall:')
+        # for i in range(0, len(params['class_names'])):
+        #     print('  -> ', str(params['class_names'][i]), ': ', recall[i])
 
     def predict(self, chip_struct, params, model_dir):
         tf.logging.set_verbosity(tf.logging.WARN)
