@@ -1,10 +1,11 @@
-import math
-import sys
-import numpy as np
-from os import path
-import tensorflow as tf
 import csv
+import math
+import numpy as np
+import tensorflow as tf
 import sklearn
+import sys
+import matplotlib.pyplot as plt
+from os import path
 
 sys.path.insert(0, path.join(path.dirname(__file__), '../'))
 import common.filesystem as fs
@@ -259,7 +260,7 @@ class ModelBuilder(object):
         #                                 train_spec=tf.estimator.TrainSpec(train_input, hooks=[logging_hook]),
         #                                 eval_spec=tf.estimator.EvalSpec(test_input, hooks=[logging_hook]))
 
-    def validate(self, images, expect_labels, params, model_dir, exclude_classes=None):
+    def validate(self, images, expect_labels, params, model_dir, save_results=True, exclude_classes=None):
         tf.logging.set_verbosity(tf.logging.WARN)
 
         estimator = tf.estimator.Estimator(#model_fn=tf.contrib.estimator.replicate_model_fn(self.__build_model),
@@ -279,14 +280,16 @@ class ModelBuilder(object):
             size_x, size_y, _ = predict['classes'].shape
             label = dsutils.crop_np_chip(label, size_x)
             crop_labels.append(label)
-        # print('total:', len(predictions_lst))
+
         predictions = np.array(predictions_lst, dtype=np.int32).flatten()
         crop_labels = np.array(crop_labels, dtype=np.int32).flatten()
-        # print('shape:', predictions.shape)
-        # print('shape labels:', crop_labels.shape)
-        f1_score = sklearn.metrics.f1_score(predictions, crop_labels, labels=[1, 2], average=None)
-        precision = sklearn.metrics.precision_score(predictions, crop_labels, average=None)
-        recall = sklearn.metrics.recall_score(predictions, crop_labels, average=None)
+
+        f1_score = sklearn.metrics.f1_score(crop_labels, predictions, labels=[1, 2], average=None)
+        precision = sklearn.metrics.precision_score(crop_labels, predictions, average=None)
+        recall = sklearn.metrics.recall_score(crop_labels, predictions, average=None)
+        classification_report = sklearn.metrics.classification_report(crop_labels, predictions,
+                                                                      target_names=params['classes'])
+        confusion_matrix = sklearn.metrics.confusion_matrix(crop_labels, predictions, labels=[1, 2])
 
         print('<<------------------------------------------------------------>>')
         print('<<------------------ Validation Results ---------------------->>')
@@ -304,7 +307,37 @@ class ModelBuilder(object):
         for i in range(0, len(recall)):
             print('  - ', str(params['class_names'][i]), ': ', recall[i])
 
-    def predict(self, chip_struct, params, model_dir):
+        print('Classification Report:\n', classification_report)
+
+        print('Confusion Matrix: ', confusion_matrix)
+
+        fig, ax = plt.subplots()
+        img = ax.imshow(confusion_matrix, interpolation='nearest', cmap=plt.cm.Blues)
+        ax.figure.colorbar(img, ax=ax)
+        ax.set(xticks=np.arange(confusion_matrix.shape[1]),
+               yticks=np.arange(confusion_matrix.shape[0]),
+               xticklabels=params['classes'].remove('no_data'),
+               title='Confusion Matrix',
+               ylabel='True Label',
+               xlabel='Predicted Label')
+
+        # Rotate the tick labels and set their alignment.
+        plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+                 rotation_mode="anchor")
+
+        # Loop over data dimensions and create text annotations.
+        fmt = 'd'  # '.2f' if normalize else 'd'
+        thresh = confusion_matrix.max() / 2.
+        for i in range(confusion_matrix.shape[0]):
+            for j in range(confusion_matrix.shape[1]):
+                ax.text(j, i, format(confusion_matrix[i, j], fmt),
+                        ha="center", va="center",
+                        color="white" if confusion_matrix[i, j] > thresh else "black")
+        fig.tight_layout()
+        plt.show()
+
+
+def predict(self, chip_struct, params, model_dir):
         tf.logging.set_verbosity(tf.logging.WARN)
         images = chip_struct['chips']
 
@@ -317,8 +350,6 @@ class ModelBuilder(object):
         input_fn = tf.estimator.inputs.numpy_input_fn(x={'data': images},
                                                       batch_size=params['batch_size'],
                                                       shuffle=False)
-
-
 
         # predictions = estimator.predict(input_fn=input_fn)
 
