@@ -5,9 +5,9 @@ import tensorflow as tf
 import sklearn
 import sys
 import matplotlib.pyplot as plt
-from os import path
+import os
 
-sys.path.insert(0, path.join(path.dirname(__file__), '../'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../'))
 import common.filesystem as fs
 import dataset.utils as dsutils
 import networks.fcn1s as fcn1s
@@ -26,15 +26,15 @@ reload(dsutils)  # TODO: remove this
 
 
 # TODO: Remove this
-def discretize_values(data, numberClass, startValue=0):
-    for clazz in range(startValue, (numberClass + 1)):
-        if clazz == startValue:
-            classFilter = (data <= clazz + 0.5)
-        elif clazz == numberClass:
-            classFilter = (data > clazz - 0.5)
+def discretize_values(data, number_class, start_value=0):
+    for clazz in range(start_value, (number_class + 1)):
+        if clazz == start_value:
+            class_filter = (data <= clazz + 0.5)
+        elif clazz == number_class:
+            class_filter = (data > clazz - 0.5)
         else:
-            classFilter = np.logical_and(data > clazz - 0.5, data <= clazz + 0.5)
-        data[classFilter] = clazz
+            class_filter = np.logical_and(data > clazz - 0.5, data <= clazz + 0.5)
+        data[class_filter] = clazz
 
     return data.astype(np.uint8)
 
@@ -292,25 +292,33 @@ class ModelBuilder(object):
         confusion_matrix = sklearn.metrics.confusion_matrix(crop_labels, predictions, labels=[1, 2])
         confusion_matrix = confusion_matrix.astype('float') / confusion_matrix.sum(axis=1)[:, np.newaxis]
 
-        print('<<------------------------------------------------------------>>')
-        print('<<------------------ Validation Results ---------------------->>')
-        print('<<------------------------------------------------------------>>')
+        out_str = ''
 
-        print('F1-Score:')
+        out_str += '<<------------------------------------------------------------>>' + os.linesep
+        out_str += '<<------------------ Validation Results ---------------------->>' + os.linesep
+        out_str += '<<------------------------------------------------------------>>' + os.linesep
+
+        out_str += 'F1-Score:' + os.linesep
         for i in range(0, len(f1_score)):
-            print('  - ', str(params['class_names'][i+1]), ': ', f1_score[i])
+            out_str += '  - ' + str(params['class_names'][i+1]) + ': ' + str(f1_score[i]) + os.linesep
 
-        print('Precision:')
+        out_str += 'Precision:' + os.linesep
         for i in range(0, len(precision)):
-            print('  - ', str(params['class_names'][i]), ': ', precision[i])
+            out_str += '  - ', str(params['class_names'][i]), ': ', str(precision[i]) + os.linesep
         
-        print('Recall:')
+        out_str += 'Recall:' + os.linesep
         for i in range(0, len(recall)):
-            print('  - ', str(params['class_names'][i]), ': ', recall[i])
+            out_str += '  - ', str(params['class_names'][i]), ': ', str(recall[i]) + os.linesep
 
-        print('Classification Report:\n', classification_report)
+        out_str += 'Classification Report:\n', str(classification_report) + os.linesep
 
-        print('Confusion Matrix:\n', confusion_matrix)
+        out_str += 'Confusion Matrix:\n', str(confusion_matrix) + os.linesep
+
+        fs.mkdir(os.path.join(model_dir, 'validation'))
+        print(out_str)
+        out_file = open(os.path.join(model_dir, 'validation', 'validation_report.txt'), 'w')
+        out_file.write(out_str)
+        out_file.close()
 
         fig, ax = plt.subplots()
         img = ax.imshow(confusion_matrix, interpolation='nearest', cmap=plt.cm.Greens)
