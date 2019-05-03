@@ -20,6 +20,9 @@ import networks.loss_functions as lossf
 import networks.tb_metrics as tbm
 import networks.layers as layers
 
+from importlib import reload
+reload(dsutils)  # TODO: remove this
+
 
 # TODO: Remove this
 def discretize_values(data, numberClass, startValue=0):
@@ -272,16 +275,18 @@ class ModelBuilder(object):
         predictions_lst = []
         crop_labels = []
         for predict, label in zip(estimator.predict(input_fn), expect_labels):
-            predictions_lst.append(predict['classes'])
+            predictions_lst.append(np.reshape(predict['classes'], -1))
             size_x, size_y, _ = predict['classes'].shape
             label = dsutils.crop_np_chip(label, size_x)
-            crop_labels.append(label)
+            crop_labels.append(np.reshape(label, -1))
         print('total:', len(predictions_lst))
         predictions = np.array(predictions_lst, dtype=np.int32)
+        crop_labels = np.array(crop_labels, dtype=np.int32)
         print('shape:', predictions.shape)
-        f1_score = sklearn.metrics.f1_score(predictions, expect_labels, average=None)
-        precision = sklearn.metrics.precision_score(predictions, expect_labels, average=None)
-        recall = sklearn.metrics.recall_score(predictions, expect_labels, average=None)
+        print('shape labels:', crop_labels.shape)
+        f1_score = sklearn.metrics.f1_score(predictions, crop_labels, average=None)
+        precision = sklearn.metrics.precision_score(predictions, crop_labels, average=None)
+        recall = sklearn.metrics.recall_score(predictions, crop_labels, average=None)
 
         print('<<------------------------------------------------------------>>')
         print('<<------------------ Validation Results ---------------------->>')

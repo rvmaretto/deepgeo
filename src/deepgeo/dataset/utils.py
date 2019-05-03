@@ -22,9 +22,9 @@ def split_dataset(dataset, perc_test=30, perc_val=0, random_seed=None):
 
 def crop_np_chip(chip, out_size):
     feat_shape = chip.shape
-    np.cast(out_size, np.int32)
-    offsets = [0, np.cast((int(feat_shape[1]) - int(out_size)) / 2, np.int32),
-               np.cast((int(feat_shape[2]) - int(out_size)) / 2, np.int32), 0]
-    size = [out_size, out_size, feat_shape[3]]
-    chip = np.slice(chip, offsets, size)
+    offsets = [int((int(feat_shape[0]) - int(out_size)) / 2),
+               int((int(feat_shape[1]) - int(out_size)) / 2)]
+    #size = [out_size, out_size, feat_shape[2]]
+    #chip = np.slice(chip, offsets, size)
+    chip = chip[offsets[0]:(offsets[0] + out_size), offsets[1]:(offsets[1] + out_size), :]
     return chip
