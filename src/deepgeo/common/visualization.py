@@ -1,3 +1,4 @@
+import numpy
 import numpy as np
 import os
 import matplotlib.patches as patches
@@ -5,6 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import skimage
 from descartes import PolygonPatch
+from matplotlib import pyplot
 from matplotlib.colors import ListedColormap
 from osgeo import ogr
 from shapely.wkb import loads
@@ -167,9 +169,36 @@ def plot_chips(chips, raster_array=None, bands=[1, 2, 3], contrast=False, chipsc
 
         plt.axis('off')
 
-    for coord in chips['coords']:
+    for coord in chips['win_coords']:
         width = coord['lower_row'] - coord['upper_row']
         height = coord['right_col'] - coord['left_col']
         rect = patches.Rectangle((coord['left_col'], coord['upper_row']), width, height,
                                   edgecolor=chipscolor, facecolor='none')
         ax.add_patch(rect)
+
+
+def plot_confusion_matrix(confusion_matrix, params, conf_matrix_path):
+    fig, ax = plt.subplots()
+    img = ax.imshow(confusion_matrix, interpolation='nearest', cmap=plt.cm.Greens)
+    ax.figure.colorbar(img, ax=ax)
+    ax.set(xticks=np.arange(confusion_matrix.shape[1]),
+           yticks=np.arange(confusion_matrix.shape[0]),
+           xticklabels=params['class_names'][1:3],
+           yticklabels=params['class_names'][1:3],
+           title='Confusion Matrix',
+           ylabel='True Label',
+           xlabel='Predicted Label')
+    # Rotate the tick labels and set their alignment.
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+             rotation_mode="anchor")
+    # Loop over data dimensions and create text annotations.
+    fmt = '.2f'
+    thresh = confusion_matrix.max() / 2.
+    for i in range(confusion_matrix.shape[0]):
+        for j in range(confusion_matrix.shape[1]):
+            ax.text(j, i, format(confusion_matrix[i, j], fmt),
+                    ha="center", va="center",
+                    color="white" if confusion_matrix[i, j] > thresh else "black")
+    fig.tight_layout()
+    plt.savefig(conf_matrix_path)
+    plt.show()

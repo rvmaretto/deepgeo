@@ -4,8 +4,9 @@ import numpy as np
 import tensorflow as tf
 import sklearn
 import sys
-import matplotlib.pyplot as plt
 import os
+
+import src.deepgeo.common.visualization as vis
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../'))
 import common.filesystem as fs
@@ -183,10 +184,10 @@ class ModelBuilder(object):
         # tf.set_random_seed(1987)
         tf.logging.set_verbosity(tf.logging.INFO)
 
-        if not path.exists(output_dir):
+        if not os.path.exists(output_dir):
             fs.mkdir(output_dir)
             
-        with open(path.join(output_dir, "parameters.csv"), "w") as f:
+        with open(os.path.join(output_dir, "parameters.csv"), "w") as f:
             w = csv.writer(f, delimiter=';')
             w.writerow(["network", self.network])
             w.writerow(["input_chip_size", [train_imgs[0].shape[0], train_imgs[0].shape[1]]])
@@ -263,6 +264,8 @@ class ModelBuilder(object):
     def validate(self, images, expect_labels, params, model_dir, save_results=True, exclude_classes=None):
         tf.logging.set_verbosity(tf.logging.WARN)
 
+        out_dir = os.path.join(model_dir, 'validation')
+
         estimator = tf.estimator.Estimator(#model_fn=tf.contrib.estimator.replicate_model_fn(self.__build_model),
                                            model_fn=self.__build_model,
                                            model_dir=model_dir,
@@ -316,38 +319,17 @@ class ModelBuilder(object):
 
         fs.mkdir(os.path.join(model_dir, 'validation'))
         print(out_str)
-        out_file = open(os.path.join(model_dir, 'validation', 'validation_report.txt'), 'w')
+        report_path = os.path.join(out_dir, 'validation_report.txt')
+
+        out_file = open(report_path, 'w')
         out_file.write(out_str)
         out_file.close()
 
-        fig, ax = plt.subplots()
-        img = ax.imshow(confusion_matrix, interpolation='nearest', cmap=plt.cm.Greens)
-        ax.figure.colorbar(img, ax=ax)
-        ax.set(xticks=np.arange(confusion_matrix.shape[1]),
-               yticks=np.arange(confusion_matrix.shape[0]),
-               xticklabels=params['class_names'][1:3],
-               yticklabels=params['class_names'][1:3],
-               title='Confusion Matrix',
-               ylabel='True Label',
-               xlabel='Predicted Label')
+        conf_matrix_path = os.path.join(out_dir, 'validation_confusion_matrix.png')
 
-        # Rotate the tick labels and set their alignment.
-        plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
-                 rotation_mode="anchor")
+        vis.plot_confusion_matrix(confusion_matrix, params, conf_matrix_path)
 
-        # Loop over data dimensions and create text annotations.
-        fmt = '.2f'  
-        thresh = confusion_matrix.max() / 2.
-        for i in range(confusion_matrix.shape[0]):
-            for j in range(confusion_matrix.shape[1]):
-                ax.text(j, i, format(confusion_matrix[i, j], fmt),
-                        ha="center", va="center",
-                        color="white" if confusion_matrix[i, j] > thresh else "black")
-        fig.tight_layout()
-        plt.savefig(os.path.join(model_dir, 'validation', 'validation_confusion_matrix.png'))
-        plt.show()
-
-def predict(self, chip_struct, params, model_dir):
+    def predict(self, chip_struct, params, model_dir):
         tf.logging.set_verbosity(tf.logging.WARN)
         images = chip_struct['chips']
 
