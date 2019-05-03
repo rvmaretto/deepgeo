@@ -259,7 +259,7 @@ class ModelBuilder(object):
         #                                 train_spec=tf.estimator.TrainSpec(train_input, hooks=[logging_hook]),
         #                                 eval_spec=tf.estimator.EvalSpec(test_input, hooks=[logging_hook]))
 
-    def validate(self, images, expect_labels, params, model_dir):
+    def validate(self, images, expect_labels, params, model_dir, exclude_classes=None):
         tf.logging.set_verbosity(tf.logging.WARN)
 
         estimator = tf.estimator.Estimator(#model_fn=tf.contrib.estimator.replicate_model_fn(self.__build_model),
@@ -280,29 +280,29 @@ class ModelBuilder(object):
             label = dsutils.crop_np_chip(label, size_x)
             crop_labels.append(label)
         # print('total:', len(predictions_lst))
-        predictions = np.array(predictions_lst, dtype=np.int32)
-        crop_labels = np.array(crop_labels, dtype=np.int32)
+        predictions = np.array(predictions_lst, dtype=np.int32).flatten()
+        crop_labels = np.array(crop_labels, dtype=np.int32).flatten()
         # print('shape:', predictions.shape)
         # print('shape labels:', crop_labels.shape)
-        f1_score = sklearn.metrics.f1_score(predictions.flatten(), crop_labels.flatten(), average='weighted')
-        # precision = sklearn.metrics.precision_score(predictions, crop_labels, average=None)
-        # recall = sklearn.metrics.recall_score(predictions, crop_labels, average=None)
+        f1_score = sklearn.metrics.f1_score(predictions, crop_labels, labels=[1, 2], average=None)
+        precision = sklearn.metrics.precision_score(predictions, crop_labels, average=None)
+        recall = sklearn.metrics.recall_score(predictions, crop_labels, average=None)
 
         print('<<------------------------------------------------------------>>')
         print('<<------------------ Validation Results ---------------------->>')
         print('<<------------------------------------------------------------>>')
 
         print('F1-Score:')
-        for i in range(0, len(params['class_names'])):
-            print('  -> ', str(params['class_names'][i]), ': ', f1_score[i])
+        for i in range(0, len(f1_score)):
+            print('  - ', str(params['class_names'][i+1]), ': ', f1_score[i])
 
-        # print('Precision:')
-        # for i in range(0, len(params['class_names'])):
-        #     print('  -> ', str(params['class_names'][i]), ': ', precision[i])
-        #
-        # print('Recall:')
-        # for i in range(0, len(params['class_names'])):
-        #     print('  -> ', str(params['class_names'][i]), ': ', recall[i])
+        print('Precision:')
+        for i in range(0, len(precision)):
+            print('  - ', str(params['class_names'][i]), ': ', precision[i])
+        
+        print('Recall:')
+        for i in range(0, len(recall)):
+            print('  - ', str(params['class_names'][i]), ': ', recall[i])
 
     def predict(self, chip_struct, params, model_dir):
         tf.logging.set_verbosity(tf.logging.WARN)
