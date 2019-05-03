@@ -177,7 +177,7 @@ def plot_chips(chips, raster_array=None, bands=[1, 2, 3], contrast=False, chipsc
         ax.add_patch(rect)
 
 
-def plot_confusion_matrix(confusion_matrix, params, conf_matrix_path):
+def plot_confusion_matrix(confusion_matrix, params, fig_path=None):
     fig, ax = plt.subplots()
     img = ax.imshow(confusion_matrix, interpolation='nearest', cmap=plt.cm.Greens)
     ax.figure.colorbar(img, ax=ax)
@@ -200,5 +200,6 @@ def plot_confusion_matrix(confusion_matrix, params, conf_matrix_path):
                     ha="center", va="center",
                     color="white" if confusion_matrix[i, j] > thresh else "black")
     fig.tight_layout()
-    plt.savefig(conf_matrix_path)
+    if fig_path is not None:
+        plt.savefig(fig_path)
     plt.show()

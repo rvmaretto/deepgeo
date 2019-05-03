@@ -286,47 +286,53 @@ class ModelBuilder(object):
         predictions = np.array(predictions_lst, dtype=np.int32).flatten()
         crop_labels = np.array(crop_labels, dtype=np.int32).flatten()
 
-        f1_score = sklearn.metrics.f1_score(crop_labels, predictions, labels=[1, 2], average=None)
-        precision = sklearn.metrics.precision_score(crop_labels, predictions, average=None)
-        recall = sklearn.metrics.recall_score(crop_labels, predictions, average=None)
-        classification_report = sklearn.metrics.classification_report(crop_labels, predictions,
-                                                                      target_names=params['class_names'])
-        confusion_matrix = sklearn.metrics.confusion_matrix(crop_labels, predictions, labels=[1, 2])
-        confusion_matrix = confusion_matrix.astype('float') / confusion_matrix.sum(axis=1)[:, np.newaxis]
-
         out_str = ''
-
         out_str += '<<------------------------------------------------------------>>' + os.linesep
         out_str += '<<------------------ Validation Results ---------------------->>' + os.linesep
         out_str += '<<------------------------------------------------------------>>' + os.linesep
 
-        out_str += 'F1-Score:' + os.linesep
-        for i in range(0, len(f1_score)):
-            out_str += '  - ' + str(params['class_names'][i+1]) + ': ' + str(f1_score[i]) + os.linesep
+        metrics, report_str = self.compute_quality_metrics(crop_labels, predictions, params)
 
-        out_str += 'Precision:' + os.linesep
-        for i in range(0, len(precision)):
-            out_str += '  - ' + str(params['class_names'][i]) + ': ' + str(precision[i]) + os.linesep
-        
-        out_str += 'Recall:' + os.linesep
-        for i in range(0, len(recall)):
-            out_str += '  - ' + str(params['class_names'][i]) + ': ' + str(recall[i]) + os.linesep
-
-        out_str += 'Classification Report:' + os.linesep + str(classification_report) + os.linesep
-
-        out_str += 'Confusion Matrix:' + os.linesep + str(confusion_matrix) + os.linesep
+        out_str += report_str
 
         fs.mkdir(os.path.join(model_dir, 'validation'))
         print(out_str)
-        report_path = os.path.join(out_dir, 'validation_report.txt')
 
+        report_path = os.path.join(out_dir, 'validation_report.txt')
         out_file = open(report_path, 'w')
         out_file.write(out_str)
         out_file.close()
 
         conf_matrix_path = os.path.join(out_dir, 'validation_confusion_matrix.png')
+        vis.plot_confusion_matrix(metrics['confusion_matrix'], params, conf_matrix_path)
 
-        vis.plot_confusion_matrix(confusion_matrix, params, conf_matrix_path)
+    def compute_quality_metrics(self, labels, predictions, params):
+        metrics = {}
+        metrics['f1_score'] = sklearn.metrics.f1_score(labels, predictions, labels=[1, 2], average=None)
+        metrics['precision'] = sklearn.metrics.precision_score(labels, predictions, average=None)
+        metrics['recall'] = sklearn.metrics.recall_score(labels, predictions, average=None)
+        metrics['classification_report'] = sklearn.metrics.classification_report(labels, predictions,
+                                                                      target_names=params['class_names'])
+        confusion_matrix = sklearn.metrics.confusion_matrix(labels, predictions, labels=[1, 2])
+        metrics['confusion_matrix'] = confusion_matrix.astype('float') / confusion_matrix.sum(axis=1)[:, np.newaxis]
+
+        out_str = ''
+        out_str += 'F1-Score:' + os.linesep
+        for i in range(0, len(metrics['f1_score'])):
+            out_str += '  - ' + str(params['class_names'][i + 1]) + ': ' + str(metrics['f1_score'][i]) + os.linesep
+
+        out_str += 'Precision:' + os.linesep
+        for i in range(0, len(metrics['precision'])):
+            out_str += '  - ' + str(params['class_names'][i]) + ': ' + str(metrics['precision'][i]) + os.linesep
+
+        out_str += 'Recall:' + os.linesep
+        for i in range(0, len(metrics['recall'])):
+            out_str += '  - ' + str(params['class_names'][i]) + ': ' + str(metrics['recall'][i]) + os.linesep
+
+        out_str += 'Classification Report:' + os.linesep + str(metrics['classification_report']) + os.linesep
+        out_str += 'Confusion Matrix:' + os.linesep + str(metrics['confusion_matrix']) + os.linesep
+
+        return metrics, out_str
 
     def predict(self, chip_struct, params, model_dir):
         tf.logging.set_verbosity(tf.logging.WARN)
