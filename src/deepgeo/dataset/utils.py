@@ -24,7 +24,7 @@ def crop_np_chip(chip, out_size):
     feat_shape = chip.shape
     offsets = [int((int(feat_shape[0]) - int(out_size)) / 2),
                int((int(feat_shape[1]) - int(out_size)) / 2)]
-    #size = [out_size, out_size, feat_shape[2]]
-    #chip = np.slice(chip, offsets, size)
+    # size = [out_size, out_size, feat_shape[2]]
+    # chip = np.slice(chip, offsets, size)
     chip = chip[offsets[0]:(offsets[0] + out_size), offsets[1]:(offsets[1] + out_size), :]
     return chip

@@ -2,7 +2,7 @@ import os
 import sklearn
 
 
-def compute_quality_metrics(self, labels, predictions, params):
+def compute_quality_metrics(labels, predictions, params):
     metrics = {}
     metrics['f1_score'] = sklearn.metrics.f1_score(labels, predictions, labels=[1, 2], average=None)
     metrics['precision'] = sklearn.metrics.precision_score(labels, predictions, average=None)
