@@ -193,3 +193,89 @@ def write_pred_chips(output_path, base_raster, pred_struct, output_format='GTiff
         out_band.WriteArray(chip, y_start, x_start)
 
     out_band.FlushCache()
+
+
+def compute_geo_coords(coords, x_origin, y_origin, pixel_width, pixel_height):
+    # if base_raster_path is None:
+    #     raise RuntimeError('Base raster path is None. It must exists to generate geographic coordinates.')
+    # else:
+    #     img_ds = gdal.Open(base_raster_path)
+    #
+    # transform = img_ds.GetGeoTransform()
+    #
+    # x_origin = transform[0]
+    # y_origin = transform[3]
+    # pixel_width = transform[1]
+    # pixel_height = transform[5]
+
+    geo_coords = []
+    for coord in coords:
+        geo_coord = []
+        # coord = self.ij_samples[pos]
+        # window = self.compute_window_coords(coord)
+
+        upper_y = y_origin + (coord['upper_row'] * pixel_height)
+        lower_y = y_origin + (coord['lower_row'] * pixel_height)
+        left_x = x_origin + (coord['left_col'] * pixel_width)
+        right_x = x_origin + (coord['right_col'] * pixel_width)
+
+        geo_coord.append(upper_y)
+        geo_coord.append(lower_y)
+        geo_coord.append(left_x)
+        geo_coord.append(right_x)
+        geo_coords.append(geo_coord)
+
+    img_ds = None
+    return geo_coords
+
+
+def save_chips_shp(chip_struct, out_path, base_raster_path):
+    if base_raster_path is None:
+        raise RuntimeError('Base raster path is None. It must exists to generate geographic coordinates.')
+    else:
+        img_ds = gdal.Open(base_raster_path)
+
+    transform = img_ds.GetGeoTransform()
+
+    x_origin = transform[0]
+    y_origin = transform[3]
+    pixel_width = transform[1]
+    pixel_height = transform[5]
+
+    driver = ogr.GetDriverByName("ESRI Shapefile")
+
+    if os.path.exists(out_path):
+        driver.DeleteDataSource(out_path)
+
+    prj = img_ds.GetProjection()
+    srs = osr.SpatialReference(wkt=prj)
+
+    # create the data source
+    output_ds = driver.CreateDataSource(out_path)
+    layer_name = os.path.splitext(os.path.basename(out_path))[0]
+    layer = output_ds.CreateLayer(layer_name, srs, ogr.wkbPolygon)
+
+    geo_coords = compute_geo_coords(chip_struct['coords'], x_origin, y_origin, pixel_width, pixel_height)
+
+    for pos in range(len(geo_coords)):
+        coord = geo_coords[pos]
+        ring = ogr.Geometry(ogr.wkbLinearRing)
+        ring.AddPoint(coord[2], coord[0])
+        ring.AddPoint(coord[2], coord[1])
+        ring.AddPoint(coord[3], coord[1])
+        ring.AddPoint(coord[3], coord[0])
+        ring.AddPoint(coord[2], coord[0])
+
+        polygon = ogr.Geometry(ogr.wkbPolygon)
+        polygon.AddGeometry(ring)
+
+        feature = ogr.Feature(layer.GetLayerDefn())
+        feature.SetGeometry(polygon)
+        layer.CreateFeature(feature)
+
+        feature.Destroy()
+        polygon.Destroy()
+        ring.Destroy()
+
+    output_ds.Destroy()
+    img_ds = None
