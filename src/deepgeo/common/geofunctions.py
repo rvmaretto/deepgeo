@@ -188,8 +188,8 @@ def write_pred_chips(output_path, base_raster, pred_struct, output_format='GTiff
     for idx in range(1, len(pred_struct['predict'])):
         chip = pred_struct['predict'][idx]
         chip = np.squeeze(chip)
-        x_start = pred_struct['coords'][idx]['upper_row'] + pred_struct['overlap'][0]
-        y_start = pred_struct['coords'][idx]['left_col'] + pred_struct['overlap'][1]
+        x_start = pred_struct['coords'][idx]['upper_row'] - pred_struct['overlap'][0]
+        y_start = pred_struct['coords'][idx]['left_col'] - pred_struct['overlap'][1]
         out_band.WriteArray(chip, y_start, x_start)
 
     out_band.FlushCache()
