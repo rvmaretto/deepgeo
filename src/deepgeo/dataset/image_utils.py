@@ -43,6 +43,7 @@ def stack_bands(files, output_img, band_names=None):#, no_data=-9999, format="GT
     outds.SetProjection(ds.GetProjection())
     gdal.Translate(output_img, outds, options=['COMPRESS=LZW'])
 
+
 def clip_img_by_extent(img_file, reference_shp, output_img):
     if os.path.exists(output_img):
         os.remove(output_img)
@@ -63,6 +64,7 @@ def clip_img_by_extent(img_file, reference_shp, output_img):
 
     vector_ds.Destroy()
     raster_to_clip = None
+
 
 def stack_temporal_images(files, output_img, band_names=None):
     if not isinstance(files, list):
@@ -106,6 +108,7 @@ def stack_temporal_images(files, output_img, band_names=None):
     outds.SetGeoTransform(ds.GetGeoTransform())
     outds.SetProjection(ds.GetProjection())
     outds = None
+
 
 def mosaic_images(files, output_file, band_names=None):
     if not isinstance(files, list):
@@ -154,6 +157,7 @@ def mosaic_images(files, output_file, band_names=None):
 
     out_ds = None
     input_ds = None
+
 
 def clip_by_aggregated_polygons(in_raster_path, shape_file, output_path, band_names=None, no_data=None):
     if band_names is None:
