@@ -4,6 +4,8 @@ import numpy as np
 
 
 def compute_quality_metrics(labels, predictions, params):
+    labels = labels.flatten()
+    predictions = predictions.flatten()
     metrics = {'f1_score': sklearn.metrics.f1_score(labels, predictions, labels=[1, 2], average=None),
                'precision': sklearn.metrics.precision_score(labels, predictions, average=None),
                'recall': sklearn.metrics.recall_score(labels, predictions, average=None),
