@@ -21,9 +21,6 @@ import networks.loss_functions as lossf
 import networks.tb_metrics as tbm
 import networks.layers as layers
 
-from importlib import reload
-reload(dsutils)  # TODO: remove this
-
 
 # TODO: Remove this
 def discretize_values(data, number_class, start_value=0):
