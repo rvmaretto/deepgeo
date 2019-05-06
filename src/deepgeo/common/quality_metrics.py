@@ -1,5 +1,6 @@
 import os
 import sklearn
+import numpy as np
 
 
 def compute_quality_metrics(labels, predictions, params):
