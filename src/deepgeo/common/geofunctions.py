@@ -176,12 +176,14 @@ def write_pred_chips(output_path, base_raster, pred_struct, output_format='GTiff
     x_start, pixel_width, _, y_start, _, pixel_height = base_ds.GetGeoTransform()
     x_size = base_ds.RasterXSize
     y_size = base_ds.RasterYSize
-    min_x, max_x, min_y, max_y = base_ds.GetExtent()
+    # min_x, max_x, min_y, max_y = base_ds.GetExtent()
+    x_end = x_start + (x_size * pixel_width)
+    y_end = y_start + (y_size * pixel_height)
 
-    min_x = min_x + (round(pred_struct['overlap'][0] / 2) * pixel_width)
-    max_x = max_x - (round(pred_struct['overlap'][0] / 2) * pixel_width)
-    min_y = min_y + (round(pred_struct['overlap'][1] / 2) * pixel_height)
-    max_y = max_y - (round(pred_struct['overlap'][1] / 2) * pixel_height)
+    min_x = x_start + (round(pred_struct['overlap'][0] / 2) * pixel_width)
+    max_x = x_end - (round(pred_struct['overlap'][0] / 2) * pixel_width)
+    min_y = y_start + (round(pred_struct['overlap'][1] / 2) * pixel_height)
+    max_y = y_end - (round(pred_struct['overlap'][1] / 2) * pixel_height)
 
     srs = osr.SpatialReference()
     srs.ImportFromWkt(base_ds.GetProjectionRef())
