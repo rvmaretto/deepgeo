@@ -31,6 +31,8 @@ class SequentialChipGenerator(object):
     def compute_indexes(self):
         row_size, col_size, nbands = self.img_array.shape
         if self.labeled_array is not None:
+            if len(self.labeled_array.shape) == 2:
+                self.labeled_array = np.expand_dims(self.labeled_array, -1)
             lbl_row_size, lbl_col_size, _ = self.labeled_array.shape
 
             if row_size != lbl_row_size or col_size != lbl_col_size:

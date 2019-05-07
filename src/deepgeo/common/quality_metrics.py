@@ -54,8 +54,8 @@ def evaluate_classification(chip_struct, params, out_dir):
     num_chips, size_x, size_y, _ = chip_struct['predict'].shape
     crop_labels = dsutils.crop_np_batch(chip_struct['labels'], size_x)
 
-    predictions = chip_struct['predict'].flatten()
-    crop_labels = crop_labels.flatten()
+    predictions = chip_struct['predict']
+    crop_labels = crop_labels
 
     out_str = ''
     out_str += '<<------------------------------------------------------------>>' + os.linesep

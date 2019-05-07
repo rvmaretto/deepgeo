@@ -321,7 +321,7 @@ class ModelBuilder(object):
 
         print('Classifying image with structure ', str(images.shape), '...')
 
-        chip_struct['predict'] = []
+        predictions = []
 
         for predict in estimator.predict(input_fn):
             # for predict, dummy in zip(predictions, images):
@@ -330,6 +330,8 @@ class ModelBuilder(object):
             # predicted_images.append(discretize_values(predict["classes"],
             #                                           params["num_classes"],
             #                                           0))
-            chip_struct['predict'].append(predict['classes'])
+            predictions.append(predict['classes'])
+        chip_struct['predict'] = np.array(predictions, dtype=np.int32)
 
         return chip_struct
+
