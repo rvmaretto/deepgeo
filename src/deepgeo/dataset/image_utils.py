@@ -44,6 +44,7 @@ def stack_bands(files, output_img, band_names=None):#, no_data=-9999, format="GT
     gdal.Translate(output_img, outds, options=['COMPRESS=LZW'])
 
 
+# TODO: rename to clip_img_by_extent_shp
 def clip_img_by_extent(img_file, reference_shp, output_img):
     if os.path.exists(output_img):
         os.remove(output_img)

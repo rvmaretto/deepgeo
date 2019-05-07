@@ -203,6 +203,8 @@ def write_pred_chips(output_path, base_raster, pred_struct, output_format='GTiff
         out_band.WriteArray(chip, y_start, x_start)
 
     out_band.FlushCache()
+
+    out_ds = gdal.Open(output_path)
     gdal.Warp(output_path, out_ds, format="GTiff",
               outputBounds=[min_x, min_y, max_x, max_y],
               dstSRS=projection, resampleAlg=gdal.GRA_NearestNeighbour,
