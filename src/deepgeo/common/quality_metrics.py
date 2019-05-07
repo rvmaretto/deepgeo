@@ -1,6 +1,11 @@
 import os
 import sklearn
+import sys
 import numpy as np
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../'))
+import common.visualization as vis
+import dataset.utils as dsutils
 
 
 def compute_quality_metrics(labels, predictions, params):
@@ -36,3 +41,32 @@ def compute_quality_metrics(labels, predictions, params):
     out_str += 'Confusion Matrix:' + os.linesep + str(metrics['confusion_matrix']) + os.linesep
 
     return metrics, out_str
+
+
+def evaluate_classification(chip_struct, params, out_dir):
+    num_chips, size_x, size_y, _ = chip_struct['predict'].shape
+    crop_labels = dsutils.crop_np_batch(chip_struct['labels'], size_x)
+
+    predictions = chip_struct['predict'].flatten()
+    crop_labels = crop_labels.flatten()
+
+    out_str = ''
+    out_str += '<<------------------------------------------------------------>>' + os.linesep
+    out_str += '<<---------------- Classification Results -------------------->>' + os.linesep
+    out_str += '<<------------------------------------------------------------>>' + os.linesep
+
+    metrics, report_str = compute_quality_metrics(crop_labels, predictions, params)
+
+    out_str += report_str
+
+    print(out_str)
+
+    if out_dir is not None:
+        report_path = os.path.join(out_dir, 'classification_report.txt')
+        out_file = open(report_path, 'w')
+        out_file.write(out_str)
+        out_file.close()
+
+        conf_matrix_path = os.path.join(out_dir, 'classification_confusion_matrix.png')
+
+    vis.plot_confusion_matrix(metrics['confusion_matrix'], params, conf_matrix_path)

@@ -28,3 +28,11 @@ def crop_np_chip(chip, out_size):
     # chip = np.slice(chip, offsets, size)
     chip = chip[offsets[0]:(offsets[0] + out_size), offsets[1]:(offsets[1] + out_size), :]
     return chip
+
+
+def crop_np_batch(batch, out_size):
+    feat_shape = batch.shape
+    offsets = [int((int(feat_shape[0]) - int(out_size)) / 2),
+               int((int(feat_shape[1]) - int(out_size)) / 2)]
+    batch = batch[:, offsets[0]:(offsets[0] + out_size), offsets[1]:(offsets[1] + out_size), :]
+    return batch
