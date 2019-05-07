@@ -9,7 +9,7 @@ def compute_quality_metrics(labels, predictions, params):
     metrics = {'f1_score': sklearn.metrics.f1_score(labels, predictions, labels=[1, 2], average=None),
                'precision': sklearn.metrics.precision_score(labels, predictions, average=None),
                'recall': sklearn.metrics.recall_score(labels, predictions, average=None),
-               'roc_score': sklearn.metrics.roc_auc_score(labels, predictions, average=None),
+               'roc_score': sklearn.metrics.roc_curve(labels, predictions, pos_label=2),
                'classification_report': sklearn.metrics.classification_report(labels, predictions,
                                                                               target_names=params['class_names'])}
     confusion_matrix = sklearn.metrics.confusion_matrix(labels, predictions, labels=[1, 2])
@@ -28,9 +28,16 @@ def compute_quality_metrics(labels, predictions, params):
     for i in range(0, len(metrics['recall'])):
         out_str += '  - ' + str(params['class_names'][i]) + ': ' + str(metrics['recall'][i]) + os.linesep
 
-    out_str += 'ROC:' + os.linesep
-    for i in range(0, len(metrics['roc_score'])):
-        out_str += '  - ' + str(params['class_names'][i]) + ': ' + str(metrics['recall'][i]) + os.linesep
+    out_str += 'ROC: ' + os.linesep + '  - FPR: [ ' 
+    for i in metrics['roc_score'][0]:
+        out_str += '{0}'.format(i) + ' '  #metrics['roc_score'][0]) # + os.linesep
+    out_str += ']' + os.linesep + '  - TPR: [ '
+    for i in metrics['roc_score'][1]:
+        out_str += '{0}'.format(i) + ' '
+    out_str += ']' + os.linesep + '  - Thresholds: [ '
+    for i in metrics['roc_score'][2]:
+        out_str += '{0}'.format(i) + ' '
+    out_str += ']' + os.linesep
 
     out_str += 'Classification Report:' + os.linesep + str(metrics['classification_report']) + os.linesep
     out_str += 'Confusion Matrix:' + os.linesep + str(metrics['confusion_matrix']) + os.linesep
