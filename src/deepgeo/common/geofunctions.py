@@ -176,14 +176,6 @@ def write_pred_chips(output_path, base_raster, pred_struct, output_format='GTiff
     x_start, pixel_width, _, y_start, _, pixel_height = base_ds.GetGeoTransform()
     x_size = base_ds.RasterXSize
     y_size = base_ds.RasterYSize
-    # min_x, max_x, min_y, max_y = base_ds.GetExtent()
-    x_end = x_start + (x_size * pixel_width)
-    y_end = y_start + (y_size * pixel_height)
-
-    min_x = x_start + (round(pred_struct['overlap'][0] / 2) * pixel_width)
-    max_x = x_end - (round(pred_struct['overlap'][0] / 2) * pixel_width)
-    min_y = y_start + (round(pred_struct['overlap'][1] / 2) * pixel_height)
-    max_y = y_end - (round(pred_struct['overlap'][1] / 2) * pixel_height)
 
     srs = osr.SpatialReference()
     srs.ImportFromWkt(base_ds.GetProjectionRef())
@@ -192,7 +184,6 @@ def write_pred_chips(output_path, base_raster, pred_struct, output_format='GTiff
     out_ds.SetGeoTransform((x_start, pixel_width, 0, y_start, 0, pixel_height))
     out_ds.SetProjection(srs.ExportToWkt())
     out_band = out_ds.GetRasterBand(1)
-    projection = out_ds.GetProjectionRef()
 
     for idx in range(1, len(pred_struct['predict'])):
         chip = pred_struct['predict'][idx]
@@ -203,13 +194,6 @@ def write_pred_chips(output_path, base_raster, pred_struct, output_format='GTiff
         out_band.WriteArray(chip, y_start, x_start)
 
     out_band.FlushCache()
-
-    out_ds = gdal.Open(output_path)
-    gdal.Warp(output_path, out_ds, format="GTiff",
-              outputBounds=[min_x, min_y, max_x, max_y],
-              dstSRS=projection, resampleAlg=gdal.GRA_NearestNeighbour,
-              options=['COMPRESS=LZW'])
-    out_ds = None
 
 
 def compute_geo_coords(coords, x_origin, y_origin, pixel_width, pixel_height):
