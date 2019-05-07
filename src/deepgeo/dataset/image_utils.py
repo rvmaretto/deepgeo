@@ -45,7 +45,7 @@ def stack_bands(files, output_img, band_names=None):#, no_data=-9999, format="GT
 
 
 # TODO: rename to clip_img_by_extent_shp
-def clip_img_by_extent(img_file, reference_shp, output_img):
+def clip_img_by_extent_shp(img_file, reference_shp, output_img):
     if os.path.exists(output_img):
         os.remove(output_img)
 
@@ -193,3 +193,27 @@ def clip_by_aggregated_polygons(in_raster_path, shape_file, output_path, band_na
         for id, name in enumerate(band_names):
             dest.set_band_description(id + 1, name)
         dest.write(out_image)
+
+
+def clip_img_by_network_output(img_file, net_overlap):
+    raster_to_clip = gdal.Open(img_file)
+    projection = raster_to_clip.GetProjectionRef()
+
+    x_start, pixel_width, _, y_start, _, pixel_height = raster_to_clip.GetGeoTransform()
+    x_size = raster_to_clip.RasterXSize
+    y_size = raster_to_clip.RasterYSize
+
+    x_end = x_start + (x_size * pixel_width)
+    y_end = y_start + (y_size * pixel_height)
+
+    min_x = x_start + (round(net_overlap[0] / 2) * pixel_width)
+    max_x = x_end - (round(net_overlap[0] / 2) * pixel_width)
+    min_y = y_start + (round(net_overlap[1] / 2) * pixel_height)
+    max_y = y_end - (round(net_overlap[1] / 2) * pixel_height)
+
+    gdal.Warp(img_file, raster_to_clip, format="GTiff",
+              outputBounds=[min_x, min_y, max_x, max_y],
+              dstSRS=projection, resampleAlg=gdal.GRA_NearestNeighbour,
+              options=['COMPRESS=LZW'])
+
+    raster_to_clip = None
