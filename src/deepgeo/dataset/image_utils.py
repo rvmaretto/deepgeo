@@ -5,6 +5,7 @@ import subprocess
 import fiona
 import rasterio
 import rasterio.mask
+import shutil
 # from rasterio.merge import merge
 
 def stack_bands(files, output_img, band_names=None):#, no_data=-9999, format="GTiff", dtype=gdal.GDT_Int16):
@@ -210,9 +211,10 @@ def clip_img_by_network_output(img_file, net_overlap):
     min_y = y_start + (round(net_overlap[1] / 2) * pixel_height)
     max_y = y_end - (round(net_overlap[1] / 2) * pixel_height)
 
-    gdal.Translate(img_file, raster_to_clip, format="GTiff",
+    gdal.Translate('tmp.tif', raster_to_clip, format="GTiff",
                    projWin=[min_x, min_y, max_x, max_y],
-                   dstSRS=projection, resampleAlg=gdal.GRA_NearestNeighbour,
+                   #dstSRS=projection, resampleAlg=gdal.GRA_NearestNeighbour,
                    options=['COMPRESS=LZW'])
 
     raster_to_clip = None
+    shutil.move('tmp.tif', img_file)
