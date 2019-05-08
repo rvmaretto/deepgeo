@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import subprocess
+import sys
 from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
@@ -198,7 +199,9 @@ def write_pred_chips(output_path, base_raster, pred_struct, ref_shp=None, output
         out_band.WriteArray(chip, y_start, x_start)
 
     out_band.FlushCache()
+    out_ds = None
 
+    #TODO: Check this.
     iutils.clip_img_by_network_output(output_path, pred_struct['overlap'])
     if ref_shp is not None:
         iutils.clip_by_aggregated_polygons(output_path, ref_shp, output_path, no_data=0)

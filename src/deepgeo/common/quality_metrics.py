@@ -51,7 +51,7 @@ def compute_quality_metrics(labels, predictions, params):
     return metrics, out_str
 
 
-def evaluate_classification(prediction_path, ground_truth_path, params, out_dir):
+def evaluate_classification(prediction_path, ground_truth_path, params, out_dir=None):
     pred_ds = gdal.Open(prediction_path)
     pred_arr = pred_ds.ReadAsArray()
     pred_size_x, pred_size_y = pred_arr.shape
@@ -87,5 +87,8 @@ def evaluate_classification(prediction_path, ground_truth_path, params, out_dir)
         out_file.close()
 
         conf_matrix_path = os.path.join(out_dir, 'classification_confusion_matrix.png')
-
+#        vis.plot_confusion_matrix(metrics['confusion_matrix'], params, conf_matrix_path)
+    else:
+        conf_matrix_path = None
     vis.plot_confusion_matrix(metrics['confusion_matrix'], params, conf_matrix_path)
+
