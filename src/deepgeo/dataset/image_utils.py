@@ -44,7 +44,6 @@ def stack_bands(files, output_img, band_names=None):#, no_data=-9999, format="GT
     gdal.Translate(output_img, outds, options=['COMPRESS=LZW'])
 
 
-# TODO: rename to clip_img_by_extent_shp
 def clip_img_by_extent_shp(img_file, reference_shp, output_img):
     if os.path.exists(output_img):
         os.remove(output_img)
@@ -211,9 +210,9 @@ def clip_img_by_network_output(img_file, net_overlap):
     min_y = y_start + (round(net_overlap[1] / 2) * pixel_height)
     max_y = y_end - (round(net_overlap[1] / 2) * pixel_height)
 
-    gdal.Warp(img_file, raster_to_clip, format="GTiff",
-              outputBounds=[min_x, min_y, max_x, max_y],
-              dstSRS=projection, resampleAlg=gdal.GRA_NearestNeighbour,
-              options=['COMPRESS=LZW'])
+    gdal.Translate(img_file, raster_to_clip, format="GTiff",
+                   projWin=[min_x, min_y, max_x, max_y],
+                   dstSRS=projection, resampleAlg=gdal.GRA_NearestNeighbour,
+                   options=['COMPRESS=LZW'])
 
     raster_to_clip = None
