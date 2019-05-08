@@ -5,6 +5,9 @@ from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../'))
+import dataset.image_utils as iutils
+
 
 def load_image(filepath, no_data=None):
     img_ds = gdal.Open(filepath)
@@ -169,7 +172,8 @@ def reproj_shape_to_raster(path_in_shp, path_raster, path_out_shp):
     in_ds = None
 
 
-def write_pred_chips(output_path, base_raster, pred_struct, output_format='GTiff', data_type=gdal.GDT_UInt16):
+def write_pred_chips(output_path, base_raster, pred_struct, ref_shp=None, output_format='GTiff',
+                     data_type=gdal.GDT_UInt16):
     driver = gdal.GetDriverByName(output_format)
     base_ds = gdal.Open(base_raster)
 
@@ -194,6 +198,10 @@ def write_pred_chips(output_path, base_raster, pred_struct, output_format='GTiff
         out_band.WriteArray(chip, y_start, x_start)
 
     out_band.FlushCache()
+
+    iutils.clip_img_by_network_output(output_path, pred_struct['overlap'])
+    if ref_shp is not None:
+        iutils.clip_by_aggregated_polygons(output_path, ref_shp, output_path, no_data=0)
 
 
 def compute_geo_coords(coords, x_origin, y_origin, pixel_width, pixel_height):
