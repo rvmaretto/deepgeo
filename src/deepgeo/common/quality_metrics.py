@@ -1,3 +1,4 @@
+import gdal
 import os
 import sklearn
 import sys
@@ -50,19 +51,30 @@ def compute_quality_metrics(labels, predictions, params):
     return metrics, out_str
 
 
-def evaluate_classification(chip_struct, params, out_dir):
-    num_chips, size_x, size_y, _ = chip_struct['predict'].shape
-    crop_labels = dsutils.crop_np_batch(chip_struct['labels'], size_x)
+def evaluate_classification(prediction_path, ground_truth_path, params, out_dir):
+    pred_ds = gdal.Open(prediction_path)
+    pred_arr = pred_ds.ReadAsArray()
+    pred_size_x, pred_size_y = pred_arr.shape
 
-    predictions = chip_struct['predict']
-    crop_labels = crop_labels
+    truth_ds = gdal.Open(ground_truth_path)
+    truth_arr = truth_ds.ReadAsArray()
+    truth_size_x, truth_size_y = truth_arr.shape
+
+    if pred_size_x != truth_size_x:
+        diff_x = truth_size_x - pred_size_x
+        diff_y = truth_size_y - pred_size_y
+        start_x = 0 + round(diff_x / 2)
+        end_x = truth_size_x - round(diff_x / 2)
+        start_y = 0 + round(diff_y / 2)
+        end_y = truth_size_y - round(diff_y / 2)
+        truth_arr = truth_arr[start_x:end_x, start_y:end_y]
 
     out_str = ''
     out_str += '<<------------------------------------------------------------>>' + os.linesep
     out_str += '<<---------------- Classification Results -------------------->>' + os.linesep
     out_str += '<<------------------------------------------------------------>>' + os.linesep
 
-    metrics, report_str = compute_quality_metrics(crop_labels, predictions, params)
+    metrics, report_str = compute_quality_metrics(truth_arr, pred_arr, params)
 
     out_str += report_str
 
