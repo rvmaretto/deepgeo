@@ -3,10 +3,11 @@ import numpy as np
 import os
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
+import scipy
 import seaborn as sns
 import skimage
+import sklearn
 from descartes import PolygonPatch
-from matplotlib import pyplot
 from matplotlib.colors import ListedColormap
 from osgeo import ogr
 from shapely.wkb import loads
@@ -202,4 +203,27 @@ def plot_confusion_matrix(confusion_matrix, params, fig_path=None):
     fig.tight_layout()
     if fig_path is not None:
         plt.savefig(fig_path)
+    plt.show()
+
+
+def plot_roc_curve(roc):
+    # tprs = []
+    # aucs = []
+    # mean_fpr = np.linspace(0, 1, 100)
+
+    fpr = roc[0]
+    tpr = roc[1]
+    thresholds = roc[2]
+
+    # tprs.append(scipy.interp(mean_fpr, fpr, tpr))
+    # tprs[-1][0] = 0.0
+
+    roc_auc = sklearn.metrics.auc(fpr, tpr)
+
+    plt.plot([0, 1], [0, 1], linestyle='--', lw=2, color='r', label='Chance', alpha=.8)
+    plt.plot(fpr, tpr, colof='b', label='ROC (AUC = %0.2f)' % roc_auc, lw=2, alpha=.8)
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('Receiver Operating Characteristics')
+    plt.legend(loc='lower right')
     plt.show()

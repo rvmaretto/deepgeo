@@ -21,6 +21,8 @@ def compute_quality_metrics(labels, predictions, params):
     confusion_matrix = sklearn.metrics.confusion_matrix(labels, predictions, labels=[1, 2])
     metrics['confusion_matrix'] = confusion_matrix.astype('float') / confusion_matrix.sum(axis=1)[:, np.newaxis]
 
+    metrics['auc'] = sklearn.metrics.auc(metrics['roc_score'][0], metrics['roc_score'][1])
+
     out_str = ''
     out_str += 'F1-Score:' + os.linesep
     for i in range(0, len(metrics['f1_score'])):
@@ -44,6 +46,8 @@ def compute_quality_metrics(labels, predictions, params):
     for i in metrics['roc_score'][2]:
         out_str += '{0}'.format(i) + ' '
     out_str += ']' + os.linesep
+
+    out_str += 'AUC-ROC: ' + metrics['auc']
 
     out_str += 'Classification Report:' + os.linesep + str(metrics['classification_report']) + os.linesep
     out_str += 'Confusion Matrix:' + os.linesep + str(metrics['confusion_matrix']) + os.linesep
@@ -87,8 +91,8 @@ def evaluate_classification(prediction_path, ground_truth_path, params, out_dir=
         out_file.close()
 
         conf_matrix_path = os.path.join(out_dir, 'classification_confusion_matrix.png')
-#        vis.plot_confusion_matrix(metrics['confusion_matrix'], params, conf_matrix_path)
     else:
         conf_matrix_path = None
     vis.plot_confusion_matrix(metrics['confusion_matrix'], params, conf_matrix_path)
 
+    vis.plot_roc_curve(metrics['roc_score'])
