@@ -20,7 +20,7 @@ def define_quality_metrics(labels_1hot, predictions, logits, labels, output, los
         metrics['cross_entropy'] = tf.metrics.mean(cross_entropy)
         summaries['cross_entropy'] = tf.summary.scalar('cross_entropy', metrics['cross_entropy'][1])
 
-        metrics['auc-roc'] = tf.metrics.auc(labels=labels, predictions=predictions)
+        metrics['auc-roc'] = tf.metrics.auc(labels=labels, predictions=output)
         summaries['auc-roc'] = tf.summary.scalar('AUC_ROC', metrics['auc-roc'][1])
 
         # metrics['mean_iou'] = tf.metrics.mean_iou(labels=labels, predictions=predictions,

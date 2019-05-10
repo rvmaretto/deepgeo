@@ -55,7 +55,7 @@ def compute_quality_metrics(labels, predictions, params):
     return metrics, out_str
 
 
-def evaluate_classification(prediction_path, ground_truth_path, params, out_dir=None):
+def evaluate_classification(prediction_path, ground_truth_path, params, out_dir=None, file_sufix=''):
     pred_ds = gdal.Open(prediction_path)
     pred_arr = pred_ds.ReadAsArray()
     pred_size_x, pred_size_y = pred_arr.shape
@@ -85,13 +85,13 @@ def evaluate_classification(prediction_path, ground_truth_path, params, out_dir=
     print(out_str)
 
     if out_dir is not None:
-        report_path = os.path.join(out_dir, 'classification_report.txt')
+        report_path = os.path.join(out_dir, ('classification_report' + file_sufix + '.txt'))
         out_file = open(report_path, 'w')
         out_file.write(out_str)
         out_file.close()
 
-        conf_matrix_path = os.path.join(out_dir, 'classification_confusion_matrix.png')
-        aucroc_curve_path = os.path.join(out_dir, 'auc_roc_curve.png')
+        conf_matrix_path = os.path.join(out_dir, ('classification_confusion_matrix' + file_sufix + '.png'))
+        aucroc_curve_path = os.path.join(out_dir, ('auc_roc_curve' + file_sufix + '.png'))
     else:
         conf_matrix_path = None
         aucroc_curve_path = None
