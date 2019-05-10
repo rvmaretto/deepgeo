@@ -2,7 +2,7 @@ import sys
 import tensorflow as tf
 from os import path
 
-sys.path.insert(0, path.join(path.dirname(__file__),"../"))
+sys.path.insert(0, path.join(path.dirname(__file__), '../'))
 import networks.layers as layers
 
 
@@ -19,6 +19,8 @@ def define_quality_metrics(labels_1hot, predictions, logits, labels, output, los
         cross_entropy = tf.losses.softmax_cross_entropy(onehot_labels=labels_1hot, logits=predictions)
         metrics['cross_entropy'] = tf.metrics.mean(cross_entropy)
         summaries['cross_entropy'] = tf.summary.scalar('cross_entropy', metrics['cross_entropy'][1])
+
+        metrics['auc-roc'] = tf.metrics.auc(labels=labels, predictions=predictions)
 
         # metrics['mean_iou'] = tf.metrics.mean_iou(labels=labels, predictions=predictions,
         #                                                      num_classes=params['num_classes'])
