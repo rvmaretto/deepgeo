@@ -163,7 +163,7 @@ class ModelBuilder(object):
                                                    'cross_entropy': metrics['cross_entropy'][1],
                                                    # 'mean_iou': metrics['mean_iou'][0],
                                                    'learning_rate': params['learning_rate'],
-                                                   'auc_roc': metrics['auc-roc']},
+                                                   'auc_roc': metrics['auc-roc'][1]},
                                                   every_n_iter=100)
 
         eval_summary_hook = tf.train.SummarySaverHook(save_steps=100,
