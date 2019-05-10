@@ -221,7 +221,7 @@ def plot_roc_curve(roc):
     roc_auc = sklearn.metrics.auc(fpr, tpr)
 
     plt.plot([0, 1], [0, 1], linestyle='--', lw=2, color='r', label='Chance', alpha=.8)
-    plt.plot(fpr, tpr, colof='b', label='ROC (AUC = %0.2f)' % roc_auc, lw=2, alpha=.8)
+    plt.plot(fpr, tpr, color='b', label='ROC (AUC = %0.2f)' % roc_auc, lw=2, alpha=.8)
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
     plt.title('Receiver Operating Characteristics')

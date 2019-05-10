@@ -47,7 +47,7 @@ def compute_quality_metrics(labels, predictions, params):
         out_str += '{0}'.format(i) + ' '
     out_str += ']' + os.linesep
 
-    out_str += 'AUC-ROC: ' + metrics['auc']
+    out_str += 'AUC-ROC: {0}'.format(metrics['auc']) + os.linesep
 
     out_str += 'Classification Report:' + os.linesep + str(metrics['classification_report']) + os.linesep
     out_str += 'Confusion Matrix:' + os.linesep + str(metrics['confusion_matrix']) + os.linesep
