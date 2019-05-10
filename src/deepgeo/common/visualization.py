@@ -206,7 +206,7 @@ def plot_confusion_matrix(confusion_matrix, params, fig_path=None):
     plt.show()
 
 
-def plot_roc_curve(roc):
+def plot_roc_curve(roc, fig_path=None):
     # tprs = []
     # aucs = []
     # mean_fpr = np.linspace(0, 1, 100)
@@ -226,4 +226,6 @@ def plot_roc_curve(roc):
     plt.ylabel('True Positive Rate')
     plt.title('Receiver Operating Characteristics')
     plt.legend(loc='lower right')
+    if fig_path is not None:
+        plt.savefig(fig_path)
     plt.show()

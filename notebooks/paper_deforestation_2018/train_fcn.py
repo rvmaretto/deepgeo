@@ -95,6 +95,7 @@ weights_eval = compute_weights_mean_proportion(test_labels, dataset['classes'])
 
 
 # # Train the Network
+
 params = {
     'epochs': 100,
     'batch_size': 40,

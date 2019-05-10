@@ -153,7 +153,8 @@ class ModelBuilder(object):
 
         eval_metric_ops = {'eval_metrics/accuracy': metrics['accuracy'],
                            'eval_metrics/f1-score': metrics['f1_score'],
-                           'eval_metrics/cross_entropy': metrics['cross_entropy']}  # ,
+                           'eval_metrics/cross_entropy': metrics['cross_entropy'],
+                           'eval_metrics/auc_roc': metrics['auc-roc']}  # ,
                            # 'eval_metrics/mean_iou': metrics['mean_iou']}
 
         logging_hook = tf.train.LoggingTensorHook({'loss': loss,
@@ -161,7 +162,8 @@ class ModelBuilder(object):
                                                    'f1_score': metrics['f1_score'][1],
                                                    'cross_entropy': metrics['cross_entropy'][1],
                                                    # 'mean_iou': metrics['mean_iou'][0],
-                                                   'learning_rate': params['learning_rate']},
+                                                   'learning_rate': params['learning_rate'],
+                                                   'auc_roc': metrics['auc-roc']},
                                                   every_n_iter=100)
 
         eval_summary_hook = tf.train.SummarySaverHook(save_steps=100,
@@ -301,7 +303,9 @@ class ModelBuilder(object):
         out_file.close()
 
         conf_matrix_path = os.path.join(out_dir, 'validation_confusion_matrix.png')
+        auc_roc_path = os.path.join(out_dir, 'auc_roc_curve.png')
         vis.plot_confusion_matrix(metrics['confusion_matrix'], params, conf_matrix_path)
+        vis.vis.plot_roc_curve(metrics['roc_score'], auc_roc_path)
 
     def predict(self, chip_struct, params, model_dir):
         tf.logging.set_verbosity(tf.logging.WARN)

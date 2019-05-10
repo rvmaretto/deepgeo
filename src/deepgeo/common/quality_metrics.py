@@ -91,8 +91,10 @@ def evaluate_classification(prediction_path, ground_truth_path, params, out_dir=
         out_file.close()
 
         conf_matrix_path = os.path.join(out_dir, 'classification_confusion_matrix.png')
+        aucroc_curve_path = os.path.join(out_dir, 'auc_roc_curve.png')
     else:
         conf_matrix_path = None
-    vis.plot_confusion_matrix(metrics['confusion_matrix'], params, conf_matrix_path)
+        aucroc_curve_path = None
 
-    vis.plot_roc_curve(metrics['roc_score'])
+    vis.plot_confusion_matrix(metrics['confusion_matrix'], params, conf_matrix_path)
+    vis.plot_roc_curve(metrics['roc_score'], aucroc_curve_path)
