@@ -22,6 +22,13 @@ import networks.tb_metrics as tbm
 import networks.layers as layers
 
 
+def _parse_function(example_proto):
+    features = {'image': tf.FixedLenFeature((), tf.float32, default_value=-10.),
+                'label': tf.FixedLenFeature((), tf.int64, default_value=0)}
+    parsed_features = tf.parse_single_example(example_proto, features)
+    return parsed_features['image'], parsed_features['label']
+
+
 # TODO: Remove this
 def discretize_values(data, number_class, start_value=0):
     for clazz in range(start_value, (number_class + 1)):
@@ -178,7 +185,8 @@ class ModelBuilder(object):
                                           evaluation_hooks=[eval_summary_hook, logging_hook],
                                           training_hooks=[train_summary_hook, logging_hook])
 
-    def train(self, train_imgs, test_imgs, train_labels, test_labels, params, output_dir):
+    # def train(self, train_imgs, test_imgs, train_labels, test_labels, params, output_dir):
+    def train(self, train_dataset, test_imgs, test_labels, params, output_dir):
         # tf.set_random_seed(1987)
         tf.logging.set_verbosity(tf.logging.INFO)
 
@@ -188,33 +196,33 @@ class ModelBuilder(object):
         with open(os.path.join(output_dir, "parameters.csv"), "w") as f:
             w = csv.writer(f, delimiter=';')
             w.writerow(["network", self.network])
-            w.writerow(["input_chip_size", [train_imgs[0].shape[0], train_imgs[0].shape[1]]])
-            w.writerow(["num_channels", train_imgs[0].shape[2]])
+            # w.writerow(["input_chip_size", [train_imgs[0].shape[0], train_imgs[0].shape[1]]])
+            # w.writerow(["num_channels", train_imgs[0].shape[2]])
             for key, value in params.items():
                 w.writerow([key, value])
 
-        data_size, _, _, bands = train_imgs.shape
-        params['bands'] = bands
-        params['decay_steps'] = math.ceil(data_size / params['batch_size'])
+        # data_size, _, _, bands = train_imgs.shape
+        params['bands'] = 10  # bands
+        params['decay_steps'] = math.ceil(33061 / params['batch_size'])  # math.ceil(data_size / params['batch_size'])
 
         # Try to update save the dataset as TFRecords and try to use this:
         # https://www.tensorflow.org/guide/distribute_strategy
-        # strategy = tf.contrib.distribute.MirroredStrategy()
-        # config = tf.estimator.RunConfig(train_distribute=strategy)#, eval_distribute=strategy)
+        strategy = tf.contrib.distribute.MirroredStrategy()
+        config = tf.estimator.RunConfig(train_distribute=strategy, eval_distribute=strategy)
 
-        # TODO: Verify why it is breaking here
-        # with tf.contrib.tfprof.ProfileContext(path.join(output_dir, "profile")) as pctx:
+        # with tf.contrib.tfprof.ProfileContext(path.join(output_dir, "profile")) as pctx:  # TODO: Verify why it is breaking here
         estimator = tf.estimator.Estimator(model_fn=self.__build_model,
-                                        #model_fn=tf.contrib.estimator.replicate_model_fn(self.__build_model),
-                                        model_dir=output_dir,
-                                        params=params)#,
-                                        # config=config)
+                                           #model_fn=tf.contrib.estimator.replicate_model_fn(self.__build_model),
+                                           model_dir=output_dir,
+                                           params=params,
+                                           config=config)
 
-        #profiling_hook = tf.train.ProfilerHook(save_steps=10, output_dir=path.join(output_dir))
+        # profiling_hook = tf.train.ProfilerHook(save_steps=10, output_dir=path.join(output_dir))
 
-
+        train_dataset = tf.data.TFRecordDataset(train_dataset)
+        train_input = train_dataset.map(_parse_function)
         # train_input = tf.data.Dataset.from_tensor_slices(({"x": train_imgs}, train_labels)).shuffle(buffer_size=2048)
-        # train_input = train_input.shuffle(1000).repeat().batch(params["batch_size"])
+        train_input = train_input.shuffle(1000).repeat().batch(params["batch_size"])
         #
         # test_input = tf.data.Dataset.from_tensor_slices(({"x": test_imgs}, test_labels)).shuffle(buffer_size=2048)
         # test_input = test_input.shuffle(1000).repeat().batch(params["batch_size"])
@@ -222,11 +230,11 @@ class ModelBuilder(object):
         for epoch in range(1, params['epochs'] + 1):
             print('===============================================')
             print('Epoch ', epoch)
-            train_input = tf.estimator.inputs.numpy_input_fn(x={'data': train_imgs},
-                                                             y=train_labels,
-                                                             batch_size=params['batch_size'],
-                                                             num_epochs=1,  # params["epochs"],
-                                                             shuffle=True)
+            # train_input = tf.estimator.inputs.numpy_input_fn(x={'data': train_imgs},
+            #                                                  y=train_labels,
+            #                                                  batch_size=params['batch_size'],
+            #                                                  num_epochs=1,  # params["epochs"],
+            #                                                  shuffle=True)
             # train_input, train_init_hook = ds_it.get_input_fn(train_imgs, train_labels, params["batch_size"], shuffle=True)
 
             print('---------------')
