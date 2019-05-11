@@ -222,7 +222,7 @@ class ModelBuilder(object):
         train_dataset = tf.data.TFRecordDataset(train_dataset)
         train_input = train_dataset.map(_parse_function)
         # train_input = tf.data.Dataset.from_tensor_slices(({"x": train_imgs}, train_labels)).shuffle(buffer_size=2048)
-        train_input = train_input.shuffle(1000).repeat().batch(params["batch_size"])
+        # train_input = train_input.shuffle(1000).repeat().batch(params["batch_size"])
         #
         # test_input = tf.data.Dataset.from_tensor_slices(({"x": test_imgs}, test_labels)).shuffle(buffer_size=2048)
         # test_input = test_input.shuffle(1000).repeat().batch(params["batch_size"])
@@ -236,6 +236,7 @@ class ModelBuilder(object):
             #                                                  num_epochs=1,  # params["epochs"],
             #                                                  shuffle=True)
             # train_input, train_init_hook = ds_it.get_input_fn(train_imgs, train_labels, params["batch_size"], shuffle=True)
+            train_input = train_input.shuffle(1000).repeat().batch(params["batch_size"])
 
             print('---------------')
             print('Training...')
