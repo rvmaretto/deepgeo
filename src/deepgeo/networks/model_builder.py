@@ -22,11 +22,16 @@ import networks.tb_metrics as tbm
 import networks.layers as layers
 
 
-def _parse_function(example_proto):
-    features = {'image': tf.FixedLenFeature((), tf.float32, default_value=-10.),
-                'label': tf.FixedLenFeature((), tf.int64, default_value=0)}
-    parsed_features = tf.parse_single_example(example_proto, features)
-    return parsed_features['image'], parsed_features['label']
+def _parse_function(serialized):
+    features = {'image': tf.FixedLenFeature([], tf.float32, default_value=-10.),
+                'label': tf.FixedLenFeature([], tf.int64, default_value=0)}
+    parsed_features = tf.parse_single_example(serialized=serialized, features=features)
+    img_raw = parsed_features['image']
+    lbl_raw = parsed_features['label']
+    image = tf.decode_raw(img_raw, tf.float32)
+    label = tf.decode_raw(lbl_raw, tf.int64)
+    label = tf.cast(label, tf.int32)
+    return image, label
 
 
 # TODO: Remove this
