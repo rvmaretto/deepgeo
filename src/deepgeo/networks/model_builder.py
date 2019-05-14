@@ -41,12 +41,15 @@ def _parse_function(serialized):
     return image, label
 
 
-def tfrecord_input_fn(train_dataset, batch_size, train=True):
-    train_dataset = tf.data.TFRecordDataset(train_dataset)
-    train_input = train_dataset.map(_parse_function, num_parallel_calls=10)
+def tfrecord_input_fn(train_dataset, params, train=True):
+    dataset = tf.data.TFRecordDataset(train_dataset)
+    train_input = dataset.map(_parse_function, num_parallel_calls=10)
     if train:
         train_input = train_input.shuffle(1000)
-    train_input = train_input.repeat(1).batch(batch_size)
+        train_input = train_input.repeat(params['epochs'])
+    else:
+        train_input.repeat(1)
+    train_input = train_input.batch(params['batch_size'])
     train_input = train_input.prefetch(1000)
     return train_input
 
@@ -238,19 +241,19 @@ class ModelBuilder(object):
 
         # profiling_hook = tf.train.ProfilerHook(save_steps=10, output_dir=path.join(output_dir))
 
-        for epoch in range(1, params['epochs'] + 1):
-            print('===============================================')
-            print('Epoch ', epoch)
-
-            print('---------------')
-            print('Training...')
-            train_results = estimator.train(input_fn=lambda: tfrecord_input_fn(train_dataset, params['batch_size']),
-                                            steps=None)
-                                            # hooks=[profiling_hook])
-
-            print('---------------')
-            print('Evaluating...')
-            test_results = estimator.evaluate(input_fn=lambda: tfrecord_input_fn(test_dataset, params['batch_size']))
+        # for epoch in range(1, params['epochs'] + 1):
+        #     print('===============================================')
+        #     print('Epoch ', epoch)
+        #
+        #     print('---------------')
+        #     print('Training...')
+        #     train_results = estimator.train(input_fn=lambda: tfrecord_input_fn(train_dataset, params),
+        #                                     steps=None)
+        #                                     # hooks=[profiling_hook])
+        #
+        #     print('---------------')
+        #     print('Evaluating...')
+        #     test_results = estimator.evaluate(input_fn=lambda: tfrecord_input_fn(test_dataset, params))
 
         # early_stopping = tf.contrib.estimator.stop_if_no_decrease_hook(
         #     estimator,
@@ -259,9 +262,9 @@ class ModelBuilder(object):
         #     eval_dir=path.join(output_dir, "eval"),
         #     min_steps=100)
 
-        # tf.estimator.train_and_evaluate(estimator,
-        #                                 train_spec=tf.estimator.TrainSpec(train_input, hooks=[logging_hook]),
-        #                                 eval_spec=tf.estimator.EvalSpec(test_input, hooks=[logging_hook]))
+        tf.estimator.train_and_evaluate(estimator,
+                                        train_spec=tf.estimator.TrainSpec(lambda: tfrecord_input_fn(train_dataset, params)),
+                                        eval_spec=tf.estimator.EvalSpec(lambda: tfrecord_input_fn(test_dataset, params)))
 
     def validate(self, images, expect_labels, params, model_dir, save_results=True, exclude_classes=None):
         tf.logging.set_verbosity(tf.logging.WARN)
