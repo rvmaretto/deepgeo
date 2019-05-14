@@ -42,6 +42,13 @@ def _parse_function(serialized):
     return image, label
 
 
+def tfrecord_input_fn(train_dataset, batch_size):
+    train_dataset = tf.data.TFRecordDataset(train_dataset)
+    train_input = train_dataset.map(_parse_function)
+    train_input = train_input.shuffle(1000).repeat(1).batch(batch_size)
+    train_input = train_input.prefetch(1)
+    return train_input.make_one_shot_iterator().get_next()
+
 # TODO: Remove this
 def discretize_values(data, number_class, start_value=0):
     for clazz in range(start_value, (number_class + 1)):
@@ -232,11 +239,6 @@ class ModelBuilder(object):
 
         # profiling_hook = tf.train.ProfilerHook(save_steps=10, output_dir=path.join(output_dir))
 
-        train_dataset = tf.data.TFRecordDataset(train_dataset)
-        train_input = train_dataset.map(_parse_function)
-        train_input = train_input.shuffle(1000).repeat(1).batch(params["batch_size"])
-        train_input = train_input.prefetch(1)
-
         # train_input = tf.data.Dataset.from_tensor_slices(({"x": train_imgs}, train_labels)).shuffle(buffer_size=2048)
         # train_input = train_input.shuffle(1000).repeat().batch(params["batch_size"])
         #
@@ -255,7 +257,8 @@ class ModelBuilder(object):
 
             print('---------------')
             print('Training...')
-            train_results = estimator.train(input_fn=lambda: train_input, steps=None)
+            train_results = estimator.train(input_fn=lambda: tfrecord_input_fn(train_dataset, params['batch_size']),
+                                            steps=None)
                                             # hooks=[profiling_hook])
 
             test_input = tf.estimator.inputs.numpy_input_fn(x={'data': test_imgs},
