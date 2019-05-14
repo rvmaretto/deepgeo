@@ -24,13 +24,21 @@ import networks.layers as layers
 
 def _parse_function(serialized):
     features = {'image': tf.FixedLenFeature([], tf.float32, default_value=-10.),
-                'label': tf.FixedLenFeature([], tf.int64, default_value=0)}
+                'channels': tf.FixedLenFeature([], tf.int64, default_value=0),
+                'label': tf.FixedLenFeature([], tf.int64, default_value=0),
+                'channels': tf.FixedLenFeature([], tf.int64, default_value=0),
+                'height': tf.FixedLenFeature([], tf.int64, default_value=0),
+                'width': tf.FixedLenFeature([], tf.int64, default_value=0)}
+
     parsed_features = tf.parse_single_example(serialized=serialized, features=features)
-    img_raw = parsed_features['image']
-    lbl_raw = parsed_features['label']
-    image = tf.decode_raw(img_raw, tf.float32)
-    label = tf.decode_raw(lbl_raw, tf.int64)
-    label = tf.cast(label, tf.int32)
+    num_bands = parsed_features['channels']
+    image = parsed_features['image']
+    #bands = []
+    #for i in range(0, 10):
+    #    bands.append(parsed_features[str(i)])
+    #image = tf.stack(bands, axis=-1)
+
+    label = tf.expand_dims(parsed_features['label'], -1)
     return image, label
 
 
@@ -226,6 +234,9 @@ class ModelBuilder(object):
 
         train_dataset = tf.data.TFRecordDataset(train_dataset)
         train_input = train_dataset.map(_parse_function)
+        train_input = train_input.shuffle(1000).repeat().batch(params["batch_size"])
+        train_input = train_input.prefetch(1)
+
         # train_input = tf.data.Dataset.from_tensor_slices(({"x": train_imgs}, train_labels)).shuffle(buffer_size=2048)
         # train_input = train_input.shuffle(1000).repeat().batch(params["batch_size"])
         #
@@ -241,11 +252,10 @@ class ModelBuilder(object):
             #                                                  num_epochs=1,  # params["epochs"],
             #                                                  shuffle=True)
             # train_input, train_init_hook = ds_it.get_input_fn(train_imgs, train_labels, params["batch_size"], shuffle=True)
-            train_input = train_input.shuffle(1000).repeat().batch(params["batch_size"])
 
             print('---------------')
             print('Training...')
-            train_results = estimator.train(input_fn=train_input,
+            train_results = estimator.train(input_fn=lambda: train_input,
                                             steps=None)
                                             # hooks=[profiling_hook])
 
