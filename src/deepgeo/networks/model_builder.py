@@ -230,7 +230,7 @@ class ModelBuilder(object):
         # Try to update save the dataset as TFRecords and try to use this:
         # https://www.tensorflow.org/guide/distribute_strategy
         strategy = tf.contrib.distribute.MirroredStrategy()
-        config = tf.estimator.RunConfig(train_distribute=strategy, eval_distribute=strategy)
+        config = tf.estimator.RunConfig(train_distribute=strategy)  # , eval_distribute=strategy)
 
         estimator = tf.estimator.Estimator(model_fn=self.__build_model,
                                            #model_fn=tf.contrib.estimator.replicate_model_fn(self.__build_model),
@@ -246,9 +246,9 @@ class ModelBuilder(object):
         # test_input = tf.data.Dataset.from_tensor_slices(({"x": test_imgs}, test_labels)).shuffle(buffer_size=2048)
         # test_input = test_input.shuffle(1000).repeat().batch(params["batch_size"])
 
-        # for epoch in range(1, params['epochs'] + 1):
-        #     print('===============================================')
-        #     print('Epoch ', epoch)
+        for epoch in range(1, params['epochs'] + 1):
+            print('===============================================')
+            print('Epoch ', epoch)
             # train_input = tf.estimator.inputs.numpy_input_fn(x={'data': train_imgs},
             #                                                  y=train_labels,
             #                                                  batch_size=params['batch_size'],
@@ -256,10 +256,10 @@ class ModelBuilder(object):
             #                                                  shuffle=True)
             # train_input, train_init_hook = ds_it.get_input_fn(train_imgs, train_labels, params["batch_size"], shuffle=True)
 
-            # print('---------------')
-            # print('Training...')
-            # train_results = estimator.train(input_fn=lambda: tfrecord_input_fn(train_dataset, params['batch_size']),
-            #                                 steps=None)
+            print('---------------')
+            print('Training...')
+            train_results = estimator.train(input_fn=lambda: tfrecord_input_fn(train_dataset, params['batch_size']),
+                                            steps=None)
                                             # hooks=[profiling_hook])
 
             # test_input = tf.estimator.inputs.numpy_input_fn(x={'data': test_imgs},
@@ -270,9 +270,9 @@ class ModelBuilder(object):
             
             # test_input, test_init_hook = ds_it.get_input_fn(test_imgs, test_labels, params["batch_size"], shuffle=True)
 
-            # print('---------------')
-            # print('Evaluating...')
-            # test_results = estimator.evaluate(input_fn=lambda: tfrecord_input_fn(test_dataset, params['batch_size']))
+            print('---------------')
+            print('Evaluating...')
+            test_results = estimator.evaluate(input_fn=lambda: tfrecord_input_fn(test_dataset, params['batch_size']))
 
         # early_stopping = tf.contrib.estimator.stop_if_no_decrease_hook(
         #     estimator,
@@ -281,11 +281,9 @@ class ModelBuilder(object):
         #     eval_dir=path.join(output_dir, "eval"),
         #     min_steps=100)
 
-        tf.estimator.train_and_evaluate(estimator,
-                                        train_spec=tf.estimator.TrainSpec(lambda: tfrecord_input_fn(train_dataset,
-                                                                                                    params['batch_size'])),
-                                        eval_spec=tf.estimator.EvalSpec(lambda: tfrecord_input_fn(test_dataset,
-                                                                                                  params['batch_size'])))
+        # tf.estimator.train_and_evaluate(estimator,
+        #                                 train_spec=tf.estimator.TrainSpec(train_input, hooks=[logging_hook]),
+        #                                 eval_spec=tf.estimator.EvalSpec(test_input, hooks=[logging_hook]))
 
     def validate(self, images, expect_labels, params, model_dir, save_results=True, exclude_classes=None):
         tf.logging.set_verbosity(tf.logging.WARN)
