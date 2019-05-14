@@ -26,7 +26,6 @@ def _parse_function(serialized):
     features = {'image': tf.FixedLenFeature([], tf.string, default_value=''),
                 'channels': tf.FixedLenFeature([], tf.int64, default_value=0),
                 'label': tf.FixedLenFeature([], tf.string, default_value=''),
-                'channels': tf.FixedLenFeature([], tf.int64, default_value=0),
                 'height': tf.FixedLenFeature([], tf.int64, default_value=0),
                 'width': tf.FixedLenFeature([], tf.int64, default_value=0)}
 
@@ -42,12 +41,15 @@ def _parse_function(serialized):
     return image, label
 
 
-def tfrecord_input_fn(train_dataset, batch_size):
+def tfrecord_input_fn(train_dataset, batch_size, train=True):
     train_dataset = tf.data.TFRecordDataset(train_dataset)
     train_input = train_dataset.map(_parse_function)
-    train_input = train_input.shuffle(1000).repeat(1).batch(batch_size)
+    if train:
+        train_input = train_input.shuffle(1000)
+    train_input = train_input.repeat(1).batch(batch_size)
     train_input = train_input.prefetch(1)
-    return train_input#.make_one_shot_iterator()
+    return train_input
+
 
 # TODO: Remove this
 def discretize_values(data, number_class, start_value=0):
@@ -61,6 +63,7 @@ def discretize_values(data, number_class, start_value=0):
         data[class_filter] = clazz
 
     return data.astype(np.uint8)
+
 
 # TODO: Implement in the ModelBuilder a function that computes the output size.
 class ModelBuilder(object):
@@ -207,7 +210,7 @@ class ModelBuilder(object):
                                           training_hooks=[train_summary_hook, logging_hook])
 
     # def train(self, train_imgs, test_imgs, train_labels, test_labels, params, output_dir):
-    def train(self, train_dataset, test_imgs, test_labels, params, output_dir):
+    def train(self, train_dataset, test_dataset, params, output_dir):
         # tf.set_random_seed(1987)
         tf.logging.set_verbosity(tf.logging.INFO)
 
@@ -262,18 +265,17 @@ class ModelBuilder(object):
                                             steps=None)
                                             # hooks=[profiling_hook])
 
-            test_input = tf.estimator.inputs.numpy_input_fn(x={'data': test_imgs},
-                                                            y=test_labels,
-                                                            batch_size=params['batch_size'],
-                                                            num_epochs=1,#params["epochs"],
-                                                            shuffle=False)
+            # test_input = tf.estimator.inputs.numpy_input_fn(x={'data': test_imgs},
+            #                                                 y=test_labels,
+            #                                                 batch_size=params['batch_size'],
+            #                                                 num_epochs=1,#params["epochs"],
+            #                                                 shuffle=False)
             
             # test_input, test_init_hook = ds_it.get_input_fn(test_imgs, test_labels, params["batch_size"], shuffle=True)
 
             print('---------------')
             print('Evaluating...')
-            test_results = estimator.evaluate(input_fn=test_input)#,
-                                              # hooks=[logging_hook])#, profiling_hook])
+            test_results = estimator.evaluate(input_fn=lambda: tfrecord_input_fn(test_dataset, params['batch_size']))
 
         # early_stopping = tf.contrib.estimator.stop_if_no_decrease_hook(
         #     estimator,
