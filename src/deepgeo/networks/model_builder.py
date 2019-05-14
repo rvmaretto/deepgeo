@@ -117,7 +117,6 @@ class ModelBuilder(object):
         training = mode == tf.estimator.ModeKeys.TRAIN
         # global_step = tf.Variable(0, name='global_step', trainable=False)
         samples = features#['data']
-        print('SHAPE: ', labels.shape)
 
         logits = self.model_description(samples, labels, params, mode, config)
 
@@ -170,7 +169,6 @@ class ModelBuilder(object):
 
         optimizer = tf.train.AdamOptimizer(learning_rate=params['learning_rate'], name='Optimizer')
         # optimizer = tf.contrib.opt.NadamOptimizer(params['learning_rate'], name='Optimizer')
-        # optimizer = tf.contrib.estimator.TowerOptimizer(optimizer)
 
         if training:
             with tf.control_dependencies(update_ops):
@@ -234,7 +232,6 @@ class ModelBuilder(object):
         strategy = tf.contrib.distribute.MirroredStrategy()
         config = tf.estimator.RunConfig(train_distribute=strategy, eval_distribute=strategy)
 
-        # with tf.contrib.tfprof.ProfileContext(path.join(output_dir, "profile")) as pctx:  # TODO: Verify why it is breaking here
         estimator = tf.estimator.Estimator(model_fn=self.__build_model,
                                            #model_fn=tf.contrib.estimator.replicate_model_fn(self.__build_model),
                                            model_dir=output_dir,
@@ -275,7 +272,8 @@ class ModelBuilder(object):
 
             print('---------------')
             print('Evaluating...')
-            test_results = estimator.evaluate(input_fn=lambda: tfrecord_input_fn(test_dataset, params['batch_size']))
+            test_results = estimator.evaluate(input_fn=lambda: tfrecord_input_fn(test_dataset, params['batch_size']),
+                                              hooks=[])
 
         # early_stopping = tf.contrib.estimator.stop_if_no_decrease_hook(
         #     estimator,
