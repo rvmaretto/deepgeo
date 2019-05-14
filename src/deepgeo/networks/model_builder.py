@@ -23,22 +23,22 @@ import networks.layers as layers
 
 
 def _parse_function(serialized):
-    features = {'image': tf.FixedLenFeature([], tf.float32, default_value=-10.),
+    features = {'image': tf.FixedLenFeature([], tf.string, default_value=''),
                 'channels': tf.FixedLenFeature([], tf.int64, default_value=0),
-                'label': tf.FixedLenFeature([], tf.int64, default_value=0),
+                'label': tf.FixedLenFeature([], tf.string, default_value=''),
                 'channels': tf.FixedLenFeature([], tf.int64, default_value=0),
                 'height': tf.FixedLenFeature([], tf.int64, default_value=0),
                 'width': tf.FixedLenFeature([], tf.int64, default_value=0)}
 
     parsed_features = tf.parse_single_example(serialized=serialized, features=features)
-    num_bands = parsed_features['channels']
-    image = parsed_features['image']
-    #bands = []
-    #for i in range(0, 10):
-    #    bands.append(parsed_features[str(i)])
-    #image = tf.stack(bands, axis=-1)
+    num_bands = tf.cast(parsed_features['channels'], tf.int32)
+    height = parsed_features['height']
+    width = parsed_features['width']
+    image = tf.decode_raw(parsed_features['image'], tf.float32)
+    image = tf.reshape(image, [286, 286, 10])
 
-    label = tf.expand_dims(parsed_features['label'], -1)
+    label = tf.decode_raw(parsed_features['label'], tf.int32)
+    label = tf.reshape(label, [286, 286, 1])
     return image, label
 
 
@@ -47,7 +47,7 @@ def tfrecord_input_fn(train_dataset, batch_size):
     train_input = train_dataset.map(_parse_function)
     train_input = train_input.shuffle(1000).repeat(1).batch(batch_size)
     train_input = train_input.prefetch(1)
-    return train_input.make_one_shot_iterator().get_next()
+    return train_input#.make_one_shot_iterator()
 
 # TODO: Remove this
 def discretize_values(data, number_class, start_value=0):
@@ -113,7 +113,8 @@ class ModelBuilder(object):
         tf.logging.set_verbosity(tf.logging.INFO)
         training = mode == tf.estimator.ModeKeys.TRAIN
         # global_step = tf.Variable(0, name='global_step', trainable=False)
-        samples = features['data']
+        samples = features#['data']
+        print('SHAPE: ', labels.shape)
 
         logits = self.model_description(samples, labels, params, mode, config)
 
