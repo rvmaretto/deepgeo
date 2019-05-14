@@ -43,11 +43,11 @@ def _parse_function(serialized):
 
 def tfrecord_input_fn(train_dataset, batch_size, train=True):
     train_dataset = tf.data.TFRecordDataset(train_dataset)
-    train_input = train_dataset.map(_parse_function)
+    train_input = train_dataset.map(_parse_function, num_parallel_calls=10)
     if train:
         train_input = train_input.shuffle(1000)
     train_input = train_input.repeat(1).batch(batch_size)
-    train_input = train_input.prefetch(1)
+    train_input = train_input.prefetch(1000)
     return train_input
 
 
@@ -227,48 +227,26 @@ class ModelBuilder(object):
         params['bands'] = 10  # bands
         params['decay_steps'] = math.ceil(33061 / params['batch_size'])  # math.ceil(data_size / params['batch_size'])
 
-        # Try to update save the dataset as TFRecords and try to use this:
         # https://www.tensorflow.org/guide/distribute_strategy
         strategy = tf.contrib.distribute.MirroredStrategy()
         config = tf.estimator.RunConfig(train_distribute=strategy)  # , eval_distribute=strategy)
 
         estimator = tf.estimator.Estimator(model_fn=self.__build_model,
-                                           #model_fn=tf.contrib.estimator.replicate_model_fn(self.__build_model),
                                            model_dir=output_dir,
                                            params=params,
                                            config=config)
 
         # profiling_hook = tf.train.ProfilerHook(save_steps=10, output_dir=path.join(output_dir))
 
-        # train_input = tf.data.Dataset.from_tensor_slices(({"x": train_imgs}, train_labels)).shuffle(buffer_size=2048)
-        # train_input = train_input.shuffle(1000).repeat().batch(params["batch_size"])
-        #
-        # test_input = tf.data.Dataset.from_tensor_slices(({"x": test_imgs}, test_labels)).shuffle(buffer_size=2048)
-        # test_input = test_input.shuffle(1000).repeat().batch(params["batch_size"])
-
         for epoch in range(1, params['epochs'] + 1):
             print('===============================================')
             print('Epoch ', epoch)
-            # train_input = tf.estimator.inputs.numpy_input_fn(x={'data': train_imgs},
-            #                                                  y=train_labels,
-            #                                                  batch_size=params['batch_size'],
-            #                                                  num_epochs=1,  # params["epochs"],
-            #                                                  shuffle=True)
-            # train_input, train_init_hook = ds_it.get_input_fn(train_imgs, train_labels, params["batch_size"], shuffle=True)
 
             print('---------------')
             print('Training...')
             train_results = estimator.train(input_fn=lambda: tfrecord_input_fn(train_dataset, params['batch_size']),
                                             steps=None)
                                             # hooks=[profiling_hook])
-
-            # test_input = tf.estimator.inputs.numpy_input_fn(x={'data': test_imgs},
-            #                                                 y=test_labels,
-            #                                                 batch_size=params['batch_size'],
-            #                                                 num_epochs=1,#params["epochs"],
-            #                                                 shuffle=False)
-            
-            # test_input, test_init_hook = ds_it.get_input_fn(test_imgs, test_labels, params["batch_size"], shuffle=True)
 
             print('---------------')
             print('Evaluating...')
