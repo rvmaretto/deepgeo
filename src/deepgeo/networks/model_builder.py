@@ -42,19 +42,19 @@ def _rot270(image, label):
 
 def _flip_left_right(image, label):
     image = tf.image.flip_left_right(image)
-    image = tf.image.flip_left_right(label)
+    label = tf.image.flip_left_right(label)
     return image, label
 
 
 def _flip_up_down(image, label):
     image = tf.image.flip_up_down(image)
-    image = tf.image.flip_up_down(label)
+    label = tf.image.flip_up_down(label)
     return image, label
 
 
 def _flip_transpose(image, label):
     image = tf.image.transpose_image(image)
-    image = tf.image.transpose_image(label)
+    label = tf.image.transpose_image(label)
     return image, label
 
 
@@ -81,12 +81,13 @@ def tfrecord_input_fn(train_dataset, params, train=True):
     dataset = tf.data.TFRecordDataset(train_dataset)
     train_input = dataset.map(_parse_function, num_parallel_calls=10)
     if train:
-        train_input = train_input.map(_rot90, num_parallel_calls=10)
-        train_input = train_input.map(_rot180, num_parallel_calls=10)
-        train_input = train_input.map(_rot270, num_parallel_calls=10)
-        #train_input = train_input.map(_flip_left_right, num_parallel_calls=10)
-        #train_input = train_input.map(_flip_up_down, num_parallel_calls=10)
-        #train_input = train_input.map(_flip_transpose, num_parallel_calls=10)
+        rot90 = train_input.map(_rot90, num_parallel_calls=10)
+        rot180 = train_input.map(_rot180, num_parallel_calls=10)
+        train_input = train_input.concatenate((rot90, rot180))
+        # train_input = train_input.map(_rot270, num_parallel_calls=10)
+        # train_input = train_input.map(_flip_left_right, num_parallel_calls=10)
+        # train_input = train_input.map(_flip_up_down, num_parallel_calls=10)
+        # train_input = train_input.map(_flip_transpose, num_parallel_calls=10)
         train_input = train_input.shuffle(10000)
         #train_input = train_input.repeat(params['epochs'])
     #else:
@@ -319,7 +320,7 @@ class ModelBuilder(object):
                                            params=params)
 
         data_size, _, _, _ = images.shape
-        input_fn = tf.estimator.inputs.numpy_input_fn(x={'data': images},
+        input_fn = tf.estimator.inputs.numpy_input_fn(x=images,
                                                       batch_size=params['batch_size'],
                                                       shuffle=False)
 
