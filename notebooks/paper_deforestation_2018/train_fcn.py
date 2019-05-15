@@ -114,7 +114,7 @@ params = {
     'num_classes': len(dataset['classes']),
     'num_compositions': 2,
     'bands_plot': [[1, 2, 3], [6, 7, 8]],
-    'Notes': 'Reverting commit to head.\nDifferent weights for train and eval.\nTesting smaller L2 reg. rate.\nChanging Variance scale to Xavier initializer.\nRemoving dropout.'
+    'Notes': 'Migrating to TFRecord and MirroredStrategy. Data Augment only rotations!'
 }
 
 
