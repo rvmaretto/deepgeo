@@ -22,6 +22,42 @@ import networks.tb_metrics as tbm
 import networks.layers as layers
 
 
+def _rot90(image, label):
+    image = tf.image.rot90(image, 1)
+    label = tf.image.rot90(label, 1)
+    return image, label
+
+
+def _rot180(image, label):
+    image = tf.image.rot90(image, 2)
+    label = tf.image.rot90(label, 2)
+    return image, label
+
+
+def _rot270(image, label):
+    image = tf.image.rot90(image, 3)
+    label = tf.image.rot90(label, 3)
+    return image, label
+
+
+def _flip_left_right(image, label):
+    image = tf.image.flip_left_right(image)
+    image = tf.image.flip_left_right(label)
+    return image, label
+
+
+def _flip_up_down(image, label):
+    image = tf.image.flip_up_down(image)
+    image = tf.image.flip_up_down(label)
+    return image, label
+
+
+def _flip_transpose(image, label):
+    image = tf.image.transpose_image(image)
+    image = tf.image.transpose_image(label)
+    return image, label
+
+
 def _parse_function(serialized):
     features = {'image': tf.FixedLenFeature([], tf.string, default_value=''),
                 'channels': tf.FixedLenFeature([], tf.int64, default_value=0),
@@ -45,11 +81,17 @@ def tfrecord_input_fn(train_dataset, params, train=True):
     dataset = tf.data.TFRecordDataset(train_dataset)
     train_input = dataset.map(_parse_function, num_parallel_calls=10)
     if train:
-        train_input = train_input.shuffle(1000)
-        train_input = train_input.repeat(params['epochs'])
-    else:
-        train_input.repeat(1)
-    train_input = train_input.batch(params['batch_size'])
+        train_input = train_input.map(_rot90, num_parallel_calls=10)
+        train_input = train_input.map(_rot180, num_parallel_calls=10)
+        train_input = train_input.map(_rot270, num_parallel_calls=10)
+        #train_input = train_input.map(_flip_left_right, num_parallel_calls=10)
+        #train_input = train_input.map(_flip_up_down, num_parallel_calls=10)
+        #train_input = train_input.map(_flip_transpose, num_parallel_calls=10)
+        train_input = train_input.shuffle(10000)
+        #train_input = train_input.repeat(params['epochs'])
+    #else:
+        #train_input.repeat(1)
+    train_input = train_input.repeat(1).batch(params['batch_size'])
     train_input = train_input.prefetch(1000)
     return train_input
 
@@ -241,19 +283,19 @@ class ModelBuilder(object):
 
         # profiling_hook = tf.train.ProfilerHook(save_steps=10, output_dir=path.join(output_dir))
 
-        # for epoch in range(1, params['epochs'] + 1):
-        #     print('===============================================')
-        #     print('Epoch ', epoch)
-        #
-        #     print('---------------')
-        #     print('Training...')
-        #     train_results = estimator.train(input_fn=lambda: tfrecord_input_fn(train_dataset, params),
-        #                                     steps=None)
-        #                                     # hooks=[profiling_hook])
-        #
-        #     print('---------------')
-        #     print('Evaluating...')
-        #     test_results = estimator.evaluate(input_fn=lambda: tfrecord_input_fn(test_dataset, params))
+        for epoch in range(1, params['epochs'] + 1):
+            print('===============================================')
+            print('Epoch ', epoch)
+       
+            print('---------------')
+            print('Training...')
+            train_results = estimator.train(input_fn=lambda: tfrecord_input_fn(train_dataset, params),
+                                            steps=None)
+                                            # hooks=[profiling_hook])
+       
+            print('---------------')
+            print('Evaluating...')
+            test_results = estimator.evaluate(input_fn=lambda: tfrecord_input_fn(test_dataset, params))
 
         # early_stopping = tf.contrib.estimator.stop_if_no_decrease_hook(
         #     estimator,
@@ -262,9 +304,9 @@ class ModelBuilder(object):
         #     eval_dir=path.join(output_dir, "eval"),
         #     min_steps=100)
 
-        tf.estimator.train_and_evaluate(estimator,
-                                        train_spec=tf.estimator.TrainSpec(lambda: tfrecord_input_fn(train_dataset, params)),
-                                        eval_spec=tf.estimator.EvalSpec(lambda: tfrecord_input_fn(test_dataset, params)))
+        #tf.estimator.train_and_evaluate(estimator,
+        #                                train_spec=tf.estimator.TrainSpec(lambda: tfrecord_input_fn(train_dataset, params)),
+        #                                eval_spec=tf.estimator.EvalSpec(lambda: tfrecord_input_fn(test_dataset, params)))
 
     def validate(self, images, expect_labels, params, model_dir, save_results=True, exclude_classes=None):
         tf.logging.set_verbosity(tf.logging.WARN)
