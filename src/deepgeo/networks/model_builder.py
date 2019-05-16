@@ -79,20 +79,30 @@ def _parse_function(serialized):
 
 def tfrecord_input_fn(train_dataset, params, train=True):
     dataset = tf.data.TFRecordDataset(train_dataset)
-    train_input = dataset.map(_parse_function, num_parallel_calls=10)
+    train_input = dataset.map(_parse_function, num_parallel_calls=40)
+    dt_augs = [_rot90, _rot180, _rot270, _flip_left_right, _flip_up_down, _flip_transpose]
     if train:
-        rot90 = train_input.map(_rot90, num_parallel_calls=10)
-        rot180 = train_input.map(_rot180, num_parallel_calls=10)
-        train_input = train_input.concatenate((rot90, rot180))
-        # train_input = train_input.map(_rot270, num_parallel_calls=10)
-        # train_input = train_input.map(_flip_left_right, num_parallel_calls=10)
-        # train_input = train_input.map(_flip_up_down, num_parallel_calls=10)
-        # train_input = train_input.map(_flip_transpose, num_parallel_calls=10)
+        aug_datasets = []
+        for op in dt_augs:
+            aug_ds = train_input.map(op, num_parallel_calls=40)
+            aug_datasets.append(aug_ds)
+
+        for ds in aug_datasets:
+            train_input = train_input.concatenate(ds)
+
+        #rot90 = train_input.map(_rot90, num_parallel_calls=40)
+        #rot180 = train_input.map(_rot180, num_parallel_calls=40)
+        #train_input = train_input.concatenate(rot90)
+        #train_input = train_input.concatenate(rot180)
+        #train_input = train_input.map(_rot270, num_parallel_calls=10)
+        #train_input = train_input.map(_flip_left_right, num_parallel_calls=10)
+        #train_input = train_input.map(_flip_up_down, num_parallel_calls=10)
+        #train_input = train_input.map(_flip_transpose, num_parallel_calls=10)
         train_input = train_input.shuffle(10000)
-        #train_input = train_input.repeat(params['epochs'])
-    #else:
-        #train_input.repeat(1)
-    train_input = train_input.repeat(1).batch(params['batch_size'])
+        train_input = train_input.repeat(params['epochs'])
+    else:
+        train_input.repeat(1)
+    train_input = train_input.batch(params['batch_size'])
     train_input = train_input.prefetch(1000)
     return train_input
 
@@ -284,19 +294,19 @@ class ModelBuilder(object):
 
         # profiling_hook = tf.train.ProfilerHook(save_steps=10, output_dir=path.join(output_dir))
 
-        for epoch in range(1, params['epochs'] + 1):
-            print('===============================================')
-            print('Epoch ', epoch)
+        #for epoch in range(1, params['epochs'] + 1):
+            #print('===============================================')
+            #print('Epoch ', epoch)
        
-            print('---------------')
-            print('Training...')
-            train_results = estimator.train(input_fn=lambda: tfrecord_input_fn(train_dataset, params),
-                                            steps=None)
-                                            # hooks=[profiling_hook])
+            #print('---------------')
+            #print('Training...')
+            #train_results = estimator.train(input_fn=lambda: tfrecord_input_fn(train_dataset, params),
+            #                                steps=None)
+            #                                # hooks=[profiling_hook])
        
-            print('---------------')
-            print('Evaluating...')
-            test_results = estimator.evaluate(input_fn=lambda: tfrecord_input_fn(test_dataset, params))
+            #print('---------------')
+            #print('Evaluating...')
+            #test_results = estimator.evaluate(input_fn=lambda: tfrecord_input_fn(test_dataset, params))
 
         # early_stopping = tf.contrib.estimator.stop_if_no_decrease_hook(
         #     estimator,
@@ -305,9 +315,9 @@ class ModelBuilder(object):
         #     eval_dir=path.join(output_dir, "eval"),
         #     min_steps=100)
 
-        #tf.estimator.train_and_evaluate(estimator,
-        #                                train_spec=tf.estimator.TrainSpec(lambda: tfrecord_input_fn(train_dataset, params)),
-        #                                eval_spec=tf.estimator.EvalSpec(lambda: tfrecord_input_fn(test_dataset, params)))
+        tf.estimator.train_and_evaluate(estimator,
+                                        train_spec=tf.estimator.TrainSpec(lambda: tfrecord_input_fn(train_dataset, params)),
+                                        eval_spec=tf.estimator.EvalSpec(lambda: tfrecord_input_fn(test_dataset, params)))
 
     def validate(self, images, expect_labels, params, model_dir, save_results=True, exclude_classes=None):
         tf.logging.set_verbosity(tf.logging.WARN)
@@ -355,7 +365,7 @@ class ModelBuilder(object):
         conf_matrix_path = os.path.join(out_dir, 'validation_confusion_matrix.png')
         auc_roc_path = os.path.join(out_dir, 'auc_roc_curve.png')
         vis.plot_confusion_matrix(metrics['confusion_matrix'], params, conf_matrix_path)
-        vis.vis.plot_roc_curve(metrics['roc_score'], auc_roc_path)
+        vis.plot_roc_curve(metrics['roc_score'], auc_roc_path)
 
     def predict(self, chip_struct, params, model_dir):
         tf.logging.set_verbosity(tf.logging.WARN)

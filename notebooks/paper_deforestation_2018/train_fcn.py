@@ -3,6 +3,7 @@ import os
 import sys
 from importlib import reload
 from datetime import datetime
+import tensorflow as tf
 
 sys.path.insert(0, '../../src')
 import deepgeo.dataset.data_augment as dtaug
@@ -18,6 +19,10 @@ import deepgeo.networks.model_builder as mb
 network = 'unet'
 DATA_DIR = '/home/raian/doutorado/Dados/generated'
 DATASET_FILE = os.path.join(DATA_DIR, 'new_dataset_286x286_timesstack-2013-2017.npz')
+
+train_tfrecord = os.path.join(DATA_DIR, 'train.tfrecord')
+test_tfrecord = os.path.join(DATA_DIR, 'test.tfrecord')
+val_tfrecord = os.path.join(DATA_DIR, 'validation.tfrecord')
 
 model_dir = os.path.join(DATA_DIR, 'tf_logs', 'experiments', network,
                          'test_%s_%s' % (network, datetime.now().strftime('%d_%m_%Y-%H_%M_%S')))
@@ -42,8 +47,9 @@ print('Labels shape: ', dataset['labels'][0].shape, ' - DType: ', dataset['label
 
 # In[ ]:
 
-
-train_images, test_images, valid_images, train_labels, test_labels, valid_labels = dsutils.split_dataset(dataset)
+train_images, test_images, valid_images, train_labels, test_labels, valid_labels = dsutils.split_dataset(dataset,
+                                                                                                         perc_test=20,
+                                                                                                         perc_val=20)
 
 print('Splitted dataset:')
 print('  -> Train images: ', train_images.shape)
@@ -53,27 +59,61 @@ print('  -> Train Labels: ', train_labels.shape)
 print('  -> Test Labels: ', test_labels.shape)
 print('  -> Validation Labels: ', valid_labels.shape)
 
+def wrap_bytes(value):
+    return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
+
+def wrap_float(value):
+    return tf.train.Feature(float_list=tf.train.FloatList(value=[value]))
+
+def wrap_int64(value):
+    return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
+
+def save_to_tfrecord(out_path, imgs, labels):
+    with tf.python_io.TFRecordWriter(out_path) as writer:
+        for i in range(imgs.shape[0]):
+            img = imgs[i, :, :, :]
+            lbl = labels[i, :, :, :]
+            
+            height = img.shape[0]
+            width = img.shape[1]
+            channels = img.shape[2]
+            
+            img_raw = img.tostring()
+            lbl_raw = lbl.tostring()
+            
+            feature = {'image': wrap_bytes(img_raw),
+                       'label': wrap_bytes(lbl_raw),
+                       'channels': wrap_int64(channels),
+                       'height': wrap_int64(height),
+                       'width': wrap_int64(width)}
+            
+            example = tf.train.Example(features=tf.train.Features(feature=feature))
+            writer.write(example.SerializeToString())
+
+save_to_tfrecord(train_tfrecord, train_images, train_labels)
+save_to_tfrecord(test_tfrecord, test_images, test_labels)
+save_to_tfrecord(val_tfrecord, valid_images, valid_labels)
 
 # # Perform Data Augmentation
 
-angles = [90, 180, 270]
-rotated_imgs = dtaug.rotate_images(train_images, angles)
-flipped_imgs = dtaug.flip_images(train_images)
+#angles = [90, 180, 270]
+#rotated_imgs = dtaug.rotate_images(train_images, angles)
+#flipped_imgs = dtaug.flip_images(train_images)
 
-train_images = np.concatenate((train_images, rotated_imgs))
-train_images = np.concatenate((train_images, flipped_imgs))
+#train_images = np.concatenate((train_images, rotated_imgs))
+#train_images = np.concatenate((train_images, flipped_imgs))
 
-rotated_lbls = dtaug.rotate_images(train_labels, angles)
-flipped_lbls = dtaug.flip_images(train_labels)
+#rotated_lbls = dtaug.rotate_images(train_labels, angles)
+#flipped_lbls = dtaug.flip_images(train_labels)
 
-train_labels = np.concatenate((train_labels, rotated_lbls))
-train_labels = np.concatenate((train_labels, flipped_lbls)).astype(dtype=np.int32)
+#train_labels = np.concatenate((train_labels, rotated_lbls))
+#train_labels = np.concatenate((train_labels, flipped_lbls)).astype(dtype=np.int32)
 
-print('Data Augmentation Applied:')
-print('  -> Train Images: ', train_images.shape)
-print('  -> Train Labels: ', train_labels.shape)
-print('  -> Test Images: ', test_images.shape)
-print('  -> Test Labels: ', test_labels.shape)
+#print('Data Augmentation Applied:')
+#print('  -> Train Images: ', train_images.shape)
+#print('  -> Train Labels: ', train_labels.shape)
+#print('  -> Test Images: ', test_images.shape)
+#print('  -> Test Labels: ', test_labels.shape)
 
 
 # TODO: Put this in the __get_loss() in the model builder. Or create a class Losses.
@@ -114,10 +154,10 @@ params = {
     'num_classes': len(dataset['classes']),
     'num_compositions': 2,
     'bands_plot': [[1, 2, 3], [6, 7, 8]],
-    'Notes': 'Migrating to TFRecord and MirroredStrategy. Data Augment only rotations!'
+    'Notes': 'Migrating to TFRecord and MirroredStrategy. All Data Augmentation!'
 }
 
 
 reload(mb)
 model = mb.ModelBuilder(network)
-model.train(train_images, test_images, train_labels, test_labels, params, model_dir)
+model.train(train_tfrecord, test_tfrecord, params, model_dir)
