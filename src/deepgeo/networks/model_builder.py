@@ -199,11 +199,10 @@ class ModelBuilder(object):
             if number_of_chips == 1:
                 chip_shape = tf.train.Example()
                 chip_shape.ParseFromString(record)
-                print(chip_shape)
 
         # data_size, _, _, bands = train_imgs.shape
         params['bands'] = 10  # bands
-        params['decay_steps'] = math.ceil(number_of_chips / params['batch_size'])
+        params['decay_steps'] = math.ceil((number_of_chips * len(params['data_aug_ops'])) / params['batch_size'])
 
         # https://www.tensorflow.org/guide/distribute_strategy
         strategy = tf.contrib.distribute.MirroredStrategy()
