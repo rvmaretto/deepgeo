@@ -57,7 +57,7 @@ class DatasetLoader(object):
         height = parsed_features['height']
         width = parsed_features['width']
 
-        #shape_img = tf.stack([height, width, num_bands])
+        #shape_img = tf.stack([height, width, 10])
         #shape_lbl = tf.stack([height, width, 1])
         shape_img = [286, 286, 10]
         shape_lbl = [286, 286, 1]
