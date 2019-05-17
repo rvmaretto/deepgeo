@@ -190,14 +190,20 @@ class ModelBuilder(object):
         with open(os.path.join(output_dir, "parameters.csv"), "w") as f:
             w = csv.writer(f, delimiter=';')
             w.writerow(["network", self.network])
-            # w.writerow(["input_chip_size", [train_imgs[0].shape[0], train_imgs[0].shape[1]]])
-            # w.writerow(["num_channels", train_imgs[0].shape[2]])
             for key, value in params.items():
                 w.writerow([key, value])
 
+        number_of_chips = 0
+        for record in tf.python_io.tf_record_iterator(train_dataset):
+            number_of_chips += 1
+            if number_of_chips == 1:
+                chip_shape = tf.train.Example()
+                chip_shape.ParseFromString(record)
+                print(chip_shape)
+
         # data_size, _, _, bands = train_imgs.shape
         params['bands'] = 10  # bands
-        params['decay_steps'] = math.ceil(33061 / params['batch_size'])  # math.ceil(data_size / params['batch_size'])
+        params['decay_steps'] = math.ceil(number_of_chips / params['batch_size'])
 
         # https://www.tensorflow.org/guide/distribute_strategy
         strategy = tf.contrib.distribute.MirroredStrategy()
@@ -209,6 +215,10 @@ class ModelBuilder(object):
                                            config=config)
 
         loader = dsloader.DatasetLoader()
+
+        trainer = tf.estimator.TrainSpec(lambda: loader.tfrecord_input_fn(train_dataset, params))
+        evaluator = tf.estimator.EvalSpec(lambda: loader.tfrecord_input_fn(test_dataset, params))
+        tf.estimator.train_and_evaluate(estimator, train_spec=trainer, eval_spec=evaluator)
 
         # profiling_hook = tf.train.ProfilerHook(save_steps=10, output_dir=path.join(output_dir))
 
@@ -232,10 +242,6 @@ class ModelBuilder(object):
         #     max_steps_without_decrease=1000,
         #     eval_dir=path.join(output_dir, "eval"),
         #     min_steps=100)
-
-        trainer = tf.estimator.TrainSpec(lambda: loader.tfrecord_input_fn(train_dataset, params))
-        evaluator = tf.estimator.EvalSpec(lambda: loader.tfrecord_input_fn(test_dataset, params))
-        tf.estimator.train_and_evaluate(estimator, train_spec=trainer, eval_spec=evaluator)
 
     def validate(self, images, expect_labels, params, model_dir, save_results=True, exclude_classes=None):
         tf.logging.set_verbosity(tf.logging.WARN)
