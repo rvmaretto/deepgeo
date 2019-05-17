@@ -150,6 +150,8 @@ params = {
     # 'dropout_rate': 0.5,  # TODO: Put a bool parameter to apply or not Dropout
     'fusion': 'early',
     'loss_func': 'weighted_crossentropy',
+    'data_aug_ops': ['rot90', 'rot180', 'rot270', 'flip_left_right',
+                     'flip_up_down', 'flip_transpose'],
     'class_weights': {'train': weights_train, 'eval': weights_eval},
     'num_classes': len(dataset['classes']),
     'num_compositions': 2,

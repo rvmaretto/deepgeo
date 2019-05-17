@@ -38,12 +38,12 @@ def _flip_transpose(image, label):
 
 
 class DatasetLoader(object):
-    # data_aug_operations = {
-    #     'rot90': _rot90,
-    #     'rot180': _rot180,
-    #     'rot270': _rot270,
-    #     'flip_left_right': _flip_left_right,
-    # }
+    data_aug_operations = {'rot90': _rot90,
+                           'rot180': _rot180,
+                           'rot270': _rot270,
+                           'flip_left_right': _flip_left_right,
+                           'flip_up_down': _flip_up_down,
+                           'flip_transpose': _flip_transpose}
 
     def _parse_function(self, serialized):
         features = {'image': tf.FixedLenFeature([], tf.string, default_value=''),
@@ -72,11 +72,10 @@ class DatasetLoader(object):
     def tfrecord_input_fn(self, train_dataset, params, train=True):
         dataset = tf.data.TFRecordDataset(train_dataset)
         train_input = dataset.map(self._parse_function, num_parallel_calls=40)
-        dt_augs = [_rot90, _rot180, _rot270, _flip_left_right, _flip_up_down, _flip_transpose]
         if train:
             aug_datasets = []
-            for op in dt_augs:
-                aug_ds = train_input.map(op, num_parallel_calls=40)
+            for op in params['data_aug_ops']:
+                aug_ds = train_input.map(self.data_aug_operations[op], num_parallel_calls=40)
                 aug_datasets.append(aug_ds)
 
             for ds in aug_datasets:
@@ -89,3 +88,6 @@ class DatasetLoader(object):
         train_input = train_input.batch(params['batch_size'])
         train_input = train_input.prefetch(1000)
         return train_input
+
+    # TODO: Implement this method.
+    # def register_dtaug_op
