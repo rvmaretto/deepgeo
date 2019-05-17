@@ -15,6 +15,8 @@ def unet_encoder(samples, params, mode, name_sufix=''):
     if params['fusion'] == 'early':
         total_channels = samples.get_shape().as_list()[3]
         num_channels = round(total_channels / 2)
+        #total_channels = tf.shape(samples)[3]
+        #num_channels = tf.cast(tf.round(total_channels / 2), tf.int32)
         samples = tf.layers.conv2d(samples, filters=num_channels, kernel_size=(1, 1), strides=1,
                                    padding='valid', activation=tf.nn.relu,
                                    kernel_initializer=tf.contrib.layers.xavier_initializer(),
