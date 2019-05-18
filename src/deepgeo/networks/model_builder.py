@@ -192,6 +192,9 @@ class ModelBuilder(object):
             for key, value in params.items():
                 w.writerow([key, value])
 
+        train_loader = dsloader.DatasetLoader(train_dataset)
+        shape_img = train_loader.get_image_shape()
+
         number_of_chips = 0
         for record in tf.python_io.tf_record_iterator(train_dataset):
             number_of_chips += 1
@@ -199,7 +202,7 @@ class ModelBuilder(object):
                 chip_shape = tf.train.Example()
                 chip_shape.ParseFromString(record)
 
-        params['bands'] = 10  # bands
+        params['bands'] = int(shape_img[2])  # bands
         params['decay_steps'] = math.ceil((number_of_chips * len(params['data_aug_ops'])) / params['batch_size'])
 
         # https://www.tensorflow.org/guide/distribute_strategy
@@ -211,10 +214,10 @@ class ModelBuilder(object):
                                            params=params,
                                            config=config)
 
-        loader = dsloader.DatasetLoader()
+        test_loader = dsloader.DatasetLoader(test_dataset)
 
-        trainer = tf.estimator.TrainSpec(lambda: loader.tfrecord_input_fn(train_dataset, params))
-        evaluator = tf.estimator.EvalSpec(lambda: loader.tfrecord_input_fn(test_dataset, params))
+        trainer = tf.estimator.TrainSpec(lambda: train_loader.tfrecord_input_fn(params))
+        evaluator = tf.estimator.EvalSpec(lambda: test_loader.tfrecord_input_fn(params))
         tf.estimator.train_and_evaluate(estimator, train_spec=trainer, eval_spec=evaluator)
 
         # profiling_hook = tf.train.ProfilerHook(save_steps=10, output_dir=path.join(output_dir))

@@ -45,14 +45,36 @@ class DatasetLoader(object):
                            'flip_up_down': _flip_up_down,
                            'flip_transpose': _flip_transpose}
 
-    def _parse_function(self, serialized):
-        features = {'image': tf.FixedLenFeature([], tf.string, default_value=''),
-                    'channels': tf.FixedLenFeature([], tf.int64, default_value=0),
-                    'label': tf.FixedLenFeature([], tf.string, default_value=''),
-                    'height': tf.FixedLenFeature([], tf.int64, default_value=0),
-                    'width': tf.FixedLenFeature([], tf.int64, default_value=0)}
+    features = {'image': tf.FixedLenFeature([], tf.string, default_value=''),
+                'channels': tf.FixedLenFeature([], tf.int64, default_value=0),
+                'label': tf.FixedLenFeature([], tf.string, default_value=''),
+                'height': tf.FixedLenFeature([], tf.int64, default_value=0),
+                'width': tf.FixedLenFeature([], tf.int64, default_value=0)}
 
+    def __init__(self, train_dataset):
+        self.dataset = tf.data.TFRecordDataset(train_dataset)
+
+    def set_tfrecord_features(self, features):
+        self.features = features
+
+    def get_tfrecord_features(self):
+        return self.features
+
+    def get_image_shape(self):
+        ds = self.dataset.take(1).map(self._parse_shape)
+        for shape in ds:
+            return shape
+
+    def _parse_shape(self, serialized):
+        features = self.features
         parsed_features = tf.parse_single_example(serialized=serialized, features=features)
+        num_bands = parsed_features['channels']
+        height = parsed_features['height']
+        width = parsed_features['width']
+        return [num_bands, height, width]
+
+    def _parse_function(self, serialized):
+        parsed_features = tf.parse_single_example(serialized=serialized, features=self.featuresfeatures)
         num_bands = parsed_features['channels']
         height = parsed_features['height']
         width = parsed_features['width']
@@ -69,9 +91,8 @@ class DatasetLoader(object):
         label = tf.reshape(label, shape_lbl)
         return image, label
 
-    def tfrecord_input_fn(self, train_dataset, params, train=True):
-        dataset = tf.data.TFRecordDataset(train_dataset)
-        train_input = dataset.map(self._parse_function, num_parallel_calls=40)
+    def tfrecord_input_fn(self, params, train=True):
+        train_input = self.dataset.map(self._parse_function, num_parallel_calls=40)
         if train:
             aug_datasets = []
             for op in params['data_aug_ops']:
