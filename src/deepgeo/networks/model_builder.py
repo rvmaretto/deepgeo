@@ -262,7 +262,7 @@ class ModelBuilder(object):
         crop_labels = []
         for predict, label in zip(estimator.predict(input_fn), expect_labels):
             predictions_lst.append(predict['classes'])
-            probabilities_lst.append(probabilities_lst['probabilities'])
+            probabilities_lst.append(predict['probabilities'])
             size_x, size_y, _ = predict['classes'].shape
             label = dsutils.crop_np_chip(label, size_x)
             crop_labels.append(label)
