@@ -52,7 +52,7 @@ class DatasetLoader(object):
                 'width': tf.FixedLenFeature([], tf.int64, default_value=0)}
 
     def __init__(self, train_dataset):
-        self.dataset = tf.data.TFRecordDataset(train_dataset)
+        self.dataset = train_dataset
 
     def set_tfrecord_features(self, features):
         self.features = features
@@ -61,9 +61,20 @@ class DatasetLoader(object):
         return self.features
 
     def get_image_shape(self):
-        ds = self.dataset.take(1).map(self._parse_shape)
-        for shape in ds:
-            return shape
+        for record in tf.python_io.tf_record_iterator(self.dataset):
+            self.chip_shape = tf.train.Example()
+            self.chip_shape.ParseFromString(record)
+            break
+        return self.chip_shape
+
+    def get_dataset_size(self):
+        number_of_chips = 0
+        for record in tf.python_io.tf_record_iterator(self.dataset):
+            number_of_chips += 1
+            if number_of_chips == 1:
+                chip_shape = tf.train.Example()
+                chip_shape.ParseFromString(record)
+        return number_of_chips
 
     def _parse_shape(self, serialized):
         features = self.features
@@ -92,7 +103,8 @@ class DatasetLoader(object):
         return image, label
 
     def tfrecord_input_fn(self, params, train=True):
-        train_input = self.dataset.map(self._parse_function, num_parallel_calls=40)
+        dataset = tf.data.TFRecordDataset(self.dataset)
+        train_input = dataset.map(self._parse_function, num_parallel_calls=40)
         if train:
             aug_datasets = []
             for op in params['data_aug_ops']:
