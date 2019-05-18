@@ -6,16 +6,19 @@ import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../'))
 import common.visualization as vis
-import dataset.utils as dsutils
 
 
-def compute_quality_metrics(labels, predictions, params):
+def compute_quality_metrics(labels, predictions, params, probabilities=None):
     labels = labels.flatten()
     predictions = predictions.flatten()
+    if probabilities is not None:
+        probabilities = probabilities[:, :, :, 2].flatten()
+    else:
+        probabilities = predictions
     metrics = {'f1_score': sklearn.metrics.f1_score(labels, predictions, labels=[1, 2], average=None),
                'precision': sklearn.metrics.precision_score(labels, predictions, average=None),
                'recall': sklearn.metrics.recall_score(labels, predictions, average=None),
-               'roc_score': sklearn.metrics.roc_curve(labels, predictions, pos_label=2),
+               'roc_score': sklearn.metrics.roc_curve(labels, probabilities, pos_label=2),
                'classification_report': sklearn.metrics.classification_report(labels, predictions,
                                                                               target_names=params['class_names'])}
     confusion_matrix = sklearn.metrics.confusion_matrix(labels, predictions, labels=[1, 2])
@@ -38,7 +41,7 @@ def compute_quality_metrics(labels, predictions, params):
 
     out_str += 'ROC: ' + os.linesep + '  - FPR: [ ' 
     for i in metrics['roc_score'][0]:
-        out_str += '{0}'.format(i) + ' '  #metrics['roc_score'][0]) # + os.linesep
+        out_str += '{0}'.format(i) + ' '
     out_str += ']' + os.linesep + '  - TPR: [ '
     for i in metrics['roc_score'][1]:
         out_str += '{0}'.format(i) + ' '

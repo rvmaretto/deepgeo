@@ -87,8 +87,7 @@ class ModelBuilder(object):
     def __build_model(self, features, labels, params, mode, config):
         tf.logging.set_verbosity(tf.logging.INFO)
         training = mode == tf.estimator.ModeKeys.TRAIN
-        # global_step = tf.Variable(0, name='global_step', trainable=False)
-        samples = features#['data']
+        samples = features
 
         logits = self.model_description(samples, labels, params, mode, config)
 
@@ -96,7 +95,8 @@ class ModelBuilder(object):
         output = tf.expand_dims(tf.argmax(input=predictions, axis=-1, name='Argmax_Prediction'), -1)
 
         if mode == tf.estimator.ModeKeys.PREDICT:
-            return tf.estimator.EstimatorSpec(mode=mode, predictions={'classes': output})
+            return tf.estimator.EstimatorSpec(mode=mode, predictions={'classes': output,
+                                                                      'probabilities': predictions})
 
         if labels.shape[1] != logits.shape[1]:
             labels = tf.cast(layers.crop_features(labels, logits.shape[1], name="labels"), tf.float32)
@@ -179,7 +179,6 @@ class ModelBuilder(object):
                                           evaluation_hooks=[eval_summary_hook, logging_hook],
                                           training_hooks=[train_summary_hook, logging_hook])
 
-    # def train(self, train_imgs, test_imgs, train_labels, test_labels, params, output_dir):
     def train(self, train_dataset, test_dataset, params, output_dir):
         # tf.set_random_seed(1987)
         tf.logging.set_verbosity(tf.logging.INFO)
@@ -200,7 +199,6 @@ class ModelBuilder(object):
                 chip_shape = tf.train.Example()
                 chip_shape.ParseFromString(record)
 
-        # data_size, _, _, bands = train_imgs.shape
         params['bands'] = 10  # bands
         params['decay_steps'] = math.ceil((number_of_chips * len(params['data_aug_ops'])) / params['batch_size'])
 
@@ -257,22 +255,25 @@ class ModelBuilder(object):
                                                       shuffle=False)
 
         predictions_lst = []
+        probabilities_lst = []
         crop_labels = []
         for predict, label in zip(estimator.predict(input_fn), expect_labels):
             predictions_lst.append(predict['classes'])
+            probabilities_lst.append(probabilities_lst['probabilities'])
             size_x, size_y, _ = predict['classes'].shape
             label = dsutils.crop_np_chip(label, size_x)
             crop_labels.append(label)
 
-        predictions = np.array(predictions_lst, dtype=np.int32).flatten()
-        crop_labels = np.array(crop_labels, dtype=np.int32).flatten()
+        predictions = np.array(predictions_lst, dtype=np.int32)
+        crop_labels = np.array(crop_labels, dtype=np.int32)
+        probabilities = np.array(probabilities_lst, dtype=np.float32)
 
         out_str = ''
         out_str += '<<------------------------------------------------------------>>' + os.linesep
         out_str += '<<------------------ Validation Results ---------------------->>' + os.linesep
         out_str += '<<------------------------------------------------------------>>' + os.linesep
 
-        metrics, report_str = qm.compute_quality_metrics(crop_labels, predictions, params)
+        metrics, report_str = qm.compute_quality_metrics(crop_labels, predictions, params, probabilities)
 
         out_str += report_str
 
