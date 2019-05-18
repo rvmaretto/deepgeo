@@ -62,8 +62,11 @@ class DatasetLoader(object):
 
     def get_image_shape(self):
         for record in tf.python_io.tf_record_iterator(self.dataset):
-            self.chip_shape = tf.train.Example()
-            self.chip_shape.ParseFromString(record)
+            rec = tf.parse_single_example(serialized=record, features=self.features)
+            num_bands = rec['channels']
+            height = rec['height']
+            width = rec['width']
+            self.chip_shape = [num_bands, height, width]
             break
         return self.chip_shape
 
@@ -71,14 +74,10 @@ class DatasetLoader(object):
         number_of_chips = 0
         for record in tf.python_io.tf_record_iterator(self.dataset):
             number_of_chips += 1
-            if number_of_chips == 1:
-                chip_shape = tf.train.Example()
-                chip_shape.ParseFromString(record)
         return number_of_chips
 
     def _parse_shape(self, serialized):
-        features = self.features
-        parsed_features = tf.parse_single_example(serialized=serialized, features=features)
+        parsed_features = tf.parse_single_example(serialized=serialized, features=self.features)
         num_bands = parsed_features['channels']
         height = parsed_features['height']
         width = parsed_features['width']
