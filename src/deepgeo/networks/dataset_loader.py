@@ -66,7 +66,8 @@ class DatasetLoader(object):
             num_bands = rec['channels']
             height = rec['height']
             width = rec['width']
-            self.chip_shape = [num_bands, height, width]
+
+            self.chip_shape = [height, width, num_bands]
             break
         return self.chip_shape
 
@@ -78,21 +79,23 @@ class DatasetLoader(object):
 
     def _parse_shape(self, serialized):
         parsed_features = tf.parse_single_example(serialized=serialized, features=self.features)
-        num_bands = parsed_features['channels']
-        height = parsed_features['height']
-        width = parsed_features['width']
-        return [num_bands, height, width]
+        # num_bands = parsed_features['channels']
+        # height = parsed_features['height']
+        # width = parsed_features['width']
+        # return [height, width, num_bands]
+        shape = tf.reshape(parsed_features['shape'], (3,))
+        return shape
 
     def _parse_function(self, serialized):
-        parsed_features = tf.parse_single_example(serialized=serialized, features=self.featuresfeatures)
-        num_bands = parsed_features['channels']
-        height = parsed_features['height']
-        width = parsed_features['width']
+        parsed_features = tf.parse_single_example(serialized=serialized, features=self.features)
+        # num_bands = parsed_features['channels']
+        # height = parsed_features['height']
+        # width = parsed_features['width']
 
-        #shape_img = tf.stack([height, width, 10])
-        #shape_lbl = tf.stack([height, width, 1])
-        shape_img = [286, 286, 10]
-        shape_lbl = [286, 286, 1]
+        # shape_img = tf.stack([height, width, 10])
+        # shape_lbl = tf.stack([height, width, 1])
+        shape_img = self.params['shape']  # [286, 286, 10]
+        shape_lbl = [shape_img[0], shape_img[1], 1]   # [286, 286, 1]
 
         image = tf.decode_raw(parsed_features['image'], tf.float32)
         image = tf.reshape(image, shape_img)
