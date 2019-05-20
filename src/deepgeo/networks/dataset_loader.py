@@ -67,24 +67,15 @@ class DatasetLoader(object):
             height = int(rec['height'].int_64_list.value[0])
             width = int(rec['width'].int_64_list.value[0])
 
-            self.chip_shape = [height, width, num_bands]
+            chip_shape = [height, width, num_bands]
             break
-        return self.chip_shape
+        return chip_shape
 
     def get_dataset_size(self):
         number_of_chips = 0
         for record in tf.python_io.tf_record_iterator(self.dataset):
             number_of_chips += 1
         return number_of_chips
-
-    def _parse_shape(self, serialized):
-        parsed_features = tf.parse_single_example(serialized=serialized, features=self.features)
-        num_bands = int(parsed_features['channels'].int_64_list.value[0])
-        height = int(parsed_features['height'].int_64_list.value[0])
-        width = int(parsed_features['width'].int_64_list.value[0])
-        return [height, width, num_bands]
-        # shape = tf.reshape(parsed_features['shape'], (3,))
-        # return shape
 
     def _parse_function(self, serialized):
         parsed_features = tf.parse_single_example(serialized=serialized, features=self.features)
@@ -124,5 +115,5 @@ class DatasetLoader(object):
         train_input = train_input.prefetch(1000)
         return train_input
 
-    # TODO: Implement this method.
-    # def register_dtaug_op
+    def register_dtaug_op(self, key, func):
+        self.data_aug_operations[key] = func

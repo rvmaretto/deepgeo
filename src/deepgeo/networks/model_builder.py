@@ -193,10 +193,9 @@ class ModelBuilder(object):
                 w.writerow([key, value])
 
         train_loader = dsloader.DatasetLoader(train_dataset)
-        shape_img = train_loader.get_image_shape()
+        params['shape'] = [params['chip_size'], params['chip_size'], params['bands']]
         number_of_chips = train_loader.get_dataset_size()
 
-        params['bands'] = int(shape_img[2])  # bands
         params['decay_steps'] = math.ceil((number_of_chips * len(params['data_aug_ops'])) / params['batch_size'])
 
         # https://www.tensorflow.org/guide/distribute_strategy
