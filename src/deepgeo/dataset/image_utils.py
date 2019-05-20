@@ -6,7 +6,7 @@ import fiona
 import rasterio
 import rasterio.mask
 import shutil
-# from rasterio.merge import merge
+
 
 def stack_bands(files, output_img, band_names=None):#, no_data=-9999, format="GTiff", dtype=gdal.GDT_Int16):
     if not isinstance(files, list):

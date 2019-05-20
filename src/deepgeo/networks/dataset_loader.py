@@ -63,9 +63,9 @@ class DatasetLoader(object):
     def get_image_shape(self):
         for record in tf.python_io.tf_record_iterator(self.dataset):
             rec = tf.parse_single_example(serialized=record, features=self.features)
-            num_bands = rec['channels']
-            height = rec['height']
-            width = rec['width']
+            num_bands = int(rec['channels'].int_64_list.value[0])
+            height = int(rec['height'].int_64_list.value[0])
+            width = int(rec['width'].int_64_list.value[0])
 
             self.chip_shape = [height, width, num_bands]
             break
@@ -79,12 +79,12 @@ class DatasetLoader(object):
 
     def _parse_shape(self, serialized):
         parsed_features = tf.parse_single_example(serialized=serialized, features=self.features)
-        # num_bands = parsed_features['channels']
-        # height = parsed_features['height']
-        # width = parsed_features['width']
-        # return [height, width, num_bands]
-        shape = tf.reshape(parsed_features['shape'], (3,))
-        return shape
+        num_bands = int(parsed_features['channels'].int_64_list.value[0])
+        height = int(parsed_features['height'].int_64_list.value[0])
+        width = int(parsed_features['width'].int_64_list.value[0])
+        return [height, width, num_bands]
+        # shape = tf.reshape(parsed_features['shape'], (3,))
+        # return shape
 
     def _parse_function(self, serialized):
         parsed_features = tf.parse_single_example(serialized=serialized, features=self.features)
