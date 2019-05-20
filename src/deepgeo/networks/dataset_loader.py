@@ -51,8 +51,9 @@ class DatasetLoader(object):
                 'height': tf.FixedLenFeature([], tf.int64, default_value=0),
                 'width': tf.FixedLenFeature([], tf.int64, default_value=0)}
 
-    def __init__(self, train_dataset):
+    def __init__(self, train_dataset, params):
         self.dataset = train_dataset
+        self.params = params
 
     def set_tfrecord_features(self, features):
         self.features = features
@@ -95,12 +96,12 @@ class DatasetLoader(object):
         label = tf.reshape(label, shape_lbl)
         return image, label
 
-    def tfrecord_input_fn(self, params, train=True):
+    def tfrecord_input_fn(self, train=True):
         dataset = tf.data.TFRecordDataset(self.dataset)
         train_input = dataset.map(self._parse_function, num_parallel_calls=40)
         if train:
             aug_datasets = []
-            for op in params['data_aug_ops']:
+            for op in self.params['data_aug_ops']:
                 aug_ds = train_input.map(self.data_aug_operations[op], num_parallel_calls=40)
                 aug_datasets.append(aug_ds)
 
@@ -108,12 +109,13 @@ class DatasetLoader(object):
                 train_input = train_input.concatenate(ds)
 
             train_input = train_input.shuffle(10000)
-            train_input = train_input.repeat(params['epochs'])
+            train_input = train_input.repeat(self.params['epochs'])
         else:
             train_input.repeat(1)
-        train_input = train_input.batch(params['batch_size'])
+        train_input = train_input.batch(self.params['batch_size'])
         train_input = train_input.prefetch(1000)
         return train_input
 
     def register_dtaug_op(self, key, func):
         self.data_aug_operations[key] = func
+

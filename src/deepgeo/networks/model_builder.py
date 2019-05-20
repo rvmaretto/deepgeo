@@ -192,8 +192,9 @@ class ModelBuilder(object):
             for key, value in params.items():
                 w.writerow([key, value])
 
-        train_loader = dsloader.DatasetLoader(train_dataset)
         params['shape'] = [params['chip_size'], params['chip_size'], params['bands']]
+        train_loader = dsloader.DatasetLoader(train_dataset, params)
+        test_loader = dsloader.DatasetLoader(test_dataset, params)
         number_of_chips = train_loader.get_dataset_size()
 
         params['decay_steps'] = math.ceil((number_of_chips * len(params['data_aug_ops'])) / params['batch_size'])
@@ -207,10 +208,8 @@ class ModelBuilder(object):
                                            params=params,
                                            config=config)
 
-        test_loader = dsloader.DatasetLoader(test_dataset)
-
-        trainer = tf.estimator.TrainSpec(lambda: train_loader.tfrecord_input_fn(params))
-        evaluator = tf.estimator.EvalSpec(lambda: test_loader.tfrecord_input_fn(params))
+        trainer = tf.estimator.TrainSpec(lambda: train_loader.tfrecord_input_fn())
+        evaluator = tf.estimator.EvalSpec(lambda: test_loader.tfrecord_input_fn())
         tf.estimator.train_and_evaluate(estimator, train_spec=trainer, eval_spec=evaluator)
 
         # profiling_hook = tf.train.ProfilerHook(save_steps=10, output_dir=path.join(output_dir))
