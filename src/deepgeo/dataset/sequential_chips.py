@@ -87,33 +87,3 @@ class SequentialChipGenerator(object):
             return {'chips': samples_img,
                     'coords': windows,
                     'overlap': self.overlap}
-
-
-
-# def generate_sequential_chips(img_array, chip_size=286, overlap=(0, 0), remove_no_data=True):
-#     x_size, y_size, nbands = img_array.shape
-#     # print('Raster size: (', x_size, ', ', y_size, ', ', nbands, ')')
-#
-#     struct = {'chips': [], 'coords': []}
-#     for y_start in range(0, y_size, chip_size - overlap[0]):
-#         y_end = y_start + chip_size
-#
-#         if y_end > y_size:
-#             y_end = y_size
-#             y_start = y_end - chip_size
-#             # print('XSTART = ', x_start, 'XEND = ', x_end)
-#
-#         for x_start in range(0, x_size, chip_size - overlap[1]):
-#             x_end = x_start + chip_size
-#
-#             if x_end > x_size:
-#                 x_end = x_size
-#                 x_start = x_end - chip_size
-#                 # print('YSTART = ', y_start, 'YEND = ', y_end)
-#
-#             chip_array = img_array[x_start:x_end, y_start:y_end, :]
-#
-#             struct['chips'].append(chip_array)
-#             struct['coords'].append({'x_start': x_start, 'x_end': x_end, 'y_start': y_start, 'y_end': y_end})
-#
-#     return struct

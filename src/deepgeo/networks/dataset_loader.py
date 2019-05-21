@@ -84,10 +84,10 @@ class DatasetLoader(object):
         # height = parsed_features['height']
         # width = parsed_features['width']
 
-        # shape_img = tf.stack([height, width, 10])
+        # shape_img = tf.stack([height, width, num_bands])
         # shape_lbl = tf.stack([height, width, 1])
-        shape_img = self.params['shape']  # [286, 286, 10]
-        shape_lbl = [shape_img[0], shape_img[1], 1]   # [286, 286, 1]
+        shape_img = self.params['shape']
+        shape_lbl = [shape_img[0], shape_img[1], 1]
 
         image = tf.decode_raw(parsed_features['image'], tf.float32)
         image = tf.reshape(image, shape_img)
