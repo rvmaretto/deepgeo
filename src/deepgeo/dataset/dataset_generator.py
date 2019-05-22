@@ -91,10 +91,10 @@ class DatasetGenerator(object):
                              'test': {'chips': test_chips, 'labels': test_labels},
                              'valid': {'chips': val_chips, 'labels': val_labels}}
 
-    def save_to_tfrecord(self, out_path, filename):
+    def save_to_disk(self, out_path, filename):
         fs.mkdir(out_path)
         if 'train' in self.chips_struct:
-            suffixes = ['train', 'test', 'valid']
+            suffixes = ['train', 'test']
         else:
             suffixes = ['']
         for suf in suffixes:
@@ -120,6 +120,11 @@ class DatasetGenerator(object):
 
                     example = tf.train.Example(features=tf.train.Features(feature=feature))
                     writer.write(example.SerializeToString())
+
+        out_file_path = os.path.join(out_path, filename + '_valid.npz')
+        np.savez(out_file_path,
+                 chips=self.chips_struct['valid']['chips'],
+                 labels=self.chips_struct['valid']['labels'])
 
     def save_samples_PNG(self, path, color_map=None, r_g_b=[1, 2, 3]):
         for pos in range(len(self.samples_img)):

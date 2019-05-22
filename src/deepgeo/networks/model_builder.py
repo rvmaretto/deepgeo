@@ -209,7 +209,7 @@ class ModelBuilder(object):
                                            config=config)
 
         trainer = tf.estimator.TrainSpec(lambda: train_loader.tfrecord_input_fn())
-        evaluator = tf.estimator.EvalSpec(lambda: test_loader.tfrecord_input_fn())
+        evaluator = tf.estimator.EvalSpec(lambda: test_loader.tfrecord_input_fn(train=False))
         tf.estimator.train_and_evaluate(estimator, train_spec=trainer, eval_spec=evaluator)
 
         # profiling_hook = tf.train.ProfilerHook(save_steps=10, output_dir=path.join(output_dir))
@@ -235,8 +235,7 @@ class ModelBuilder(object):
         #     eval_dir=path.join(output_dir, "eval"),
         #     min_steps=100)
 
-    # def validate(self, images, expect_labels, params, model_dir, save_results=True, exclude_classes=None):
-    def validate(self, valid_dataset, params, model_dir, save_results=True, exclude_classes=None):
+    def validate(self, images, expect_labels, params, model_dir, save_results=True, exclude_classes=None):
         tf.logging.set_verbosity(tf.logging.WARN)
 
         out_dir = os.path.join(model_dir, 'validation')
@@ -244,20 +243,15 @@ class ModelBuilder(object):
         estimator = tf.estimator.Estimator(model_fn=self.__build_model,
                                            model_dir=model_dir,
                                            params=params)
-        params['epochs'] = 1
 
-        # input_fn = tf.estimator.inputs.numpy_input_fn(x=images,
-        #                                               batch_size=params['batch_size'],
-        #                                               shuffle=False)
-        loader = dsloader.DatasetLoader(valid_dataset, params) #TODO: Check how to do that
+        input_fn = tf.estimator.inputs.numpy_input_fn(x=images,
+                                                      batch_size=params['batch_size'],
+                                                      shuffle=False)
 
         predictions_lst = []
         probabilities_lst = []
         crop_labels = []
-
-        # for predict, label in zip(estimator.predict(input_fn), expect_labels):
-        for chip, label in loader.tfrecord_input_fn():
-            predict = estimator.predict(chip)
+        for predict, label in zip(estimator.predict(input_fn), expect_labels):
             predictions_lst.append(predict['classes'])
             probabilities_lst.append(predict['probabilities'])
             size_x, size_y, _ = predict['classes'].shape
@@ -302,7 +296,6 @@ class ModelBuilder(object):
                                            model_dir=model_dir,
                                            params=params)
 
-        data_size, _, _, _ = images.shape
         input_fn = tf.estimator.inputs.numpy_input_fn(x=images,
                                                       batch_size=params['batch_size'],
                                                       shuffle=False)
