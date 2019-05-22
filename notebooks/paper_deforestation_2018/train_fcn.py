@@ -20,7 +20,8 @@ class_names = ['no_data', 'not_deforestation', 'deforestation']
 DATASET = os.path.join(DATA_DIR, 'dataset_286x286_tmstk-2013-2017')
 train_tfrecord = os.path.join(DATASET, 'dataset_train.tfrecord')
 test_tfrecord = os.path.join(DATASET, 'dataset_test.tfrecord')
-val_tfrecord = os.path.join(DATASET, 'dataset_validation.tfrecord')
+val_dataset = os.path.join(DATASET, 'dataset_valid.npz')
+# val_tfrecord = os.path.join(DATASET, 'dataset_validation.tfrecord')
 
 model_dir = os.path.join(DATA_DIR, 'tf_logs', 'experiments', network,
                          'test_%s_%s' % (network, datetime.now().strftime('%d_%m_%Y-%H_%M_%S')))
@@ -94,4 +95,6 @@ params = {
 reload(mb)
 model = mb.ModelBuilder(network)
 model.train(train_tfrecord, test_tfrecord, params, model_dir)
-model.validate(val_tfrecord, params, model_dir)
+dataset = np.load(val_dataset)
+model.validate(dataset['chips'], dataset['labels'], params, model_dir)
+# model.validate(val_tfrecord, params, model_dir)
