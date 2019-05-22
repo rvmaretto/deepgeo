@@ -50,16 +50,17 @@ class DatasetGenerator(object):
     def generate_chips(self, params):
         self.chips_struct['chips'] = []
         self.chips_struct['labels'] = []
+        self.chips_struct['coords'] = []
         for i in range(0, len(self.raster_arrays)):
-            params['raster_array'] = self.raster_arrays[i],
-            params['labeled_array'] = self.labels_arrays[i],
+            params['raster_array'] = self.raster_arrays[i]
+            params['labels_array'] = self.labels_arrays[i]
             self.chip_size = params['win_size']
 
             chips_struct = self.strategies[self.strategy](params).generate_chips()
 
             self.chips_struct['chips'].append(chips_struct['chips'])
             self.chips_struct['labels'].append(chips_struct['labels'])
-            self.chips_struct['coords'].append(chips_struct['coords'])
+            self.chips_struct['coords'] = self.chips_struct['coords'] + list(chips_struct['coords'])
 
         self.chips_struct['chips'] = np.concatenate(self.chips_struct['chips'], axis=0)
         self.chips_struct['labels'] = np.concatenate(self.chips_struct['labels'], axis=0)
@@ -68,11 +69,14 @@ class DatasetGenerator(object):
         return self.chips_struct
 
     def remove_no_data(self):
+        coords_remove = []
         for i in range(0, len(self.chips_struct['chips'])):
-            if np.count_nonzero(self.chips_struct['labels'].mask) == (self.chip_size * self.chip_size):
+            if np.count_nonzero(self.chips_struct['labels'][i] == 0) == (self.chip_size * self.chip_size):
+                coords_remove.append(i)
                 np.delete(self.chips_struct['chips'], i, axis=0)
                 np.delete(self.chips_struct['labels'], i, axis=0)
-                del self.chips_struct['coords'][i]
+        
+        self.chips_struct['coords'] = [x for i, x in enumerate(self.chips_struct['coords']) if i not in coords_remove]
 
     def shuffle_ds(self):
         chips, labels = sklearn.utils.shuffle(self.chips_struct['chips'],
@@ -90,12 +94,12 @@ class DatasetGenerator(object):
     def save_to_tfrecord(self, out_path, filename):
         fs.mkdir(out_path)
         if 'train' in self.chips_struct:
-            suffixes = ['train', 'test', 'val']
+            suffixes = ['train', 'test', 'valid']
         else:
             suffixes = ['']
         for suf in suffixes:
             chips = self.chips_struct[suf]
-            out_file_path = os.path.join(out_path, filename + '_' + suf)
+            out_file_path = os.path.join(out_path, filename + '_' + suf + '.tfrecord')
             with tf.python_io.TFRecordWriter(out_file_path) as writer:
                 for pos in range(chips['chips'].shape[0]):
                     img = chips['chips'][pos, :, :, :]
