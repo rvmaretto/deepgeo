@@ -235,7 +235,8 @@ class ModelBuilder(object):
         #     eval_dir=path.join(output_dir, "eval"),
         #     min_steps=100)
 
-    def validate(self, images, expect_labels, params, model_dir, save_results=True, exclude_classes=None):
+    # def validate(self, images, expect_labels, params, model_dir, save_results=True, exclude_classes=None):
+    def validate(self, valid_dataset, params, model_dir, save_results=True, exclude_classes=None):
         tf.logging.set_verbosity(tf.logging.WARN)
 
         out_dir = os.path.join(model_dir, 'validation')
@@ -243,16 +244,20 @@ class ModelBuilder(object):
         estimator = tf.estimator.Estimator(model_fn=self.__build_model,
                                            model_dir=model_dir,
                                            params=params)
+        params['epochs'] = 1
 
-        data_size, _, _, _ = images.shape
-        input_fn = tf.estimator.inputs.numpy_input_fn(x=images,
-                                                      batch_size=params['batch_size'],
-                                                      shuffle=False)
+        # input_fn = tf.estimator.inputs.numpy_input_fn(x=images,
+        #                                               batch_size=params['batch_size'],
+        #                                               shuffle=False)
+        loader = dsloader.DatasetLoader(valid_dataset, params) #TODO: Check how to do that
 
         predictions_lst = []
         probabilities_lst = []
         crop_labels = []
-        for predict, label in zip(estimator.predict(input_fn), expect_labels):
+
+        # for predict, label in zip(estimator.predict(input_fn), expect_labels):
+        for chip, label in loader.tfrecord_input_fn():
+            predict = estimator.predict(chip)
             predictions_lst.append(predict['classes'])
             probabilities_lst.append(predict['probabilities'])
             size_x, size_y, _ = predict['classes'].shape
@@ -271,17 +276,21 @@ class ModelBuilder(object):
         metrics, report_str = qm.compute_quality_metrics(crop_labels, predictions, params, probabilities)
 
         out_str += report_str
-
-        fs.mkdir(os.path.join(model_dir, 'validation'))
         print(out_str)
 
-        report_path = os.path.join(out_dir, 'validation_report.txt')
-        out_file = open(report_path, 'w')
-        out_file.write(out_str)
-        out_file.close()
+        if save_results:
+            fs.mkdir(os.path.join(model_dir, 'validation'))
+            report_path = os.path.join(out_dir, 'validation_report.txt')
+            out_file = open(report_path, 'w')
+            out_file.write(out_str)
+            out_file.close()
 
-        conf_matrix_path = os.path.join(out_dir, 'validation_confusion_matrix.png')
-        auc_roc_path = os.path.join(out_dir, 'auc_roc_curve.png')
+            conf_matrix_path = os.path.join(out_dir, 'validation_confusion_matrix.png')
+            auc_roc_path = os.path.join(out_dir, 'auc_roc_curve.png')
+        else:
+            conf_matrix_path = None
+            auc_roc_path = None
+
         vis.plot_confusion_matrix(metrics['confusion_matrix'], params, conf_matrix_path)
         vis.plot_roc_curve(metrics['roc_score'], auc_roc_path)
 
