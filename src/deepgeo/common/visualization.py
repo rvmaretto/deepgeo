@@ -178,7 +178,7 @@ def plot_chips(chips, raster_array=None, bands=[1, 2, 3], contrast=False, chipsc
         ax.add_patch(rect)
 
 
-def plot_confusion_matrix(confusion_matrix, params, fig_path=None):
+def plot_confusion_matrix(confusion_matrix, params, fig_path=None, show_plot=True):
     fig, ax = plt.subplots()
     img = ax.imshow(confusion_matrix, interpolation='nearest', cmap=plt.cm.Greens)
     ax.figure.colorbar(img, ax=ax)
@@ -203,10 +203,11 @@ def plot_confusion_matrix(confusion_matrix, params, fig_path=None):
     fig.tight_layout()
     if fig_path is not None:
         plt.savefig(fig_path)
-    plt.show()
+    if show_plot:
+        plt.show()
 
 
-def plot_roc_curve(roc, fig_path=None):
+def plot_roc_curve(roc, fig_path=None, show_plot=True):
     # tprs = []
     # aucs = []
     # mean_fpr = np.linspace(0, 1, 100)
@@ -228,4 +229,32 @@ def plot_roc_curve(roc, fig_path=None):
     plt.legend(loc='lower right')
     if fig_path is not None:
         plt.savefig(fig_path)
-    plt.show()
+    if show_plot:
+        plt.show()
+
+
+def plot_precision_recall_curve(prec_rec, fig_path=None, show_plot=True):
+    # tprs = []
+    # aucs = []
+    # mean_fpr = np.linspace(0, 1, 100)
+
+    precision = prec_rec[0]
+    recall = prec_rec[1]
+    # thresholds = roc[2]
+
+    # tprs.append(scipy.interp(mean_fpr, fpr, tpr))
+    # tprs[-1][0] = 0.0
+
+    # roc_auc = sklearn.metrics.auc(fpr, tpr)
+
+    plt.step(recall, precision, color='b', alpha=.8, where='post')
+    plt.fill_between(recall, precision, alpha=.2, color='b', **{'step': 'post'})
+    plt.xlabel('Recall')
+    plt.ylabel('Precision')
+    plt.ylim([0.0, 1.05])
+    plt.xlim([0.0, 1.0])
+    plt.title('Precision Recall Curve')  # TODO: Try to put here the average precision.
+    if fig_path is not None:
+        plt.savefig(fig_path)
+    if show_plot:
+        plt.show()
