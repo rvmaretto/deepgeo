@@ -196,6 +196,7 @@ class ModelBuilder(object):
         train_loader = dsloader.DatasetLoader(train_dataset, params)
         test_loader = dsloader.DatasetLoader(test_dataset, params)
         number_of_chips = train_loader.get_dataset_size()
+        params['number_of_chips'] = number_of_chips
 
         params['decay_steps'] = math.ceil((number_of_chips * len(params['data_aug_ops'])) / params['batch_size'])
 

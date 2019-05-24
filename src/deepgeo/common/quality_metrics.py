@@ -8,9 +8,15 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../'))
 import common.visualization as vis
 
 
-def compute_quality_metrics(labels, predictions, params, probabilities=None):
-    labels = labels.flatten()
-    predictions = predictions.flatten()
+def compute_quality_metrics(labels, predictions, params, probabilities=None, classes_remove=[0]):
+    print('SHAPES BEFORE: ', labels.shape, ' - ', predictions.shape, ' - ', probabilities.shape)
+    for value in classes_remove:
+        new_pred = np.delete(predictions, np.where(labels == value))
+        new_labels = np.delete(labels, np.where(labels == value))
+        probabilities = np.delete(probabilities, np.where(labels == value))
+    print('SHAPES BEFORE: ', labels.shape, ' - ', predictions.shape, ' - ', probabilities.shape)
+    labels = new_labels.flatten()
+    predictions = new_pred.flatten()
     if probabilities is not None:
         probabilities = probabilities[:, :, :, 2].flatten()
     else:
@@ -18,13 +24,15 @@ def compute_quality_metrics(labels, predictions, params, probabilities=None):
     metrics = {'f1_score': sklearn.metrics.f1_score(labels, predictions, labels=[1, 2], average=None),
                'precision': sklearn.metrics.precision_score(labels, predictions, average=None),
                'recall': sklearn.metrics.recall_score(labels, predictions, average=None),
-               'roc_score': sklearn.metrics.roc_curve(labels, probabilities, pos_label=2),
+               'roc_curve': sklearn.metrics.roc_curve(labels, probabilities, pos_label=2),  # TODO: try to put here one curve for each class
+               'prec_rec_curve': sklearn.metrics.precision_recall_curve(labels, probabilities, pos_label='2'),
                'classification_report': sklearn.metrics.classification_report(labels, predictions,
                                                                               target_names=params['class_names'])}
     confusion_matrix = sklearn.metrics.confusion_matrix(labels, predictions, labels=[1, 2])
     metrics['confusion_matrix'] = confusion_matrix.astype('float') / confusion_matrix.sum(axis=1)[:, np.newaxis]
 
-    metrics['auc'] = sklearn.metrics.auc(metrics['roc_score'][0], metrics['roc_score'][1])
+    metrics['auc_roc'] = sklearn.metrics.auc(metrics['roc_score'][0], metrics['roc_score'][1])
+    metrics['auc_prec_rec'] = sklearn.metrics.auc(metrics['prec_rec_curve'][0], metrics['prec_rec_curve'][1])
 
     out_str = ''
     out_str += 'F1-Score:' + os.linesep
@@ -39,18 +47,19 @@ def compute_quality_metrics(labels, predictions, params, probabilities=None):
     for i in range(0, len(metrics['recall'])):
         out_str += '  - ' + str(params['class_names'][i]) + ': ' + str(metrics['recall'][i]) + os.linesep
 
-    out_str += 'ROC: ' + os.linesep + '  - FPR: [ ' 
-    for i in metrics['roc_score'][0]:
-        out_str += '{0}'.format(i) + ' '
-    out_str += ']' + os.linesep + '  - TPR: [ '
-    for i in metrics['roc_score'][1]:
-        out_str += '{0}'.format(i) + ' '
-    out_str += ']' + os.linesep + '  - Thresholds: [ '
-    for i in metrics['roc_score'][2]:
-        out_str += '{0}'.format(i) + ' '
-    out_str += ']' + os.linesep
+    # out_str += 'ROC: ' + os.linesep + '  - FPR: [ '
+    # for i in metrics['roc_score'][0]:
+    #     out_str += '{0}'.format(i) + ' '
+    # out_str += ']' + os.linesep + '  - TPR: [ '
+    # for i in metrics['roc_score'][1]:
+    #     out_str += '{0}'.format(i) + ' '
+    # out_str += ']' + os.linesep + '  - Thresholds: [ '
+    # for i in metrics['roc_score'][2]:
+    #     out_str += '{0}'.format(i) + ' '
+    # out_str += ']' + os.linesep
 
-    out_str += 'AUC-ROC: {0}'.format(metrics['auc']) + os.linesep
+    out_str += 'AUC-ROC: {0}'.format(metrics['auc_roc']) + os.linesep
+    out_str += 'AUC-Precision-Recall: {0}'.format(metrics['auc_prec_rec']) + os.linesep
 
     out_str += 'Classification Report:' + os.linesep + str(metrics['classification_report']) + os.linesep
     out_str += 'Confusion Matrix:' + os.linesep + str(metrics['confusion_matrix']) + os.linesep
