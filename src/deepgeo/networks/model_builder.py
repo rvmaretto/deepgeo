@@ -236,7 +236,8 @@ class ModelBuilder(object):
         #     eval_dir=path.join(output_dir, "eval"),
         #     min_steps=100)
 
-    def validate(self, images, expect_labels, params, model_dir, save_results=True, exclude_classes=None):
+    def validate(self, images, expect_labels, params, model_dir, save_results=True,
+                 show_plots=True, exclude_classes=None):
         tf.logging.set_verbosity(tf.logging.WARN)
 
         out_dir = os.path.join(model_dir, 'validation')
@@ -282,12 +283,15 @@ class ModelBuilder(object):
 
             conf_matrix_path = os.path.join(out_dir, 'validation_confusion_matrix.png')
             auc_roc_path = os.path.join(out_dir, 'auc_roc_curve.png')
+            prec_rec_path = os.path.join(out_dir, 'prec_rec_curve.png')
         else:
             conf_matrix_path = None
             auc_roc_path = None
+            prec_rec_path = None
 
-        vis.plot_confusion_matrix(metrics['confusion_matrix'], params, conf_matrix_path)
-        vis.plot_roc_curve(metrics['roc_curve'], auc_roc_path)
+        vis.plot_confusion_matrix(metrics['confusion_matrix'], params, conf_matrix_path, show_plots=show_plots)
+        vis.plot_roc_curve(metrics['roc_curve'], auc_roc_path, show_plots=show_plots)
+        vis.plot_precision_recall_curve(metrics['prec_rec_curve'], fig_path=prec_rec_path, show_plot=show_plots)
 
     def predict(self, chip_struct, params, model_dir):
         tf.logging.set_verbosity(tf.logging.WARN)
