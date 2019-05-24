@@ -287,7 +287,7 @@ class ModelBuilder(object):
             auc_roc_path = None
 
         vis.plot_confusion_matrix(metrics['confusion_matrix'], params, conf_matrix_path)
-        vis.plot_roc_curve(metrics['roc_score'], auc_roc_path)
+        vis.plot_roc_curve(metrics['roc_curve'], auc_roc_path)
 
     def predict(self, chip_struct, params, model_dir):
         tf.logging.set_verbosity(tf.logging.WARN)
