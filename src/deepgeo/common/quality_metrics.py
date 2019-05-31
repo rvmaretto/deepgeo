@@ -69,10 +69,15 @@ def compute_quality_metrics(labels, predictions, params, probabilities=None, cla
     return metrics, out_str
 
 
-def evaluate_classification(prediction_path, ground_truth_path, params, out_dir=None, file_sufix=''):
+def evaluate_classification(prediction_path, ground_truth_path, params, prediction_prob=None, out_dir=None, file_sufix=''):
     pred_ds = gdal.Open(prediction_path)
     pred_arr = pred_ds.ReadAsArray()
     pred_size_x, pred_size_y = pred_arr.shape
+
+    if prediction_prob is not None:
+        prob_ds = gdal.Open(prediction_path)
+        prob_arr = prob_ds.ReadAsArray()
+        prob_arr = np.rollaxis(prob_arr, 0, 3)
 
     truth_ds = gdal.Open(ground_truth_path)
     truth_arr = truth_ds.ReadAsArray()
@@ -92,7 +97,10 @@ def evaluate_classification(prediction_path, ground_truth_path, params, out_dir=
     out_str += '<<---------------- Classification Results -------------------->>' + os.linesep
     out_str += '<<------------------------------------------------------------>>' + os.linesep
 
-    metrics, report_str = compute_quality_metrics(truth_arr, pred_arr, params)
+    if prediction_prob is not None:
+        metrics, report_str = compute_quality_metrics(truth_arr, pred_arr, params, prob_arr)
+    else:
+        metrics, report_str = compute_quality_metrics(truth_arr, pred_arr, params)
 
     out_str += report_str
 
