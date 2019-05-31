@@ -215,20 +215,6 @@ class ModelBuilder(object):
 
         # profiling_hook = tf.train.ProfilerHook(save_steps=10, output_dir=path.join(output_dir))
 
-        # for epoch in range(1, params['epochs'] + 1):
-        #     print('===============================================')
-        #     print('Epoch ', epoch)
-        #
-        #     print('---------------')
-        #     print('Training...')
-        #     train_results = estimator.train(input_fn=lambda: tfrecord_input_fn(train_dataset, params),
-        #                                    steps=None)
-        #                                    # hooks=[profiling_hook])
-        #
-        #     print('---------------')
-        #     print('Evaluating...')
-        #     test_results = estimator.evaluate(input_fn=lambda: tfrecord_input_fn(test_dataset, params))
-
         # early_stopping = tf.contrib.estimator.stop_if_no_decrease_hook(
         #     estimator,
         #     metric_name='cost/loss',
@@ -293,7 +279,7 @@ class ModelBuilder(object):
         vis.plot_roc_curve(metrics['roc_curve'], auc_roc_path, show_plots=show_plots)
         vis.plot_precision_recall_curve(metrics['prec_rec_curve'], fig_path=prec_rec_path, show_plot=show_plots)
 
-    def predict(self, chip_struct, params, model_dir):
+    def predict(self, chip_struct, params, model_dir, return_prob=True):
         tf.logging.set_verbosity(tf.logging.WARN)
         images = chip_struct['chips']
 
@@ -308,16 +294,16 @@ class ModelBuilder(object):
         print('Classifying image with structure ', str(images.shape), '...')
 
         predictions = []
+        if return_prob:
+            probabilities = []
 
         for predict in estimator.predict(input_fn):
-            # for predict, dummy in zip(predictions, images):
-            # predicted_images.append(np.argmax(predict["probabilities"], -1))
-            # classif = np.argmax(predict["probabilities"], axis=-1)
-            # predicted_images.append(discretize_values(predict["classes"],
-            #                                           params["num_classes"],
-            #                                           0))
             predictions.append(predict['classes'])
+            if return_prob:
+                probabilities.append(['probabilities'])
         chip_struct['predict'] = np.array(predictions, dtype=np.int32)
+        if return_prob:
+            chip_struct['probabilities'] = np.array(probabilities, dtype=np.float32)
 
         return chip_struct
 

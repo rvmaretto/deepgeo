@@ -174,7 +174,7 @@ def reproj_shape_to_raster(path_in_shp, path_raster, path_out_shp):
     in_ds = None
 
 
-def write_pred_chips(output_path, base_raster, pred_struct, ref_shp=None, output_format='GTiff',
+def write_pred_chips(output_path, base_raster, pred_struct, save_prob=True, ref_shp=None, output_format='GTiff',
                      data_type=gdal.GDT_UInt16):
     driver = gdal.GetDriverByName(output_format)
     base_ds = gdal.Open(base_raster)
@@ -202,10 +202,32 @@ def write_pred_chips(output_path, base_raster, pred_struct, ref_shp=None, output
     out_band.FlushCache()
     out_ds = None
 
-    #TODO: Check this.
     iutils.clip_img_by_network_output(output_path, pred_struct['overlap'])
     if ref_shp is not None:
         iutils.clip_by_aggregated_polygons(output_path, ref_shp, output_path, no_data=0)
+
+    if 'probabilities' in pred_struct and save_prob:
+        num_bands = pred_struct['probabilities'][0].shape[-1]
+        output_prob = os.path.splitext(output_path)[0] + '_prob.tif'
+        out_ds = driver.Create(output_prob, x_size, y_size, num_bands, data_type)
+        out_ds.SetGeoTransform((x_start, pixel_width, 0, y_start, 0, pixel_height))
+        out_ds.SetProjection(srs.ExportToWkt())
+        out_band = out_ds.GetRasterBand(1)
+
+        for idx in range(1, len(pred_struct['probabilities'])):
+            chip = pred_struct['probabilities'][idx]
+            for i in range(1, num_bands + 1):
+                coord = pred_struct['coords'][idx]
+                x_start = coord['upper_row'] + round(pred_struct['overlap'][0] / 2)
+                y_start = coord['left_col'] + round(pred_struct['overlap'][1] / 2)
+                out_band.WriteArray(chip, y_start, x_start)
+
+        out_band.FlushCache()
+        out_ds = None
+
+        iutils.clip_img_by_network_output(output_prob, pred_struct['overlap'])
+        if ref_shp is not None:
+            iutils.clip_by_aggregated_polygons(output_prob, ref_shp, output_path, no_data=0)
 
 
 def compute_geo_coords(coords, x_origin, y_origin, pixel_width, pixel_height):
