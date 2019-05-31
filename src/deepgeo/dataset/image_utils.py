@@ -1,5 +1,6 @@
 from osgeo import gdal
 from osgeo import ogr
+import numpy as np
 import os
 import subprocess
 import fiona
@@ -218,3 +219,17 @@ def clip_img_by_network_output(img_file, net_overlap):
 
     raster_to_clip = None
     shutil.move('tmp.tif', img_file)
+
+
+def compute_cloud_mask(img_array, qa_pos=0):
+    band_qa = img_array[:, :, qa_pos]
+
+    cloud_shadow = [328, 392, 840, 904, 1350]
+    cloud = [352, 368, 416, 432, 480, 864, 880, 928, 944, 992]
+    high_confidence_cloud = [480, 992]
+    all_masked_values = cloud + high_confidence_cloud + cloud_shadow
+    cl_mask = np.zeros(band_qa.shape)
+    for cval in all_masked_values:
+        cl_mask[band_qa == cval] = 1
+
+    return cl_mask

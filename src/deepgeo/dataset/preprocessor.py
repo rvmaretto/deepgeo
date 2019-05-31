@@ -163,10 +163,7 @@ class Preprocessor(object):
         self.img_dataset = gdal.Open(raster_path)
         # self.raster_array = self.img_dataset.ReadAsArray()
         # self.raster_array = np.rollaxis(self.raster_array, 0, start=3)
-        
 
-    #TODO: Verify why the EVI result is all 0.0
-    #TODO: Review either EVI2
     def compute_indexes(self, parameters):
         for idx, params in parameters.items():
             result = self.predefIndexes[idx](self.raster_array, params)
@@ -198,9 +195,12 @@ class Preprocessor(object):
     def register_standardization(self, name, function):
         self.standardize_functions[name] = function
 
+    def remove_band(self, band_position):
+        self.raster_array = np.delete(self.raster_array, band_position, axis=-1)
+
     def set_nodata_value(self, new_value):
         self.raster_array = self.raster_array.filled(new_value)
-        self.raster_array = np.ma.masked_array(self.raster_array, self.raster_array==new_value)
+        self.raster_array = np.ma.masked_array(self.raster_array, self.raster_array == new_value)
         self.raster_array.set_fill_value(new_value)
         self.raster_dummy = new_value
 

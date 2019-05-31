@@ -60,7 +60,8 @@ def generate_multi_raster_structure(path_images, band_names=None, no_data=None):
         for i in range(1, img_ds.RasterCount + 1):
             band = img_ds.GetRasterBand(i)
             band_arr = band.ReadAsArray()
-            band_arr[band_arr == no_data] = 0
+            band_arr[band_arr == no_data] = 0  # TODO: REmove this and put no_data in the line bellow
+                                               # TODO: Include a parameter "mask_no_data", only mask if true
             band_arr = np.ma.masked_array(band_arr,
                                           band_arr == 0)  # TODO: Vefify how to remove this. How to deal with no_data
             if img is None:

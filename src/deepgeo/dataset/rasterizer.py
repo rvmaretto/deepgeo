@@ -4,7 +4,8 @@ import sys
 from osgeo import gdal
 from osgeo import ogr
 
-# sys.path.insert(0, path.join(path.dirname(__file__),"../"))
+sys.path.insert(0, path.join(path.dirname(__file__),"../"))
+import dataset.imageutils as iutils
 # import utils.geofunctions as gf
 
 
@@ -102,9 +103,17 @@ class Rasterizer(object):
         return self.labeled_raster
 
     def execute(self):
-        #if self.class_names is None:
         self.collect_class_names()
         self.rasterize_layer()
+
+    def remove_labels_under_cloud(self, pos_qa=0, new_label=0):
+        img_arr = self.base_raster.ReadAsArray()
+        img_arr = np.rollaxis(img_arr, 0, 3)
+        cl_mask = iutils.compute_cloud_mask(img_arr, pos_qa)
+
+        mask = np.expand_dims(cl_mask, -1)
+        mask = mask == 1
+        self.labeled_raster[mask] = new_label
 
     def save_labeled_raster_to_gtiff(self, path_tiff):
         driver = gdal.GetDriverByName('GTiff')
@@ -115,3 +124,5 @@ class Rasterizer(object):
         output_ds.SetGeoTransform(self.base_raster.GetGeoTransform())
         output_band = output_ds.GetRasterBand(1)
         output_band.WriteArray(np.ma.filled(self.labeled_raster[:, :, 0], self.no_data))
+        output_band.FlushCache()
+        output_ds = None
