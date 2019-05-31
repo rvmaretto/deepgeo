@@ -9,7 +9,7 @@ import common.visualization as vis
 
 
 def compute_quality_metrics(labels, predictions, params, probabilities=None, classes_remove=[0]):
-    class_names = params['class_names']
+    class_names = params['class_names'].copy()
     labels = labels.flatten()
     predictions = predictions.flatten()
     if probabilities is not None:

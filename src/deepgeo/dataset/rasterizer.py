@@ -5,7 +5,7 @@ from osgeo import gdal
 from osgeo import ogr
 
 sys.path.insert(0, path.join(path.dirname(__file__),"../"))
-import dataset.imageutils as iutils
+import dataset.image_utils as iutils
 # import utils.geofunctions as gf
 
 

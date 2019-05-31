@@ -289,8 +289,8 @@ class ModelBuilder(object):
             auc_roc_path = None
             prec_rec_path = None
 
-        vis.plot_confusion_matrix(metrics['confusion_matrix'], params, conf_matrix_path, show_plots=show_plots)
-        vis.plot_roc_curve(metrics['roc_curve'], auc_roc_path, show_plots=show_plots)
+        vis.plot_confusion_matrix(metrics['confusion_matrix'], params, conf_matrix_path, show_plot=show_plots)
+        vis.plot_roc_curve(metrics['roc_curve'], auc_roc_path, show_plot=show_plots)
         vis.plot_precision_recall_curve(metrics['prec_rec_curve'], fig_path=prec_rec_path, show_plot=show_plots)
 
     def predict(self, chip_struct, params, model_dir):

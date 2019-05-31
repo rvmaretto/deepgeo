@@ -195,8 +195,8 @@ class Preprocessor(object):
     def register_standardization(self, name, function):
         self.standardize_functions[name] = function
 
-    def remove_band(self, band_position):
-        self.raster_array = np.delete(self.raster_array, band_position, axis=-1)
+    def remove_bands(self, bands_position):
+        self.raster_array = np.delete(self.raster_array, bands_position, axis=-1)
 
     def set_nodata_value(self, new_value):
         self.raster_array = self.raster_array.filled(new_value)
