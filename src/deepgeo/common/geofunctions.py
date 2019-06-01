@@ -3,6 +3,7 @@ import os
 import subprocess
 import sys
 from osgeo import gdal
+from osgeo import gdal_array
 from osgeo import ogr
 from osgeo import osr
 
@@ -174,8 +175,7 @@ def reproj_shape_to_raster(path_in_shp, path_raster, path_out_shp):
     in_ds = None
 
 
-def write_pred_chips(output_path, base_raster, pred_struct, save_prob=True, ref_shp=None, output_format='GTiff',
-                     data_type=gdal.GDT_UInt16):
+def write_pred_chips(output_path, base_raster, pred_struct, chip_key='predict', ref_shp=None, output_format='GTiff'):
     driver = gdal.GetDriverByName(output_format)
     base_ds = gdal.Open(base_raster)
 
@@ -186,18 +186,22 @@ def write_pred_chips(output_path, base_raster, pred_struct, save_prob=True, ref_
     srs = osr.SpatialReference()
     srs.ImportFromWkt(base_ds.GetProjectionRef())
 
-    out_ds = driver.Create(output_path, x_size, y_size, 1, data_type)
+    num_bands = pred_struct[chip_key][0].shape[-1]
+    data_type = gdal_array.NumericTypeCodeToGDALTypeCode(pred_struct[chip_key][0].dtype)
+
+    out_ds = driver.Create(output_path, x_size, y_size, num_bands, data_type)
     out_ds.SetGeoTransform((x_start, pixel_width, 0, y_start, 0, pixel_height))
     out_ds.SetProjection(srs.ExportToWkt())
-    out_band = out_ds.GetRasterBand(1)
 
-    for idx in range(0, len(pred_struct['predict'])):
-        chip = pred_struct['predict'][idx]
-        chip = np.squeeze(chip)
-        coord = pred_struct['coords'][idx]
-        x_start = coord['upper_row'] + round(pred_struct['overlap'][0] / 2)
-        y_start = coord['left_col'] + round(pred_struct['overlap'][1] / 2)
-        out_band.WriteArray(chip, y_start, x_start)
+    for i in range(1, num_bands + 1):
+        out_band = out_ds.GetRasterBand(i)
+        for idx in range(0, len(pred_struct[chip_key])):
+            chip = pred_struct[chip_key][idx]
+            chip_band = chip[:, :, i - 1]
+            coord = pred_struct['coords'][idx]
+            x_start = coord['upper_row'] + round(pred_struct['overlap'][0] / 2)
+            y_start = coord['left_col'] + round(pred_struct['overlap'][1] / 2)
+            out_band.WriteArray(chip_band, y_start, x_start)
 
     out_band.FlushCache()
     out_ds = None
@@ -205,31 +209,6 @@ def write_pred_chips(output_path, base_raster, pred_struct, save_prob=True, ref_
     iutils.clip_img_by_network_output(output_path, pred_struct['overlap'])
     if ref_shp is not None:
         iutils.clip_by_aggregated_polygons(output_path, ref_shp, output_path, no_data=0)
-
-    if 'probabilities' in pred_struct and save_prob:
-        num_bands = pred_struct['probabilities'][0].shape[-1]
-        output_prob = os.path.splitext(output_path)[0] + '_prob.tif'
-        out_prob_ds = driver.Create(output_prob, x_size, y_size, num_bands, gdal.GDT_Float32)
-        out_prob_ds.SetGeoTransform((x_start, pixel_width, 0, y_start, 0, pixel_height))
-        out_prob_ds.SetProjection(srs.ExportToWkt())
-
-        for i in range(1, num_bands + 1):
-            for idx in range(0, len(pred_struct['probabilities'])):
-                chip = pred_struct['probabilities'][idx]
-                coord = pred_struct['coords'][idx]
-                x_start = coord['upper_row'] + round(pred_struct['overlap'][0] / 2)
-                y_start = coord['left_col'] + round(pred_struct['overlap'][1] / 2)
-                
-                out_band = out_prob_ds.GetRasterBand(i)
-                chip_band = chip[:,:,i - 1]
-                out_band.WriteArray(chip_band, y_start, x_start)
-                out_band.FlushCache()
-
-        out_prob_ds = None
-
-        iutils.clip_img_by_network_output(output_prob, pred_struct['overlap'])
-        if ref_shp is not None:
-            iutils.clip_by_aggregated_polygons(output_prob, ref_shp, output_prob, no_data=0)
 
 
 def compute_geo_coords(coords, x_origin, y_origin, pixel_width, pixel_height):
