@@ -13,6 +13,8 @@ def compute_quality_metrics(labels, predictions, params, probabilities=None, cla
     labels = labels.flatten()
     predictions = predictions.flatten()
     if probabilities is not None:
+        if len(probabilities.shape) < 4:
+            probabilities = np.expand_dims(probabilities, axis=0)
         probabilities = probabilities[:, :, :, 2].flatten()
     else:
         probabilities = predictions
@@ -75,7 +77,7 @@ def evaluate_classification(prediction_path, ground_truth_path, params, predicti
     pred_size_x, pred_size_y = pred_arr.shape
 
     if prediction_prob is not None:
-        prob_ds = gdal.Open(prediction_path)
+        prob_ds = gdal.Open(prediction_prob)
         prob_arr = prob_ds.ReadAsArray()
         prob_arr = np.rollaxis(prob_arr, 0, 3)
 

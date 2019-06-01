@@ -300,7 +300,7 @@ class ModelBuilder(object):
         for predict in estimator.predict(input_fn):
             predictions.append(predict['classes'])
             if return_prob:
-                probabilities.append(['probabilities'])
+                probabilities.append(predict['probabilities'])
         chip_struct['predict'] = np.array(predictions, dtype=np.int32)
         if return_prob:
             chip_struct['probabilities'] = np.array(probabilities, dtype=np.float32)
