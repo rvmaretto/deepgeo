@@ -46,8 +46,11 @@ class DatasetGenerator(object):
         self.strategy = strategy
         self.chips_struct = {}
         self.chip_size = 0
+        for lbl_arr in labels_arrays:
+            lbl_arr = lbl_arr.astype(np.int32)
 
     def generate_chips(self, params):
+        print('  -> Generating chips...')
         self.chips_struct['chips'] = []
         self.chips_struct['labels'] = []
         self.chips_struct['coords'] = []
@@ -69,6 +72,7 @@ class DatasetGenerator(object):
         return self.chips_struct
 
     def remove_no_data(self):
+        print('  -> Removing no data chips...')
         coords_remove = []
         for i in range(0, len(self.chips_struct['chips'])):
             if np.count_nonzero(self.chips_struct['labels'][i] == 0) == (self.chip_size * self.chip_size):
@@ -79,12 +83,14 @@ class DatasetGenerator(object):
         self.chips_struct['coords'] = [x for i, x in enumerate(self.chips_struct['coords']) if i not in coords_remove]
 
     def shuffle_ds(self):
+        print('  -> Shuffling Dataset...')
         chips, labels = sklearn.utils.shuffle(self.chips_struct['chips'],
                                               self.chips_struct['labels'])
         self.chips_struct['chips'] = chips
         self.chips_struct['labels'] = labels
 
     def split_ds(self, perc_test=20, perc_val=20, random_seed=None):
+        print('  -> Splitting Dataset...')
         train_chips, test_chips, val_chips, train_labels, test_labels, val_labels =\
             dsutils.split_dataset(self.chips_struct, perc_test, perc_val, random_seed)
         self.chips_struct = {'train': {'chips': train_chips, 'labels': train_labels},
@@ -92,6 +98,7 @@ class DatasetGenerator(object):
                              'valid': {'chips': val_chips, 'labels': val_labels}}
 
     def save_to_disk(self, out_path, filename):
+        print('  -> Saving Datasets to disk...')
         fs.mkdir(out_path)
         if 'train' in self.chips_struct:
             suffixes = ['train', 'test']

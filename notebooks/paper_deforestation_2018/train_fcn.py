@@ -10,14 +10,12 @@ import deepgeo.networks.model_builder as mb
 
 # # Load input Dataset
 
-# In[ ]:
-
 network = 'unet_lf'
 DATA_DIR = '/home/raian/doutorado/Dados/generated'
 
 class_names = ['no_data', 'not_deforestation', 'deforestation']
 
-DATASET = os.path.join(DATA_DIR, 'dataset_286x286_tmstk-2013-2017')
+DATASET = os.path.join(DATA_DIR, 'dataset_286x286_no_samp_cl-2013-2017')
 train_tfrecord = os.path.join(DATASET, 'dataset_train.tfrecord')
 test_tfrecord = os.path.join(DATASET, 'dataset_test.tfrecord')
 val_dataset = os.path.join(DATASET, 'dataset_valid.npz')
@@ -88,13 +86,13 @@ params = {
     'class_names': ['no data', 'not deforestation', 'deforestation'],
     'num_compositions': 2,
     'bands_plot': [[1, 2, 3], [6, 7, 8]],
-    'Notes': 'Migrating to TFRecord and MirroredStrategy. All Data Augmentation!'
+    'Notes': 'New dataset, deforested areas under clouds removed.'
 }
 
 
-reload(mb)
 model = mb.ModelBuilder(network)
 model.train(train_tfrecord, test_tfrecord, params, model_dir)
+
 dataset = np.load(val_dataset)
-model.validate(dataset['chips'], dataset['labels'], params, model_dir)
-# model.validate(val_tfrecord, params, model_dir)
+model.validate(dataset['chips'], dataset['labels'], params, model_dir, show_plots=False)
+#model.validate(val_tfrecord, params, model_dir, show_plots=False)
