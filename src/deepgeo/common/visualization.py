@@ -205,6 +205,8 @@ def plot_confusion_matrix(confusion_matrix, params, fig_path=None, show_plot=Tru
         plt.savefig(fig_path)
     if show_plot:
         plt.show()
+    else:
+        plt.clf()
 
 
 def plot_roc_curve(roc, fig_path=None, show_plot=True):
@@ -216,6 +218,7 @@ def plot_roc_curve(roc, fig_path=None, show_plot=True):
     tpr = roc[1]
     thresholds = roc[2]
 
+    # tprs.append(scipy.interp(mean_fpr, fpr, tpr))
     # tprs.append(scipy.interp(mean_fpr, fpr, tpr))
     # tprs[-1][0] = 0.0
 
@@ -231,6 +234,8 @@ def plot_roc_curve(roc, fig_path=None, show_plot=True):
         plt.savefig(fig_path)
     if show_plot:
         plt.show()
+    else:
+        plt.clf()
 
 
 def plot_precision_recall_curve(prec_rec, fig_path=None, show_plot=True):
@@ -258,3 +263,6 @@ def plot_precision_recall_curve(prec_rec, fig_path=None, show_plot=True):
         plt.savefig(fig_path)
     if show_plot:
         plt.show()
+    else:
+        plt.clf()
+

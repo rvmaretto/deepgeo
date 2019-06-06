@@ -46,8 +46,6 @@ class DatasetGenerator(object):
         self.strategy = strategy
         self.chips_struct = {}
         self.chip_size = 0
-        for lbl_arr in labels_arrays:
-            lbl_arr = lbl_arr.astype(np.int32)
 
     def generate_chips(self, params):
         print('  -> Generating chips...')

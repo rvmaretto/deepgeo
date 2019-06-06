@@ -10,7 +10,7 @@ import deepgeo.networks.model_builder as mb
 
 # # Load input Dataset
 
-network = 'unet_lf'
+network = 'unet'
 DATA_DIR = '/home/raian/doutorado/Dados/generated'
 
 class_names = ['no_data', 'not_deforestation', 'deforestation']
@@ -77,7 +77,7 @@ params = {
     # 'var_scale_factor': 2.0,  # TODO: Put the initializer as parameter
     'chips_tensorboard': 2,
     # 'dropout_rate': 0.5,  # TODO: Put a bool parameter to apply or not Dropout
-    'fusion': 'late',
+    'fusion': 'early',
     'loss_func': 'weighted_crossentropy',
     'data_aug_ops': ['rot90', 'rot180', 'rot270', 'flip_left_right',
                      'flip_up_down', 'flip_transpose'],
