@@ -81,12 +81,13 @@ params = {
     'loss_func': 'weighted_crossentropy',
     'data_aug_ops': ['rot90', 'rot180', 'rot270', 'flip_left_right',
                      'flip_up_down', 'flip_transpose'],
+    'data_aug_per_chip': 4,
     'class_weights': {'train': weights_train, 'eval': weights_eval},
     'num_classes': len(class_names),
     'class_names': ['no data', 'not deforestation', 'deforestation'],
     'num_compositions': 2,
     'bands_plot': [[1, 2, 3], [6, 7, 8]],
-    'Notes': 'New dataset, deforested areas under clouds removed.'
+    'Notes': 'Reducing number of data augmentation ops per sample. New dataset, deforested areas under clouds removed.'
 }
 
 

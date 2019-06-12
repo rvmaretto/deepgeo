@@ -21,6 +21,7 @@ def compute_quality_metrics(labels, predictions, params, probabilities=None, cla
 
     for value in classes_remove:
         predictions = np.delete(predictions, np.where(labels == value))
+        predictions[predictions == 0] = 1 # TODO: Find a beter way to solve this problem
         probabilities = np.delete(probabilities, np.where(labels == value))
         labels = np.delete(labels, np.where(labels==value))
         del class_names[value]
@@ -48,7 +49,7 @@ def compute_quality_metrics(labels, predictions, params, probabilities=None, cla
         out_str += '  - ' + str(class_names[i]) + ': ' + str(metrics['precision'][i]) + os.linesep
 
     out_str += 'Recall:' + os.linesep
-    for i in range(0, len(metrics['recall'])):
+    for i in range(0, len(metrics['recall'])): #TODO: check here when to use params and class_names
         out_str += '  - ' + str(class_names[i]) + ': ' + str(metrics['recall'][i]) + os.linesep
 
     # out_str += 'ROC: ' + os.linesep + '  - FPR: [ '
@@ -116,9 +117,13 @@ def evaluate_classification(prediction_path, ground_truth_path, params, predicti
 
         conf_matrix_path = os.path.join(out_dir, ('classification_confusion_matrix' + file_sufix + '.png'))
         aucroc_curve_path = os.path.join(out_dir, ('auc_roc_curve' + file_sufix + '.png'))
+        prec_rec_path = os.path.join(out_dir, ('prec_rec_curve' + file_sufix + '.png'))
     else:
         conf_matrix_path = None
         aucroc_curve_path = None
+        prec_rec_path = None
 
     vis.plot_confusion_matrix(metrics['confusion_matrix'], params, conf_matrix_path)
-    vis.plot_roc_curve(metrics['roc_score'], aucroc_curve_path)
+    vis.plot_roc_curve(metrics['roc_curve'], aucroc_curve_path)
+    vis.plot_precision_recall_curve(metrics['prec_rec_curve'], fig_path=prec_rec_path)
+
