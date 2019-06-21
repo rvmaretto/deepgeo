@@ -102,10 +102,12 @@ class DatasetLoader(object):
         train_input = dataset.map(self._parse_function, num_parallel_calls=tf.data.experimental.AUTOTUNE)
         if train:
             aug_datasets = []
-            if 'data_aug_per_chip' not in self.params:
+            if 'data_aug_per_chip' in self.params:
                 data_aug_ops = list(np.random.choice(self.params['data_aug_ops'], self.params['data_aug_per_chip'], replace=False))
-            else:
+            elif 'data_aug_ops' in self.params:
                 data_aug_ops = self.params['data_aug_ops']
+            else:
+                data_aug_ops = []
             #for op in self.params['data_aug_ops']:
             for op in data_aug_ops:
                 aug_ds = train_input.map(self.data_aug_operations[op], num_parallel_calls=tf.data.experimental.AUTOTUNE)
@@ -114,7 +116,10 @@ class DatasetLoader(object):
             for ds in aug_datasets:
                 train_input = train_input.concatenate(ds)
 
-            train_input = train_input.shuffle(self.params['number_of_chips'] * len(data_aug_ops))
+            if len(data_aug_ops) > 0:
+                train_input = train_input.shuffle(self.params['number_of_chips'] * len(data_aug_ops))
+            else:
+                train_input = train_input.shuffle(self.params['number_of_chips'])
             train_input = train_input.repeat(self.params['epochs'])
         else:
             train_input.repeat(1)  # TODO: Try to do without this. Check if the batch size is the reason for going only to 40

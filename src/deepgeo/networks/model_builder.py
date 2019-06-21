@@ -198,10 +198,15 @@ class ModelBuilder(object):
         number_of_chips = train_loader.get_dataset_size()
         params['number_of_chips'] = number_of_chips
 
-        params['decay_steps'] = math.ceil((number_of_chips * len(params['data_aug_ops'])) / params['batch_size'])
-
+        multpl_data_aug = 1
+        if 'data_aug_per_chip' in params:
+            multpl_data_aug = params['data_aug_per_chip'] + 1
+        elif 'data_aug_ops' in params:
+            multpl_data_aug = len(params['data_aug_ops']) + 1
+            
         # https://www.tensorflow.org/guide/distribute_strategy
         strategy = tf.contrib.distribute.MirroredStrategy()
+        params['decay_steps'] = math.ceil((number_of_chips * multpl_data_aug) / (params['batch_size'] * strategy.num_replicas_in_sync))
         config = tf.estimator.RunConfig(train_distribute=strategy)  # , eval_distribute=strategy)
 
         estimator = tf.estimator.Estimator(model_fn=self.__build_model,

@@ -22,7 +22,7 @@ val_dataset = os.path.join(DATASET, 'dataset_valid.npz')
 # val_tfrecord = os.path.join(DATASET, 'dataset_validation.tfrecord')
 
 model_dir = os.path.join(DATA_DIR, 'tf_logs', 'experiments', network,
-                         'test_%s_%s' % (network, datetime.now().strftime('%d_%m_%Y-%H_%M_%S')))
+                         'test_%s_%s' % (network, datetime.now().strftime('%Y_%m_%d-%H_%M_%S')))
 
 
 def parse(serialized):
@@ -69,7 +69,7 @@ params = {
     'batch_size': 20,
     'chip_size': 286,
     'bands': 10,
-    'filter_reduction': 0.5,
+    # 'filter_reduction': 0.5,
     'learning_rate': 0.1,
     'learning_rate_decay': True,
     'decay_rate': 0.95,
@@ -87,7 +87,7 @@ params = {
     'class_names': ['no data', 'not deforestation', 'deforestation'],
     'num_compositions': 2,
     'bands_plot': [[1, 2, 3], [6, 7, 8]],
-    'Notes': 'Reducing number of data augmentation ops per sample. New dataset, deforested areas under clouds removed.'
+    'Notes': 'Fixing decay steps for Learning Rate decay.'
 }
 
 
