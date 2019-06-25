@@ -65,10 +65,11 @@ class ModelBuilder(object):
         "unet_lf": unet_lf.unet_lf_description
     }
 
-    losses_switcher = {
-        'cross_entropy': tf.losses.softmax_cross_entropy,
-        'weighted_crossentropy': lossf.weighted_cross_entropy,
-        'soft_dice': lossf.avg_soft_dice
+    loss_functions = {
+        'bin_iou': lossf.twoclass_cost,
+        'avg_soft_dice': lossf.avg_soft_dice,
+        'weighted_cross_entropy': lossf.weighted_cross_entropy,
+        'weighted_bin_cross_entropy': lossf.weighted_binary_cross_entropy
     }
 
     predefClassif = {
@@ -83,6 +84,9 @@ class ModelBuilder(object):
         else:
             self.network = "custom"  # TODO: Change this. Implement a registration for new strategies.
             self.model_description = model
+
+    def register_loss(self, name, loss_func):
+        self.loss_functions[name] = loss_func
 
     def __build_model(self, features, labels, params, mode, config):
         tf.logging.set_verbosity(tf.logging.INFO)
@@ -104,15 +108,19 @@ class ModelBuilder(object):
         labels_1hot = tf.one_hot(tf.cast(labels, tf.uint8), params['num_classes'])
         labels_1hot = tf.squeeze(labels_1hot)
 
-        # loss_params = {
-        #     'logits': logits,
-        #     'predictions': predictions,
-        #     'output': output,
-        #     'labels_1hot': labels_1hot,
-        #     'labels': labels,
-        #     'class_weights': params['class_weights'],
-        #     'num_classes': params['num_classes']
-        # }
+        loss_params = {
+            'logits': logits,
+            'predictions': predictions,
+            'output': output,
+            'labels_1hot': labels_1hot,
+            'labels': labels,
+            'class_weights': params['class_weights'],
+            'num_classes': params['num_classes'],
+            'training': training,
+            'model_params': params
+        }
+
+        loss = self.loss_functions[params['loss_func']](loss_params)  # TODO: Review this solution
 
         # loss = tf.losses.sigmoid_cross_entropy(labels_1hot, output)
         # loss = lossf.weighted_binary_cross_entropy(logits, labels, params['class_weights'])
@@ -120,8 +128,8 @@ class ModelBuilder(object):
         # loss = lossf.twoclass_cost(output, labels)
         # loss = lossf.inverse_mean_iou(logits, labels_1hot, num_classes)
         # loss = lossf.avg_soft_dice(logits, labels_1hot)
-        loss = lossf.weighted_cross_entropy(logits, labels_1hot, params['class_weights'], params['num_classes'],
-                                            training)
+        # loss = lossf.weighted_cross_entropy(logits, labels_1hot, params['class_weights'], params['num_classes'],
+        #                                     training)
         # loss_func = self.losses_switcher.get(params['loss_func'], lossf.unknown_loss_error)
         # loss = loss_func(loss_params)
 
@@ -311,4 +319,3 @@ class ModelBuilder(object):
             chip_struct['probabilities'] = np.array(probabilities, dtype=np.float32)
 
         return chip_struct
-
