@@ -108,14 +108,20 @@ def standardize_tf(raster_array):
         return np.array(stand_img, dtype=np.float32)
 
 
-def normalize_0_1(raster_array):
+def normalize_range(raster_array, params=None):
+    if params is None:
+        new_min = -1
+        new_max = 1
+    else:
+        new_min = params['min']
+        new_max = params['max']
     nbands = raster_array.shape[2]
     min = np.ma.min(raster_array)
     max = np.ma.max(raster_array)
     norm_raster_array = None
     for band in range(nbands):
-        band_norm = raster_array[:,:,band]
-        band_norm = (band_norm - min) / (max - min)
+        band_norm = raster_array[:, :, band]
+        band_norm = (((band_norm - min) * (new_max - new_min)) / (max - min)) + new_min
         if norm_raster_array is None:
             norm_raster_array = band_norm
         else:
@@ -149,7 +155,7 @@ class Preprocessor(object):
         "mean_std": standardize_mean_std,
         "median_std": standardize_median_std,
         "tensorflow": standardize_tf,
-        "norm_0-1": normalize_0_1,
+        "norm_range": normalize_range,
         "reduce_sr": reduce_sr
     }
 

@@ -27,6 +27,24 @@ def avg_soft_dice(params):
         return loss
 
 
+def avg_generalized_dice(params):
+    with tf.name_scope('cost'):
+        if params['training']:
+            class_weights = tf.reshape(params['class_weights']['train'], (1, params['num_classes']))
+        else:
+            class_weights = tf.reshape(params['class_weights']['eval'], (1, params['num_classes']))
+
+        epsilon = tf.constant(1e-6, dtype=tf.float32)
+        intersection = tf.reduce_sum(tf.multiply(params['logits'], params['labels_1hot']), axis=[1, 2])
+        weighted_intersection = tf.multiply(intersection, class_weights)
+        numerator = tf.multiply(tf.constant(2., dtype=tf.float32), weighted_intersection)
+        denominator = tf.reduce_sum(tf.add(params['logits'], params['labels_1hot']), axis=[1, 2])
+        denominator = tf.multiply(denominator, class_weights)
+        dice_mean = tf.reduce_mean(tf.divide(numerator, tf.add(denominator, epsilon)))
+        loss = tf.subtract(tf.constant(1., dtype=tf.float32), dice_mean, name='loss')
+        return loss
+
+
 # def weighted_cross_entropy(logits, labels, class_weights, num_classes, training):
 def weighted_cross_entropy(params):
     with tf.name_scope('cost'):
@@ -85,4 +103,38 @@ def compute_weights_mean_proportion(tfrecord, classes, classes_zero=['no_data'])
     proportions = [i / total for i in tot_count]
     mean_prop = sum(proportions) / (len(proportions) - len(classes_zero))
     weights = [mean_prop / i if i != 0 else 0 for i in proportions]
+    return weights
+
+
+def compute_weights_1_minus_proportion(tfrecord, classes, classes_zero=['no_data']):
+    tf.enable_eager_execution()
+    train_ds = tf.data.TFRecordDataset(tfrecord)
+    train_ds = train_ds.map(parse_tfr)
+    tot_count = [0] * len(classes)
+    for label in train_ds:
+        label = label.numpy()
+        unique, count = np.unique(label, return_counts=True)
+        for k, v in enumerate(unique):
+            if classes[v] not in classes_zero:
+                tot_count[v] += count[k]
+    total = sum(tot_count)
+    proportions = [i / total for i in tot_count]
+    weights = [1 - i if i != 0 else 0 for i in proportions]
+    return weights
+
+
+def compute_weights_inv_squared_proportion(tfrecord, classes, classes_zero=['no_data']):
+    tf.enable_eager_execution()
+    train_ds = tf.data.TFRecordDataset(tfrecord)
+    train_ds = train_ds.map(parse_tfr)
+    tot_count = [0] * len(classes)
+    for label in train_ds:
+        label = label.numpy()
+        unique, count = np.unique(label, return_counts=True)
+        for k, v in enumerate(unique):
+            if classes[v] not in classes_zero:
+                tot_count[v] += count[k]
+    total = sum(tot_count)
+    proportions = [i / total for i in tot_count]
+    weights = [1 / (i * i) if i != 0 else 0 for i in proportions]
     return weights

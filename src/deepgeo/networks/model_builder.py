@@ -68,6 +68,7 @@ class ModelBuilder(object):
     loss_functions = {
         'bin_iou': lossf.twoclass_cost,
         'avg_soft_dice': lossf.avg_soft_dice,
+        'avg_generalized_dice': lossf.avg_generalized_dice,
         'weighted_cross_entropy': lossf.weighted_cross_entropy,
         'weighted_bin_cross_entropy': lossf.weighted_binary_cross_entropy
     }
@@ -114,11 +115,14 @@ class ModelBuilder(object):
             'output': output,
             'labels_1hot': labels_1hot,
             'labels': labels,
-            'class_weights': params['class_weights'],
-            'num_classes': params['num_classes'],
             'training': training,
             'model_params': params
         }
+
+        if 'class_weights' in params:
+            loss_params['class_weights'] = params['class_weights']
+        if 'num_classes' in params:
+            loss_params['num_classes'] = params['num_classes']
 
         loss = self.loss_functions[params['loss_func']](loss_params)  # TODO: Review this solution
 
