@@ -15,6 +15,8 @@ def compute_quality_metrics(labels, predictions, params, probabilities=None, cla
     if probabilities is not None:
         if len(probabilities.shape) < 4:
             probs = np.expand_dims(probabilities, axis=0)
+        else:
+            probs = probabilities
         for i in range(0, probs.shape[3]):
             probabilities[i] = probs[:, :, :, i].flatten()
     else:
