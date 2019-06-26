@@ -15,29 +15,40 @@ def compute_quality_metrics(labels, predictions, params, probabilities=None, cla
     if probabilities is not None:
         if len(probabilities.shape) < 4:
             probabilities = np.expand_dims(probabilities, axis=0)
-        probabilities = probabilities[:, :, :, 2].flatten()
+        for i in range(0, probabilities.shape[3]):
+            probabilities[i] = probabilities[:, :, :, i].flatten()
     else:
         probabilities = predictions
 
     for value in classes_remove:
         predictions = np.delete(predictions, np.where(labels == value))
-        predictions[predictions == 0] = 1 # TODO: Find a beter way to solve this problem
+        predictions[predictions == 0] = 1  # TODO: Find a better way to solve this problem
         probabilities = np.delete(probabilities, np.where(labels == value))
-        labels = np.delete(labels, np.where(labels==value))
+        labels = np.delete(labels, np.where(labels == value))
         del class_names[value]
  
     metrics = {'f1_score': sklearn.metrics.f1_score(labels, predictions, labels=[1, 2], average=None),
                'precision': sklearn.metrics.precision_score(labels, predictions, average=None),
                'recall': sklearn.metrics.recall_score(labels, predictions, average=None),
-               'roc_curve': sklearn.metrics.roc_curve(labels, probabilities, pos_label=2),  # TODO: try to put here one curve for each class
-               'prec_rec_curve': sklearn.metrics.precision_recall_curve(labels, probabilities, pos_label=2),
                'classification_report': sklearn.metrics.classification_report(labels, predictions,
                                                                               target_names=class_names)}
+
+    metrics['prec_rec_curve'] = []
+    for clazz in class_names:
+        metrics['prec_rec_curve'][clazz] = sklearn.metrics.precision_recall_curve(labels,
+                                                                                  probabilities[params['class_names'].index(clazz)],
+                                                                                  pos_label=params['class_names'].index(clazz))
+
+    metrics['roc_curve'] = {}
+    metrics['auc_roc'] = {}
+    for clazz in class_names:
+        metrics['roc_curve'][clazz] = sklearn.metrics.roc_curve(labels,
+                                                                probabilities[params['class_names'].index(clazz)],
+                                                                pos_label=params['class_names'].index(clazz))
+        metrics['auc_roc'][clazz] = sklearn.metrics.auc(metrics['roc_curve'][clazz][0], metrics[clazz]['roc_curve'][1])
+
     confusion_matrix = sklearn.metrics.confusion_matrix(labels, predictions, labels=[1, 2])
     metrics['confusion_matrix'] = confusion_matrix.astype('float') / confusion_matrix.sum(axis=1)[:, np.newaxis]
-
-    metrics['auc_roc'] = sklearn.metrics.auc(metrics['roc_curve'][0], metrics['roc_curve'][1])
-    #metrics['auc_prec_rec'] = sklearn.metrics.auc(metrics['prec_rec_curve'][0], metrics['prec_rec_curve'][1])
 
     out_str = ''
     out_str += 'F1-Score:' + os.linesep
@@ -49,22 +60,11 @@ def compute_quality_metrics(labels, predictions, params, probabilities=None, cla
         out_str += '  - ' + str(class_names[i]) + ': ' + str(metrics['precision'][i]) + os.linesep
 
     out_str += 'Recall:' + os.linesep
-    for i in range(0, len(metrics['recall'])): #TODO: check here when to use params and class_names
+    for i in range(0, len(metrics['recall'])):
         out_str += '  - ' + str(class_names[i]) + ': ' + str(metrics['recall'][i]) + os.linesep
 
-    # out_str += 'ROC: ' + os.linesep + '  - FPR: [ '
-    # for i in metrics['roc_score'][0]:
-    #     out_str += '{0}'.format(i) + ' '
-    # out_str += ']' + os.linesep + '  - TPR: [ '
-    # for i in metrics['roc_score'][1]:
-    #     out_str += '{0}'.format(i) + ' '
-    # out_str += ']' + os.linesep + '  - Thresholds: [ '
-    # for i in metrics['roc_score'][2]:
-    #     out_str += '{0}'.format(i) + ' '
-    # out_str += ']' + os.linesep
-
-    out_str += 'AUC-ROC: {0}'.format(metrics['auc_roc']) + os.linesep
-    # out_str += 'AUC-Precision-Recall: {0}'.format(metrics['auc_prec_rec']) + os.linesep
+    for clazz, val in metrics['auc_roc'].items():
+        out_str += 'AUC-ROC {}: {}'.format(clazz, metrics['auc_roc']) + os.linesep
 
     out_str += 'Classification Report:' + os.linesep + str(metrics['classification_report']) + os.linesep
     out_str += 'Confusion Matrix:' + os.linesep + str(metrics['confusion_matrix']) + os.linesep

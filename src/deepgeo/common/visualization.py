@@ -12,6 +12,7 @@ from matplotlib.colors import ListedColormap
 from osgeo import ogr
 from shapely.wkb import loads
 from skimage import exposure
+import palettable
 # from shapely.geometry import Polygon
 
 
@@ -210,22 +211,35 @@ def plot_confusion_matrix(confusion_matrix, params, fig_path=None, show_plot=Tru
 
 
 def plot_roc_curve(roc, fig_path=None, show_plot=True):
-    # tprs = []
-    # aucs = []
-    # mean_fpr = np.linspace(0, 1, 100)
+    colorbar = palettable.colorbrewer.RdBu_11
+    plt.colorbar(colorbar)
 
-    fpr = roc[0]
-    tpr = roc[1]
-    thresholds = roc[2]
+    tprs = []
+    aucs = []
+    mean_fpr = np.linspace(0, 1, 100)
 
-    # tprs.append(scipy.interp(mean_fpr, fpr, tpr))
-    # tprs.append(scipy.interp(mean_fpr, fpr, tpr))
-    # tprs[-1][0] = 0.0
+    for clazz, roc_values in roc:
+        fpr = roc_values[0]
+        tpr = roc_values[1]
+        thresholds = roc_values[2]
 
-    roc_auc = sklearn.metrics.auc(fpr, tpr)
+        tprs.append(scipy.interp(mean_fpr, fpr, tpr))
+        tprs.append(scipy.interp(mean_fpr, fpr, tpr))
+        tprs[-1][0] = 0.0
 
-    plt.plot([0, 1], [0, 1], linestyle='--', lw=2, color='r', label='Chance', alpha=.8)
-    plt.plot(fpr, tpr, color='b', label='ROC (AUC = %0.2f)' % roc_auc, lw=2, alpha=.8)
+        roc_auc = sklearn.metrics.auc(fpr, tpr)
+        aucs.append(roc_auc)
+
+        plt.plot([0, 1], [0, 1], linestyle='--', color='r', lw=2, label='Chance', alpha=.8)
+        plt.plot(fpr, tpr, label='ROC %s (AUC = %0.2f)' % (clazz, roc_auc), lw=2, alpha=.8)
+
+    mean_tpr = np.mean(tprs, axis=0)
+    mean_tpr[-1] = 1.0
+    mean_auc = roc_auc(mean_fpr, mean_tpr)
+    std_auc = np.std(aucs)
+    plt.plot(mean_fpr, mean_tpr, label='Mean ROC (AUC = %0.2f $\pm$ %0.2f)' % (mean_auc, std_auc),
+             lw=2, alpha=.8)
+
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
     plt.title('Receiver Operating Characteristics')
@@ -239,21 +253,19 @@ def plot_roc_curve(roc, fig_path=None, show_plot=True):
 
 
 def plot_precision_recall_curve(prec_rec, fig_path=None, show_plot=True):
-    # tprs = []
-    # aucs = []
-    # mean_fpr = np.linspace(0, 1, 100)
+    colorbar = palettable.colorbrewer.RdBu_11
+    plt.colorbar(colorbar)
 
-    precision = prec_rec[0]
-    recall = prec_rec[1]
-    # thresholds = roc[2]
+    # precision = {}
+    # recall = {}
 
-    # tprs.append(scipy.interp(mean_fpr, fpr, tpr))
-    # tprs[-1][0] = 0.0
+    for clazz, pr_values in prec_rec:
+        precision = pr_values[0]
+        recall = pr_values[1]
 
-    # roc_auc = sklearn.metrics.auc(fpr, tpr)
+        plt.step(recall, precision, alpha=.8, where='post')
+        plt.fill_between(recall, precision, alpha=.2, **{'step': 'post'})
 
-    plt.step(recall, precision, color='b', alpha=.8, where='post')
-    plt.fill_between(recall, precision, alpha=.2, color='b', **{'step': 'post'})
     plt.xlabel('Recall')
     plt.ylabel('Precision')
     plt.ylim([0.0, 1.05])
