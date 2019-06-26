@@ -11,7 +11,7 @@ import deepgeo.networks.loss_funcions as lossf
 
 # # Load input Dataset
 
-network = 'unet'
+network = 'unet_lf'
 DATA_DIR = '/home/raian/doutorado/Dados/generated'
 
 class_names = ['no_data', 'not_deforestation', 'deforestation']
@@ -54,7 +54,7 @@ params = {
     'class_names': ['no data', 'not deforestation', 'deforestation'],
     'num_compositions': 2,
     'bands_plot': [[1, 2, 3], [6, 7, 8]],
-    'Notes': 'Fixing decay steps for Learning Rate decay.'
+    'Notes': 'Using randomly only 4 data augmentation ops.'
 }
 
 
