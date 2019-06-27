@@ -53,14 +53,17 @@ def plot_labels(labels_array, class_names, colors=None, title="Labels", figsize=
         plt.imshow(labels_array[:,:,0], cmap=colorMap)
     else:
         plt.imshow(labels_array, cmap=colorMap)
-    cbar = plt.colorbar()
-    cbar.ax.get_yaxis().set_ticks([])
+    #cbar = plt.colorbar()  # OLD legend
+    #cbar.ax.get_yaxis().set_ticks([])  # OLD legend
     plt.axis('off')
 
+    leg_handles = []
     for j, lab in enumerate(class_names):
-        cbar.ax.text(1.5, (2 * j + 1) / (num_classes * 2), lab, ha='left')
+        #cbar.ax.text(1.5, (2 * j + 1) / (num_classes * 2), lab, ha='left')  # OLD legend
+        leg_handles.append(patches.Patch(color=colors[j], label=lab))
 
-    cbar.ax.get_yaxis().labelpad = 15
+    plt.legend(handles=leg_handles, loc='best', bbox_to_anchor=(1.22, 0.15), fontsize='x-large')
+    #cbar.ax.get_yaxis().labelpad = 15  # OLD legend
 
 
 # TODO: How to plot the raster together? Decrease the blank space from the origin to the data
@@ -211,31 +214,27 @@ def plot_confusion_matrix(confusion_matrix, params, fig_path=None, show_plot=Tru
 
 
 def plot_roc_curve(roc, fig_path=None, show_plot=True):
-    colorbar = palettable.colorbrewer.RdBu_11
-    plt.colorbar(colorbar)
-
     tprs = []
     aucs = []
     mean_fpr = np.linspace(0, 1, 100)
 
-    for clazz, roc_values in roc:
+    for clazz, roc_values in roc.items():
         fpr = roc_values[0]
         tpr = roc_values[1]
         thresholds = roc_values[2]
 
-        tprs.append(scipy.interp(mean_fpr, fpr, tpr))
         tprs.append(scipy.interp(mean_fpr, fpr, tpr))
         tprs[-1][0] = 0.0
 
         roc_auc = sklearn.metrics.auc(fpr, tpr)
         aucs.append(roc_auc)
 
-        plt.plot([0, 1], [0, 1], linestyle='--', color='r', lw=2, label='Chance', alpha=.8)
         plt.plot(fpr, tpr, label='ROC %s (AUC = %0.2f)' % (clazz, roc_auc), lw=2, alpha=.8)
 
+    plt.plot([0, 1], [0, 1], linestyle='--', color='r', lw=2, label='Chance', alpha=.8)
     mean_tpr = np.mean(tprs, axis=0)
     mean_tpr[-1] = 1.0
-    mean_auc = roc_auc(mean_fpr, mean_tpr)
+    mean_auc = sklearn.metrics.auc(mean_fpr, mean_tpr)
     std_auc = np.std(aucs)
     plt.plot(mean_fpr, mean_tpr, label='Mean ROC (AUC = %0.2f $\pm$ %0.2f)' % (mean_auc, std_auc),
              lw=2, alpha=.8)
@@ -243,7 +242,7 @@ def plot_roc_curve(roc, fig_path=None, show_plot=True):
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
     plt.title('Receiver Operating Characteristics')
-    plt.legend(loc='lower right')
+    plt.legend(loc='best', bbox_to_anchor=(1.05, 1))
     if fig_path is not None:
         plt.savefig(fig_path)
     if show_plot:
@@ -253,17 +252,14 @@ def plot_roc_curve(roc, fig_path=None, show_plot=True):
 
 
 def plot_precision_recall_curve(prec_rec, fig_path=None, show_plot=True):
-    colorbar = palettable.colorbrewer.RdBu_11
-    plt.colorbar(colorbar)
-
     # precision = {}
     # recall = {}
-
-    for clazz, pr_values in prec_rec:
+    
+    for clazz, pr_values in prec_rec.items():
         precision = pr_values[0]
         recall = pr_values[1]
 
-        plt.step(recall, precision, alpha=.8, where='post')
+        plt.step(recall, precision, label=clazz, alpha=.8, where='post')
         plt.fill_between(recall, precision, alpha=.2, **{'step': 'post'})
 
     plt.xlabel('Recall')
@@ -271,6 +267,7 @@ def plot_precision_recall_curve(prec_rec, fig_path=None, show_plot=True):
     plt.ylim([0.0, 1.05])
     plt.xlim([0.0, 1.0])
     plt.title('Precision Recall Curve')  # TODO: Try to put here the average precision.
+    plt.legend(loc='best', bbox_to_anchor=(1.05, 1))
     if fig_path is not None:
         plt.savefig(fig_path)
     if show_plot:

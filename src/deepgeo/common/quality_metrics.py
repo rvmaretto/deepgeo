@@ -15,7 +15,7 @@ def compute_quality_metrics(labels, predictions, params, probabilities=None, cla
     if probabilities is not None:
         if len(probabilities.shape) < 4:
             probabilities = np.expand_dims(probabilities, axis=0)
-            probabilities = probabilities.reshape(-1, probabilities.shape[-1])
+        probabilities = probabilities.reshape(-1, probabilities.shape[-1])
         # for i in range(0, probabilities.shape[3]):
         #     probabilities[i] = probabilities[:, :, :, i].flatten()
     else:
@@ -24,7 +24,7 @@ def compute_quality_metrics(labels, predictions, params, probabilities=None, cla
     for value in classes_remove:
         predictions = np.delete(predictions, np.where(labels == value))
         predictions[predictions == 0] = 1  # TODO: Find a better way to solve this problem
-        probabilities = np.delete(probabilities, np.where(labels == value))
+        probabilities = np.delete(probabilities, np.where(labels == value), axis=0)
         labels = np.delete(labels, np.where(labels == value))
         del class_names[value]
  
@@ -34,19 +34,21 @@ def compute_quality_metrics(labels, predictions, params, probabilities=None, cla
                'classification_report': sklearn.metrics.classification_report(labels, predictions,
                                                                               target_names=class_names)}
 
-    metrics['prec_rec_curve'] = []
+    metrics['prec_rec_curve'] = {}
     for clazz in class_names:
+        cl_index = params['class_names'].index(clazz)
         metrics['prec_rec_curve'][clazz] = sklearn.metrics.precision_recall_curve(labels,
-                                                                                  probabilities[params['class_names'].index(clazz)],
-                                                                                  pos_label=params['class_names'].index(clazz))
+                                                                                  probabilities[:, cl_index],
+                                                                                  pos_label=cl_index)
 
     metrics['roc_curve'] = {}
     metrics['auc_roc'] = {}
     for clazz in class_names:
+        cl_index = params['class_names'].index(clazz)
         metrics['roc_curve'][clazz] = sklearn.metrics.roc_curve(labels,
-                                                                probabilities[params['class_names'].index(clazz)],
-                                                                pos_label=params['class_names'].index(clazz))
-        metrics['auc_roc'][clazz] = sklearn.metrics.auc(metrics['roc_curve'][clazz][0], metrics[clazz]['roc_curve'][1])
+                                                                probabilities[:, cl_index],
+                                                                pos_label=cl_index)
+        metrics['auc_roc'][clazz] = sklearn.metrics.auc(metrics['roc_curve'][clazz][0], metrics['roc_curve'][clazz][1])
 
     confusion_matrix = sklearn.metrics.confusion_matrix(labels, predictions, labels=[1, 2])
     metrics['confusion_matrix'] = confusion_matrix.astype('float') / confusion_matrix.sum(axis=1)[:, np.newaxis]

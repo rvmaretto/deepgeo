@@ -7,7 +7,7 @@ import tensorflow as tf
 
 sys.path.insert(0, '../../src')
 import deepgeo.networks.model_builder as mb
-import deepgeo.networks.loss_funcions as lossf
+import deepgeo.networks.loss_functions as lossf
 
 # # Load input Dataset
 
@@ -26,8 +26,8 @@ model_dir = os.path.join(DATA_DIR, 'tf_logs', 'experiments', network,
                          'test_%s_%s' % (network, datetime.now().strftime('%Y_%m_%d-%H_%M_%S')))
 
 
-weights_train = lossf.compute_weights_mean_proportion(train_tfrecord, class_names, ['no_data'])
-weights_eval = lossf.compute_weights_mean_proportion(test_tfrecord, class_names, ['no_data'])
+weights_train = lossf.compute_weights_1_minus_proportion(train_tfrecord, class_names, ['no_data'])
+weights_eval = lossf.compute_weights_1_minus_proportion(test_tfrecord, class_names, ['no_data'])
 
 
 # Train the Network
@@ -44,8 +44,8 @@ params = {
     # 'var_scale_factor': 2.0,  # TODO: Put the initializer as parameter
     'chips_tensorboard': 2,
     # 'dropout_rate': 0.5,  # TODO: Put a bool parameter to apply or not Dropout
-    'fusion': 'early',
-    'loss_func': 'weighted_cross_entropy',
+    'fusion': 'late',
+    'loss_func': 'avg_generalized_dice',
     'data_aug_ops': ['rot90', 'rot180', 'rot270', 'flip_left_right',
                      'flip_up_down', 'flip_transpose'],
     'data_aug_per_chip': 4,
@@ -54,7 +54,7 @@ params = {
     'class_names': ['no data', 'not deforestation', 'deforestation'],
     'num_compositions': 2,
     'bands_plot': [[1, 2, 3], [6, 7, 8]],
-    'Notes': 'Using randomly only 4 data augmentation ops.'
+    'Notes': 'Changing weights. Testing Generalized (weighted) Dice Score. Using randomly only 4 data augmentation ops.'
 }
 
 
