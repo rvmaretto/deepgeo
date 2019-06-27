@@ -17,3 +17,13 @@ def check_dict_parameters(params, mandatory=[], default={}):
 def get_available_gpus():
     local_device_protos = device_lib.list_local_devices()
     return [x.name for x in local_device_protos if x.device_type == 'GPU']
+
+
+def nested_list_contains(nl, target):
+    for thing in nl:
+        if type(thing) is list:
+            if nested_list_contains(thing, target):
+                return True
+        if thing == target:
+            return True
+    return False

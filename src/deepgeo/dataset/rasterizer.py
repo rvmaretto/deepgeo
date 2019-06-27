@@ -5,13 +5,13 @@ from osgeo import gdal
 from osgeo import ogr
 
 sys.path.insert(0, path.join(path.dirname(__file__),"../"))
+import common.utils as utilfuncs
 import dataset.image_utils as iutils
-# import utils.geofunctions as gf
 
 
 class Rasterizer(object):
     def __init__(self, vector_file, in_raster_file, class_column='class', classes_interest=None,
-                 non_class_name='non_class'):  # , nodata_val=255):
+                 non_class_name='non_class'):
         self.vector_path = vector_file
         self.raster_path = in_raster_file
         self.class_column = class_column
@@ -87,10 +87,10 @@ class Rasterizer(object):
             if self.classes_interest is None:
                 value = self.class_names.index(label) + 1
             else:
-                if label in self.classes_interest:
-                    value = self.classes_interest.index(label) + 1
+                if utilfuncs.nested_list_contains(self.classes_interest, label):
+                    value = self.__get_pixel_value(self.classes_interest, label)
                 else:
-                    value = self.classes_interest.index(self.non_class) + 1
+                    value = self.__get_pixel_value(self.classes_interest, self.non_class)
             
             vector_layer.SetAttributeFilter("%s='%s'" % (str(self.class_column), str(label)))
             limg = self.rasterize_label(vector_layer)
@@ -126,3 +126,14 @@ class Rasterizer(object):
         output_band.WriteArray(np.ma.filled(self.labeled_raster[:, :, 0], self.no_data))
         output_band.FlushCache()
         output_ds = None
+
+    def __get_pixel_value(self, nl, target):
+        if target in nl:
+            return nl.index(target) + 1
+
+        for thing in nl:
+            if type(thing) is list:
+                if target in thing:
+                    return nl.index(thing) + 1
+
+        raise ValueError(target + ' is not in classes_of_interest')
