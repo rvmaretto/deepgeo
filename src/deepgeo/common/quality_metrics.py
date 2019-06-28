@@ -27,8 +27,12 @@ def compute_quality_metrics(labels, predictions, params, probabilities=None, cla
         probabilities = np.delete(probabilities, np.where(labels == value), axis=0)
         labels = np.delete(labels, np.where(labels == value))
         del class_names[value]
+
+    labels = []
+    for clazz in class_names:
+        labels = params['class_names'].index(clazz)
  
-    metrics = {'f1_score': sklearn.metrics.f1_score(labels, predictions, labels=[1, 2], average=None),
+    metrics = {'f1_score': sklearn.metrics.f1_score(labels, predictions, labels=labels, average=None),
                'precision': sklearn.metrics.precision_score(labels, predictions, average=None),
                'recall': sklearn.metrics.recall_score(labels, predictions, average=None),
                'classification_report': sklearn.metrics.classification_report(labels, predictions,
@@ -50,7 +54,7 @@ def compute_quality_metrics(labels, predictions, params, probabilities=None, cla
                                                                 pos_label=cl_index)
         metrics['auc_roc'][clazz] = sklearn.metrics.auc(metrics['roc_curve'][clazz][0], metrics['roc_curve'][clazz][1])
 
-    confusion_matrix = sklearn.metrics.confusion_matrix(labels, predictions, labels=[1, 2])
+    confusion_matrix = sklearn.metrics.confusion_matrix(labels, predictions, labels=labels)
     metrics['confusion_matrix'] = confusion_matrix.astype('float') / confusion_matrix.sum(axis=1)[:, np.newaxis]
 
     out_str = ''

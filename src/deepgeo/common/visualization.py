@@ -53,17 +53,17 @@ def plot_labels(labels_array, class_names, colors=None, title="Labels", figsize=
         plt.imshow(labels_array[:,:,0], cmap=colorMap)
     else:
         plt.imshow(labels_array, cmap=colorMap)
-    #cbar = plt.colorbar()  # OLD legend
-    #cbar.ax.get_yaxis().set_ticks([])  # OLD legend
+    # cbar = plt.colorbar()  # OLD legend
+    # cbar.ax.get_yaxis().set_ticks([])  # OLD legend
     plt.axis('off')
 
     leg_handles = []
     for j, lab in enumerate(class_names):
-        #cbar.ax.text(1.5, (2 * j + 1) / (num_classes * 2), lab, ha='left')  # OLD legend
+        # cbar.ax.text(1.5, (2 * j + 1) / (num_classes * 2), lab, ha='left')  # OLD legend
         leg_handles.append(patches.Patch(color=colors[j], label=lab))
 
     plt.legend(handles=leg_handles, loc='best', bbox_to_anchor=(1.22, 0.15), fontsize='x-large')
-    #cbar.ax.get_yaxis().labelpad = 15  # OLD legend
+    # cbar.ax.get_yaxis().labelpad = 15  # OLD legend
 
 
 # TODO: How to plot the raster together? Decrease the blank space from the origin to the data
