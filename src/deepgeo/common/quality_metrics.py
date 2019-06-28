@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../'))
 import common.visualization as vis
 
 
-def compute_quality_metrics(labels, predictions, params, probabilities=None, classes_remove=[0]):
+def compute_quality_metrics(labels, predictions, params, probabilities=None, classes_ignore=[0]):
     class_names = params['class_names'].copy()
     labels = labels.flatten()
     predictions = predictions.flatten()
@@ -19,7 +19,7 @@ def compute_quality_metrics(labels, predictions, params, probabilities=None, cla
     else:
         probabilities = predictions
 
-    for value in classes_remove:
+    for value in classes_ignore:
         predictions = np.delete(predictions, np.where(labels == value))
         predictions[predictions == 0] = 1  # TODO: Find a better way to solve this problem
         probabilities = np.delete(probabilities, np.where(labels == value), axis=0)
@@ -30,31 +30,32 @@ def compute_quality_metrics(labels, predictions, params, probabilities=None, cla
     for clazz in class_names:
         labels_to_use.append(params['class_names'].index(clazz))
  
-    #TODO: Put here the sklearn.utils.parallel_backend(). https://scikit-learn.org/stable/modules/generated/sklearn.utils.parallel_backend.html
-    metrics = {'f1_score': sklearn.metrics.f1_score(labels, predictions, labels=labels_to_use, average=None),
-               'precision': sklearn.metrics.precision_score(labels, predictions, average=None),
-               'recall': sklearn.metrics.recall_score(labels, predictions, average=None),
-               'classification_report': sklearn.metrics.classification_report(labels, predictions,
-                                                                              target_names=class_names)}
+    metrics = {}
+    with sklearn.utils.parallel_backend():
+        metrics['f1_score'] = sklearn.metrics.f1_score(labels, predictions, labels=labels_to_use, average=None)
+        metrics['precision'] = sklearn.metrics.precision_score(labels, predictions, average=None)
+        metrics['recall'] = sklearn.metrics.recall_score(labels, predictions, average=None)
+        metrics['classification_report'] = sklearn.metrics.classification_report(labels, predictions,
+                                                                                 target_names=class_names)
 
-    metrics['prec_rec_curve'] = {}
-    for clazz in class_names:
-        cl_index = params['class_names'].index(clazz)
-        metrics['prec_rec_curve'][clazz] = sklearn.metrics.precision_recall_curve(labels,
-                                                                                  probabilities[:, cl_index],
-                                                                                  pos_label=cl_index)
+        metrics['prec_rec_curve'] = {}
+        for clazz in class_names:
+            cl_index = params['class_names'].index(clazz)
+            metrics['prec_rec_curve'][clazz] = sklearn.metrics.precision_recall_curve(labels,
+                                                                                      probabilities[:, cl_index],
+                                                                                      pos_label=cl_index)
 
-    metrics['roc_curve'] = {}
-    metrics['auc_roc'] = {}
-    for clazz in class_names:
-        cl_index = params['class_names'].index(clazz)
-        metrics['roc_curve'][clazz] = sklearn.metrics.roc_curve(labels,
-                                                                probabilities[:, cl_index],
-                                                                pos_label=cl_index)
-        metrics['auc_roc'][clazz] = sklearn.metrics.auc(metrics['roc_curve'][clazz][0], metrics['roc_curve'][clazz][1])
+        metrics['roc_curve'] = {}
+        metrics['auc_roc'] = {}
+        for clazz in class_names:
+            cl_index = params['class_names'].index(clazz)
+            metrics['roc_curve'][clazz] = sklearn.metrics.roc_curve(labels,
+                                                                    probabilities[:, cl_index],
+                                                                    pos_label=cl_index)
+            metrics['auc_roc'][clazz] = sklearn.metrics.auc(metrics['roc_curve'][clazz][0], metrics['roc_curve'][clazz][1])
 
-    confusion_matrix = sklearn.metrics.confusion_matrix(labels, predictions, labels=labels_to_use)
-    metrics['confusion_matrix'] = confusion_matrix.astype('float') / confusion_matrix.sum(axis=1)[:, np.newaxis]
+        confusion_matrix = sklearn.metrics.confusion_matrix(labels, predictions, labels=labels_to_use)
+        metrics['confusion_matrix'] = confusion_matrix.astype('float') / confusion_matrix.sum(axis=1)[:, np.newaxis]
 
     out_str = ''
     out_str += 'F1-Score:' + os.linesep
@@ -108,9 +109,10 @@ def evaluate_classification(prediction_path, ground_truth_path, params, predicti
     out_str += '<<------------------------------------------------------------>>' + os.linesep
 
     if prediction_prob is not None:
-        metrics, report_str = compute_quality_metrics(truth_arr, pred_arr, params, prob_arr)
+        metrics, report_str = compute_quality_metrics(truth_arr, pred_arr, params, prob_arr,
+                                                      classes_ignore=classes_ignore)
     else:
-        metrics, report_str = compute_quality_metrics(truth_arr, pred_arr, params)
+        metrics, report_str = compute_quality_metrics(truth_arr, pred_arr, params, classes_ignore=classes_ignore)
 
     out_str += report_str
 
