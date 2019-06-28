@@ -182,14 +182,17 @@ def plot_chips(chips, raster_array=None, bands=[1, 2, 3], contrast=False, chipsc
         ax.add_patch(rect)
 
 
-def plot_confusion_matrix(confusion_matrix, params, fig_path=None, show_plot=True):
+def plot_confusion_matrix(confusion_matrix, params, classes_remove=[0], fig_path=None, show_plot=True):
+    class_names = params['class_names'].copy()
+    for value in classes_remove:
+        del class_names[value]
     fig, ax = plt.subplots()
     img = ax.imshow(confusion_matrix, interpolation='nearest', cmap=plt.cm.Greens)
     ax.figure.colorbar(img, ax=ax)
     ax.set(xticks=np.arange(confusion_matrix.shape[1]),
            yticks=np.arange(confusion_matrix.shape[0]),
-           xticklabels=params['class_names'][1:3],
-           yticklabels=params['class_names'][1:3],
+           xticklabels=class_names,
+           yticklabels=class_names,
            title='Confusion Matrix',
            ylabel='True Label',
            xlabel='Predicted Label')
@@ -217,6 +220,8 @@ def plot_roc_curve(roc, fig_path=None, show_plot=True):
     tprs = []
     aucs = []
     mean_fpr = np.linspace(0, 1, 100)
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
 
     for clazz, roc_values in roc.items():
         fpr = roc_values[0]
@@ -229,22 +234,22 @@ def plot_roc_curve(roc, fig_path=None, show_plot=True):
         roc_auc = sklearn.metrics.auc(fpr, tpr)
         aucs.append(roc_auc)
 
-        plt.plot(fpr, tpr, label='ROC %s (AUC = %0.2f)' % (clazz, roc_auc), lw=2, alpha=.8)
+        ax.plot(fpr, tpr, label='ROC %s (AUC = %0.2f)' % (clazz, roc_auc), lw=2, alpha=.8)
 
-    plt.plot([0, 1], [0, 1], linestyle='--', color='r', lw=2, label='Chance', alpha=.8)
+    ax.plot([0, 1], [0, 1], linestyle='--', color='r', lw=2, label='Chance', alpha=.8)
     mean_tpr = np.mean(tprs, axis=0)
     mean_tpr[-1] = 1.0
     mean_auc = sklearn.metrics.auc(mean_fpr, mean_tpr)
     std_auc = np.std(aucs)
-    plt.plot(mean_fpr, mean_tpr, label='Mean ROC (AUC = %0.2f $\pm$ %0.2f)' % (mean_auc, std_auc),
-             lw=2, alpha=.8)
+    ax.plot(mean_fpr, mean_tpr, label='Mean ROC (AUC = %0.2f $\pm$ %0.2f)' % (mean_auc, std_auc),
+            lw=2, alpha=.8)
 
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title('Receiver Operating Characteristics')
-    plt.legend(loc='best', bbox_to_anchor=(1.05, 1))
+    ax.set_xlabel('False Positive Rate')
+    ax.set_ylabel('True Positive Rate')
+    ax.set_title('Receiver Operating Characteristics')
+    legend = ax.legend(loc='best', bbox_to_anchor=(1.05, 1))
     if fig_path is not None:
-        plt.savefig(fig_path)
+        plt.savefig(fig_path, bbox_extra_artists=(legend,), bbox_inches='tight')
     if show_plot:
         plt.show()
     else:
@@ -254,22 +259,24 @@ def plot_roc_curve(roc, fig_path=None, show_plot=True):
 def plot_precision_recall_curve(prec_rec, fig_path=None, show_plot=True):
     # precision = {}
     # recall = {}
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
     
     for clazz, pr_values in prec_rec.items():
         precision = pr_values[0]
         recall = pr_values[1]
 
-        plt.step(recall, precision, label=clazz, alpha=.8, where='post')
-        plt.fill_between(recall, precision, alpha=.2, **{'step': 'post'})
+        ax.step(recall, precision, label=clazz, alpha=.8, where='post')
+        ax.fill_between(recall, precision, alpha=.2, **{'step': 'post'})
 
-    plt.xlabel('Recall')
-    plt.ylabel('Precision')
-    plt.ylim([0.0, 1.05])
-    plt.xlim([0.0, 1.0])
-    plt.title('Precision Recall Curve')  # TODO: Try to put here the average precision.
-    plt.legend(loc='best', bbox_to_anchor=(1.05, 1))
+    ax.set_xlabel('Recall')
+    ax.set_ylabel('Precision')
+    ax.set_ylim([0.0, 1.05])
+    ax.set_xlim([0.0, 1.0])
+    ax.set_title('Precision Recall Curve')  # TODO: Try to put here the average precision.
+    legend = ax.legend(loc='best', bbox_to_anchor=(1.05, 1))
     if fig_path is not None:
-        plt.savefig(fig_path)
+        plt.savefig(fig_path, bbox_extra_artists=(legend,), bbox_inches='tight')
     if show_plot:
         plt.show()
     else:

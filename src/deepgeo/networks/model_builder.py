@@ -137,7 +137,7 @@ class ModelBuilder(object):
         # loss_func = self.losses_switcher.get(params['loss_func'], lossf.unknown_loss_error)
         # loss = loss_func(loss_params)
 
-        tbm.plot_chips_tensorboard(samples, labels, tf.expand_dims(predictions[:, :, :, 2], -1), params)
+        tbm.plot_chips_tensorboard(samples, labels, output, params)
         metrics, summaries = tbm.define_quality_metrics(labels_1hot, predictions, logits, labels, output, loss, params)
 
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
@@ -201,6 +201,7 @@ class ModelBuilder(object):
         with open(os.path.join(output_dir, "parameters.csv"), "w") as f:
             w = csv.writer(f, delimiter=';')
             w.writerow(["network", self.network])
+            w.writerow(['dataset', train_dataset])
             for key, value in params.items():
                 w.writerow([key, value])
 
@@ -292,7 +293,8 @@ class ModelBuilder(object):
             auc_roc_path = None
             prec_rec_path = None
 
-        vis.plot_confusion_matrix(metrics['confusion_matrix'], params, conf_matrix_path, show_plot=show_plots)
+        vis.plot_confusion_matrix(metrics['confusion_matrix'], params, fig_path=conf_matrix_path,
+                                  show_plot=show_plots)
         vis.plot_roc_curve(metrics['roc_curve'], auc_roc_path, show_plot=show_plots)
         vis.plot_precision_recall_curve(metrics['prec_rec_curve'], fig_path=prec_rec_path, show_plot=show_plots)
 

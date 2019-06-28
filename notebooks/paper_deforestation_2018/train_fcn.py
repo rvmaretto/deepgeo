@@ -14,9 +14,9 @@ import deepgeo.networks.loss_functions as lossf
 network = 'unet_lf'
 DATA_DIR = '/home/raian/doutorado/Dados/generated'
 
-class_names = ['no_data', 'not_deforestation', 'deforestation']
+class_names = ['no_data', 'not_deforestation', 'old_deforestation', 'deforestation_year', 'clouds']
 
-DATASET = os.path.join(DATA_DIR, 'dataset_286x286_no_samp_cl-2013-2017')
+DATASET = os.path.join(DATA_DIR, 'dataset_286x286_three_class-2013-2017')
 train_tfrecord = os.path.join(DATASET, 'dataset_train.tfrecord')
 test_tfrecord = os.path.join(DATASET, 'dataset_test.tfrecord')
 val_dataset = os.path.join(DATASET, 'dataset_valid.npz')
@@ -26,8 +26,8 @@ model_dir = os.path.join(DATA_DIR, 'tf_logs', 'experiments', network,
                          'test_%s_%s' % (network, datetime.now().strftime('%Y_%m_%d-%H_%M_%S')))
 
 
-weights_train = lossf.compute_weights_1_minus_proportion(train_tfrecord, class_names, ['no_data'])
-weights_eval = lossf.compute_weights_1_minus_proportion(test_tfrecord, class_names, ['no_data'])
+weights_train = lossf.compute_weights_mean_proportion(train_tfrecord, class_names, ['no_data'])
+weights_eval = lossf.compute_weights_mean_proportion(test_tfrecord, class_names, ['no_data'])
 
 
 # Train the Network
@@ -45,16 +45,16 @@ params = {
     'chips_tensorboard': 2,
     # 'dropout_rate': 0.5,  # TODO: Put a bool parameter to apply or not Dropout
     'fusion': 'late',
-    'loss_func': 'avg_generalized_dice',
+    'loss_func': 'weighted_cross_entropy',
     'data_aug_ops': ['rot90', 'rot180', 'rot270', 'flip_left_right',
                      'flip_up_down', 'flip_transpose'],
     'data_aug_per_chip': 4,
     'class_weights': {'train': weights_train, 'eval': weights_eval},
     'num_classes': len(class_names),
-    'class_names': ['no data', 'not deforestation', 'deforestation'],
+    'class_names': ['no data', 'not deforestation', 'old deforestation', 'deforestation year', 'clouds'],
     'num_compositions': 2,
     'bands_plot': [[1, 2, 3], [6, 7, 8]],
-    'Notes': 'Changing weights. Testing Generalized (weighted) Dice Score. Using randomly only 4 data augmentation ops.'
+    'Notes': 'Testing Dataset with more classes.'
 }
 
 

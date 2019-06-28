@@ -16,8 +16,6 @@ def compute_quality_metrics(labels, predictions, params, probabilities=None, cla
         if len(probabilities.shape) < 4:
             probabilities = np.expand_dims(probabilities, axis=0)
         probabilities = probabilities.reshape(-1, probabilities.shape[-1])
-        # for i in range(0, probabilities.shape[3]):
-        #     probabilities[i] = probabilities[:, :, :, i].flatten()
     else:
         probabilities = predictions
 
@@ -28,11 +26,12 @@ def compute_quality_metrics(labels, predictions, params, probabilities=None, cla
         labels = np.delete(labels, np.where(labels == value))
         del class_names[value]
 
-    labels = []
+    labels_to_use = []
     for clazz in class_names:
-        labels = params['class_names'].index(clazz)
+        labels_to_use.append(params['class_names'].index(clazz))
  
-    metrics = {'f1_score': sklearn.metrics.f1_score(labels, predictions, labels=labels, average=None),
+    #TODO: Put here the sklearn.utils.parallel_backend(). https://scikit-learn.org/stable/modules/generated/sklearn.utils.parallel_backend.html
+    metrics = {'f1_score': sklearn.metrics.f1_score(labels, predictions, labels=labels_to_use, average=None),
                'precision': sklearn.metrics.precision_score(labels, predictions, average=None),
                'recall': sklearn.metrics.recall_score(labels, predictions, average=None),
                'classification_report': sklearn.metrics.classification_report(labels, predictions,
@@ -54,7 +53,7 @@ def compute_quality_metrics(labels, predictions, params, probabilities=None, cla
                                                                 pos_label=cl_index)
         metrics['auc_roc'][clazz] = sklearn.metrics.auc(metrics['roc_curve'][clazz][0], metrics['roc_curve'][clazz][1])
 
-    confusion_matrix = sklearn.metrics.confusion_matrix(labels, predictions, labels=labels)
+    confusion_matrix = sklearn.metrics.confusion_matrix(labels, predictions, labels=labels_to_use)
     metrics['confusion_matrix'] = confusion_matrix.astype('float') / confusion_matrix.sum(axis=1)[:, np.newaxis]
 
     out_str = ''
@@ -79,7 +78,8 @@ def compute_quality_metrics(labels, predictions, params, probabilities=None, cla
     return metrics, out_str
 
 
-def evaluate_classification(prediction_path, ground_truth_path, params, prediction_prob=None, out_dir=None, file_sufix=''):
+def evaluate_classification(prediction_path, ground_truth_path, params, prediction_prob=None,
+                            out_dir=None, file_sufix='', classes_ignore=[0]):
     pred_ds = gdal.Open(prediction_path)
     pred_arr = pred_ds.ReadAsArray()
     pred_size_x, pred_size_y = pred_arr.shape
@@ -130,7 +130,7 @@ def evaluate_classification(prediction_path, ground_truth_path, params, predicti
         aucroc_curve_path = None
         prec_rec_path = None
 
-    vis.plot_confusion_matrix(metrics['confusion_matrix'], params, conf_matrix_path)
+    vis.plot_confusion_matrix(metrics['confusion_matrix'], params, fig_path=conf_matrix_path)
     vis.plot_roc_curve(metrics['roc_curve'], aucroc_curve_path)
     vis.plot_precision_recall_curve(metrics['prec_rec_curve'], fig_path=prec_rec_path)
 
