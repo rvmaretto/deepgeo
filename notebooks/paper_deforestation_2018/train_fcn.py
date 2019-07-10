@@ -11,12 +11,13 @@ import deepgeo.networks.loss_functions as lossf
 
 # # Load input Dataset
 
-network = 'unet_lf'
+network = 'unet'
 DATA_DIR = '/home/raian/doutorado/Dados/generated'
 
-class_names = ['no_data', 'not_deforestation', 'old_deforestation', 'deforestation_year', 'clouds']
+# class_names = ['no_data', 'not_deforestation', 'old_deforestation', 'deforestation_year', 'clouds']
+class_names = ['no_data', 'not_deforestation', 'deforestation', 'clouds']
 
-DATASET = os.path.join(DATA_DIR, 'dataset_286x286_three_class-2013-2017')
+DATASET = os.path.join(DATA_DIR, 'dataset_286x286_def_one_class_timestack_SR-2014-2017')
 train_tfrecord = os.path.join(DATASET, 'dataset_train.tfrecord')
 test_tfrecord = os.path.join(DATASET, 'dataset_test.tfrecord')
 val_dataset = os.path.join(DATASET, 'dataset_valid.npz')
@@ -32,6 +33,7 @@ weights_eval = lossf.compute_weights_mean_proportion(test_tfrecord, class_names,
 
 # Train the Network
 params = {
+    'network': network,
     'epochs': 100,
     'batch_size': 20,
     'chip_size': 286,
@@ -44,17 +46,17 @@ params = {
     # 'var_scale_factor': 2.0,  # TODO: Put the initializer as parameter
     'chips_tensorboard': 2,
     # 'dropout_rate': 0.5,  # TODO: Put a bool parameter to apply or not Dropout
-    'fusion': 'late',
+    'fusion': 'early',
     'loss_func': 'weighted_cross_entropy',
     'data_aug_ops': ['rot90', 'rot180', 'rot270', 'flip_left_right',
                      'flip_up_down', 'flip_transpose'],
     'data_aug_per_chip': 4,
     'class_weights': {'train': weights_train, 'eval': weights_eval},
     'num_classes': len(class_names),
-    'class_names': ['no data', 'not deforestation', 'old deforestation', 'deforestation year', 'clouds'],
+    'class_names': class_names,
     'num_compositions': 2,
     'bands_plot': [[1, 2, 3], [6, 7, 8]],
-    'Notes': 'Testing Dataset with more classes.'
+    'Notes': 'Repeating test that classified deforestation as no data. Testing dataset with timestack and with only one deforestation class.'
 }
 
 

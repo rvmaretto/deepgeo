@@ -21,6 +21,7 @@ def compute_quality_metrics(labels, predictions, params, probabilities=None, cla
 
     for value in classes_ignore:
         predictions = np.delete(predictions, np.where(labels == value))
+        print('UNIQUE Predictions: ', np.unique(predictions))
         predictions[predictions == 0] = 1  # TODO: Find a better way to solve this problem
         probabilities = np.delete(probabilities, np.where(labels == value), axis=0)
         labels = np.delete(labels, np.where(labels == value))
@@ -31,10 +32,11 @@ def compute_quality_metrics(labels, predictions, params, probabilities=None, cla
         labels_to_use.append(params['class_names'].index(clazz))
  
     metrics = {}
-    with sklearn.utils.parallel_backend():
+    with sklearn.externals.joblib.parallel_backend('multiprocessing'):
         metrics['f1_score'] = sklearn.metrics.f1_score(labels, predictions, labels=labels_to_use, average=None)
         metrics['precision'] = sklearn.metrics.precision_score(labels, predictions, average=None)
         metrics['recall'] = sklearn.metrics.recall_score(labels, predictions, average=None)
+        metrics['accuracy'] = sklearn.metrics.accuracy_score(labels, predictions)
         metrics['classification_report'] = sklearn.metrics.classification_report(labels, predictions,
                                                                                  target_names=class_names)
 
@@ -69,6 +71,8 @@ def compute_quality_metrics(labels, predictions, params, probabilities=None, cla
     out_str += 'Recall:' + os.linesep
     for i in range(0, len(metrics['recall'])):
         out_str += '  - ' + str(class_names[i]) + ': ' + str(metrics['recall'][i]) + os.linesep
+
+    out_str += 'Accuracy: ' + str(metrics['accuracy']) + os.linesep
 
     for clazz, val in metrics['auc_roc'].items():
         out_str += 'AUC-ROC {}: {}'.format(clazz, metrics['auc_roc']) + os.linesep

@@ -36,6 +36,10 @@ def plot_chips_tensorboard(samples, labels, output, params):
     with tf.name_scope("input_chips"):
         input_data = layers.crop_features(samples, output.shape[1])
         plots = []
+        if 'num_compositions' not in params:
+            params['num_compositions'] = 1
+        if not isinstance(params['bands_plot'][0], list):
+            params['bands_plot'] = [params['bands_plot']]
         for i in range(0, params['num_compositions']):
             bands = tf.constant(params['bands_plot'][i])
             input_data_vis = tf.transpose(tf.nn.embedding_lookup(tf.transpose(input_data), bands))

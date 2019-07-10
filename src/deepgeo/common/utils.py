@@ -1,3 +1,5 @@
+import csv
+import ast
 from tensorflow.python.client import device_lib
 
 
@@ -27,3 +29,19 @@ def nested_list_contains(nl, target):
         if thing == target:
             return True
     return False
+
+
+def read_csv_2_dict(csv_path, keys_exclude=[]):
+    with open(csv_path, mode='r') as infile:
+        reader = csv.reader(infile, delimiter=';')
+        my_dict = {}
+        for row in reader:
+            if row[0] not in keys_exclude:
+                key = row[0]
+                try:
+                    val = ast.literal_eval(row[1].strip('\n'))
+                except:
+                    val = row[1]
+                my_dict[key] = val
+        return my_dict
+

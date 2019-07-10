@@ -8,6 +8,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../'))
 import common.filesystem as fs
 import common.quality_metrics as qm
+import common.utils as utils
 import common.visualization as vis
 import dataset.utils as dsutils
 import networks.fcn1s as fcn1s
@@ -78,13 +79,17 @@ class ModelBuilder(object):
         'softmax': tf.nn.softmax
     }
 
-    def __init__(self, model):
-        if isinstance(model, str):
-            self.network = model
-            self.model_description = self.predefModels[model]
-        else:
-            self.network = "custom"  # TODO: Change this. Implement a registration for new strategies.
-            self.model_description = model
+    def __init__(self, params):
+        if isinstance(params, dict):
+            self.params = params
+        elif isinstance(params, str):
+            self.params = utils.read_csv_2_dict(os.path.join(params, 'parameters.csv'), keys_exclude=['dataset', 'Notes'])
+        self.network = self.params['network']
+        self.model_description = self.predefModels[self.params['network']]
+
+        #else:
+        #    self.network = "custom"  # TODO: Change this. Implement a registration for new strategies.
+        #    self.model_description = model
 
     def register_loss(self, name, loss_func):
         self.loss_functions[name] = loss_func
@@ -191,7 +196,7 @@ class ModelBuilder(object):
                                           evaluation_hooks=[eval_summary_hook, logging_hook],
                                           training_hooks=[train_summary_hook, logging_hook])
 
-    def train(self, train_dataset, test_dataset, params, output_dir):
+    def train(self, train_dataset, test_dataset, output_dir):
         # tf.set_random_seed(1987)
         tf.logging.set_verbosity(tf.logging.INFO)
 
@@ -200,31 +205,31 @@ class ModelBuilder(object):
             
         with open(os.path.join(output_dir, "parameters.csv"), "w") as f:
             w = csv.writer(f, delimiter=';')
-            w.writerow(["network", self.network])
+            #w.writerow(["network", self.network])
             w.writerow(['dataset', train_dataset])
-            for key, value in params.items():
+            for key, value in self.params.items():
                 w.writerow([key, value])
 
-        params['shape'] = [params['chip_size'], params['chip_size'], params['bands']]
-        train_loader = dsloader.DatasetLoader(train_dataset, params)
-        test_loader = dsloader.DatasetLoader(test_dataset, params)
+        self.params['shape'] = [self.params['chip_size'], self.params['chip_size'], self.params['bands']]
+        train_loader = dsloader.DatasetLoader(train_dataset, self.params)
+        test_loader = dsloader.DatasetLoader(test_dataset, self.params)
         number_of_chips = train_loader.get_dataset_size()
-        params['number_of_chips'] = number_of_chips
+        self.params['number_of_chips'] = number_of_chips
 
         multpl_data_aug = 1
-        if 'data_aug_per_chip' in params:
-            multpl_data_aug = params['data_aug_per_chip'] + 1
-        elif 'data_aug_ops' in params:
-            multpl_data_aug = len(params['data_aug_ops']) + 1
+        if 'data_aug_per_chip' in self.params:
+            multpl_data_aug = self.params['data_aug_per_chip'] + 1
+        elif 'data_aug_ops' in self.params:
+            multpl_data_aug = len(self.params['data_aug_ops']) + 1
             
         # https://www.tensorflow.org/guide/distribute_strategy
         strategy = tf.contrib.distribute.MirroredStrategy()
-        params['decay_steps'] = math.ceil((number_of_chips * multpl_data_aug) / (params['batch_size'] * strategy.num_replicas_in_sync))
+        self.params['decay_steps'] = math.ceil((number_of_chips * multpl_data_aug) / (self.params['batch_size'] * strategy.num_replicas_in_sync))
         config = tf.estimator.RunConfig(train_distribute=strategy)  # , eval_distribute=strategy)
 
         estimator = tf.estimator.Estimator(model_fn=self.__build_model,
                                            model_dir=output_dir,
-                                           params=params,
+                                           params=self.params,
                                            config=config)
 
         trainer = tf.estimator.TrainSpec(lambda: train_loader.tfrecord_input_fn())
@@ -240,18 +245,18 @@ class ModelBuilder(object):
         #     eval_dir=path.join(output_dir, "eval"),
         #     min_steps=100)
 
-    def validate(self, images, expect_labels, params, model_dir, save_results=True,
-                 show_plots=True, exclude_classes=None):
+    def validate(self, images, expect_labels, model_dir, save_results=True, show_plots=True,
+                 exclude_classes=None):
         tf.logging.set_verbosity(tf.logging.WARN)
 
         out_dir = os.path.join(model_dir, 'validation')
 
         estimator = tf.estimator.Estimator(model_fn=self.__build_model,
                                            model_dir=model_dir,
-                                           params=params)
+                                           params=self.params)
 
         input_fn = tf.estimator.inputs.numpy_input_fn(x=images,
-                                                      batch_size=params['batch_size'],
+                                                      batch_size=self.params['batch_size'],
                                                       shuffle=False)
 
         predictions_lst = []
@@ -273,7 +278,7 @@ class ModelBuilder(object):
         out_str += '<<------------------ Validation Results ---------------------->>' + os.linesep
         out_str += '<<------------------------------------------------------------>>' + os.linesep
 
-        metrics, report_str = qm.compute_quality_metrics(crop_labels, predictions, params, probabilities)
+        metrics, report_str = qm.compute_quality_metrics(crop_labels, predictions, self.params, probabilities)
 
         out_str += report_str
         print(out_str)
@@ -293,21 +298,21 @@ class ModelBuilder(object):
             auc_roc_path = None
             prec_rec_path = None
 
-        vis.plot_confusion_matrix(metrics['confusion_matrix'], params, fig_path=conf_matrix_path,
+        vis.plot_confusion_matrix(metrics['confusion_matrix'], self.params, fig_path=conf_matrix_path,
                                   show_plot=show_plots)
         vis.plot_roc_curve(metrics['roc_curve'], auc_roc_path, show_plot=show_plots)
         vis.plot_precision_recall_curve(metrics['prec_rec_curve'], fig_path=prec_rec_path, show_plot=show_plots)
 
-    def predict(self, chip_struct, params, model_dir, return_prob=True):
+    def predict(self, chip_struct, model_dir, return_prob=True):
         tf.logging.set_verbosity(tf.logging.WARN)
         images = chip_struct['chips']
 
         estimator = tf.estimator.Estimator(model_fn=self.__build_model,
                                            model_dir=model_dir,
-                                           params=params)
+                                           params=self.params)
 
         input_fn = tf.estimator.inputs.numpy_input_fn(x=images,
-                                                      batch_size=params['batch_size'],
+                                                      batch_size=self.params['batch_size'],
                                                       shuffle=False)
 
         print('Classifying image with structure ', str(images.shape), '...')

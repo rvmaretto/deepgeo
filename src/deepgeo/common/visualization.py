@@ -16,7 +16,8 @@ import palettable
 # from shapely.geometry import Polygon
 
 
-def plot_rgb_img(raster_array, bands=[1, 2, 3], contrast=False, title="RGB Composition", figsize=(10, 10)):
+def plot_rgb_img(raster_array, bands=[1, 2, 3], contrast=False, title="RGB Composition", fig_path=None,
+                 figsize=(10, 10)):
     if len(bands) != 3 and len(bands) != 1:
         raise AttributeError("Parameter bands must have size 3 or 1.")
 
@@ -34,11 +35,14 @@ def plot_rgb_img(raster_array, bands=[1, 2, 3], contrast=False, title="RGB Compo
     else:
         plt.imshow(raster_img[:,:,bands[0]])
     plt.axis('off')
+    if fig_path is not None:
+        plt.savefig(fig_path)
     plt.show()
 
 
-def plot_labels(labels_array, class_names, colors=None, title="Labels", figsize=(10, 10)):
-    plt.figure(figsize=figsize)
+def plot_labels(labels_array, class_names, colors=None, title="Labels", fig_path=None, figsize=(10, 10)):
+    fig = plt.figure(figsize=figsize)
+    ax = fig.add_subplot(111)
     plt.title(title)
 
     # labels = np.ma.masked_where(labels_array == 255, labels_array) # TODO: Is this line necessary? Try to comment it
@@ -50,9 +54,9 @@ def plot_labels(labels_array, class_names, colors=None, title="Labels", figsize=
         colorMap = ListedColormap(colors)
 
     if len(labels_array.shape) > 2:
-        plt.imshow(labels_array[:,:,0], cmap=colorMap)
+        ax.imshow(labels_array[:,:,0], cmap=colorMap)
     else:
-        plt.imshow(labels_array, cmap=colorMap)
+        ax.imshow(labels_array, cmap=colorMap)
     # cbar = plt.colorbar()  # OLD legend
     # cbar.ax.get_yaxis().set_ticks([])  # OLD legend
     plt.axis('off')
@@ -62,8 +66,11 @@ def plot_labels(labels_array, class_names, colors=None, title="Labels", figsize=
         # cbar.ax.text(1.5, (2 * j + 1) / (num_classes * 2), lab, ha='left')  # OLD legend
         leg_handles.append(patches.Patch(color=colors[j], label=lab))
 
-    plt.legend(handles=leg_handles, loc='best', bbox_to_anchor=(1.22, 0.15), fontsize='x-large')
+    leg = ax.legend(handles=leg_handles, loc='best', bbox_to_anchor=(1.22, 0.15), fontsize='x-large')
     # cbar.ax.get_yaxis().labelpad = 15  # OLD legend
+    fig.tight_layout()
+    if fig_path is not None:
+        plt.savefig(fig_path, bbox_extra_artists=(leg,), bbox_inches='tight')
 
 
 # TODO: How to plot the raster together? Decrease the blank space from the origin to the data
@@ -267,7 +274,7 @@ def plot_precision_recall_curve(prec_rec, fig_path=None, show_plot=True):
         recall = pr_values[1]
 
         ax.step(recall, precision, label=clazz, alpha=.8, where='post')
-        ax.fill_between(recall, precision, alpha=.2, **{'step': 'post'})
+        # ax.fill_between(recall, precision, alpha=.2, **{'step': 'post'})
 
     ax.set_xlabel('Recall')
     ax.set_ylabel('Precision')
