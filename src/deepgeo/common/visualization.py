@@ -127,7 +127,7 @@ def plot_image_histogram(raster_array, cmap=None, nbins = 256, title="Histogram"
 
         plt.legend(legend)
     else:
-         plt.hist(raster_array.ravel(), color=cmap(0), alpha=0.4)
+        plt.hist(raster_array.ravel(), color=cmap(0), alpha=0.4)
 
     plt.show()
 
