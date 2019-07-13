@@ -246,7 +246,7 @@ class ModelBuilder(object):
         #     min_steps=100)
 
     def validate(self, images, expect_labels, model_dir, save_results=True, show_plots=True,
-                 exclude_classes=None):
+                 exclude_classes=[]):
         tf.logging.set_verbosity(tf.logging.WARN)
 
         out_dir = os.path.join(model_dir, 'validation')
@@ -278,7 +278,8 @@ class ModelBuilder(object):
         out_str += '<<------------------ Validation Results ---------------------->>' + os.linesep
         out_str += '<<------------------------------------------------------------>>' + os.linesep
 
-        metrics, report_str = qm.compute_quality_metrics(crop_labels, predictions, self.params, probabilities)
+        metrics, report_str = qm.compute_quality_metrics(crop_labels, predictions, self.params, probabilities,
+                                                         classes_ignore=exclude_classes)
 
         out_str += report_str
         print(out_str)
@@ -299,7 +300,7 @@ class ModelBuilder(object):
             prec_rec_path = None
 
         vis.plot_confusion_matrix(metrics['confusion_matrix'], self.params, fig_path=conf_matrix_path,
-                                  show_plot=show_plots)
+                                  show_plot=show_plots, classes_remove=exclude_classes)
         vis.plot_roc_curve(metrics['roc_curve'], auc_roc_path, show_plot=show_plots)
         vis.plot_precision_recall_curve(metrics['prec_rec_curve'], fig_path=prec_rec_path, show_plot=show_plots)
 

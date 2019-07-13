@@ -45,3 +45,10 @@ def read_csv_2_dict(csv_path, keys_exclude=[]):
                 my_dict[key] = val
         return my_dict
 
+
+def save_dict_2_csv(dict_2_save, out_path, delimiter=';'):
+    with open(out_path, 'w') as f:
+        w = csv.writer(f, delimiter=delimiter)
+        for key, value in dict_2_save.items():
+            w.writerow([key, value])
+
