@@ -1,6 +1,7 @@
 import numpy
 import numpy as np
 import os
+import matplotlib.colors as mcolors
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import scipy
@@ -8,7 +9,6 @@ import seaborn as sns
 import skimage
 import sklearn
 from descartes import PolygonPatch
-from matplotlib.colors import ListedColormap
 from osgeo import ogr
 from shapely.wkb import loads
 from skimage import exposure
@@ -48,15 +48,17 @@ def plot_labels(labels_array, class_names, colors=None, title="Labels", fig_path
     # labels = np.ma.masked_where(labels_array == 255, labels_array) # TODO: Is this line necessary? Try to comment it
 
     num_classes = len(class_names)
+    bounds = [-0.1] + list(range(0, num_classes)) + [num_classes - 0.9]
     if colors is None:
         colorMap = plt.cm.get_cmap("prism", num_classes)
     else:
-        colorMap = ListedColormap(colors)
+        colorMap = mcolors.ListedColormap(colors)
+    norm = mcolors.BoundaryNorm(bounds, colorMap.N) 
 
     if len(labels_array.shape) > 2:
-        ax.imshow(labels_array[:,:,0], cmap=colorMap)
+        ax.imshow(labels_array[:,:,0], cmap=colorMap, norm=norm)
     else:
-        ax.imshow(labels_array, cmap=colorMap)
+        ax.imshow(labels_array, cmap=colorMap, norm=norm)
     # cbar = plt.colorbar()  # OLD legend
     # cbar.ax.get_yaxis().set_ticks([])  # OLD legend
     plt.axis('off')
@@ -114,7 +116,7 @@ def plot_image_histogram(raster_array, cmap=None, nbins = 256, title="Histogram"
     if cmap is None:
         cmap = plt.cm.get_cmap("hsv", num_channels)
     elif isinstance(cmap, list):
-        cmap = ListedColormap(cmap)
+        cmap = mcolors.ListedColormap(cmap)
 
     if legend is None:
         legend = []
@@ -146,7 +148,7 @@ def plot_image_histogram_lines(raster_array, cmap=None, title="Histogram", legen
     if (cmap is None):
         cmap = plt.cm.get_cmap("hsv", num_channels)
     elif isinstance(cmap, list):
-        cmap = ListedColormap(cmap)
+        cmap = mcolors.ListedColormap(cmap)
 
     if legend is None:
         legend = []

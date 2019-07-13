@@ -136,7 +136,8 @@ def evaluate_classification(prediction_path, ground_truth_path, params, predicti
         aucroc_curve_path = None
         prec_rec_path = None
 
-    vis.plot_confusion_matrix(metrics['confusion_matrix'], params, fig_path=conf_matrix_path)
+    vis.plot_confusion_matrix(metrics['confusion_matrix'], params, classes_remove=classes_ignore,
+                              fig_path=conf_matrix_path)
     vis.plot_roc_curve(metrics['roc_curve'], aucroc_curve_path)
     vis.plot_precision_recall_curve(metrics['prec_rec_curve'], fig_path=prec_rec_path)
 

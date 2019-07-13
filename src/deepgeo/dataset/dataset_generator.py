@@ -10,6 +10,7 @@ import sklearn
 # from osgeo import osr  # TODO: Verify if it is really necessary? If I get the SRID from the Raster I still need this?
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))
+import common.utils as utils
 import common.filesystem as fs
 import dataset.sequential_chips as seqchips
 import dataset.random_chips as rdmchips
@@ -34,7 +35,7 @@ class DatasetGenerator(object):
         'random': rdmchips.RandomChipGenerator
     }
 
-    def __init__(self, raster_arrays, labels_arrays, strategy='sequential'):
+    def __init__(self, raster_arrays, labels_arrays, strategy='sequential', description=None):
         if isinstance(raster_arrays, list):
             if len(raster_arrays) != len(labels_arrays):
                 raise AttributeError('Lists "path_img" and "labeled_img" must have the same size!')
@@ -46,6 +47,7 @@ class DatasetGenerator(object):
         self.strategy = strategy
         self.chips_struct = {}
         self.chip_size = 0
+        self.description = description
 
     def generate_chips(self, params):
         print('  -> Generating chips...')
@@ -69,11 +71,11 @@ class DatasetGenerator(object):
     def get_samples(self):
         return self.chips_struct
 
-    def remove_no_data(self):
+    def remove_no_data(self, percent=.99):
         print('  -> Removing no data chips...')
         coords_remove = []
         for i in range(0, len(self.chips_struct['chips'])):
-            if np.count_nonzero(self.chips_struct['labels'][i] == 0) == (self.chip_size * self.chip_size):
+            if np.count_nonzero(self.chips_struct['labels'][i] == 0) > ((self.chip_size * self.chip_size) * percent):
                 coords_remove.append(i)
                 np.delete(self.chips_struct['chips'], i, axis=0)
                 np.delete(self.chips_struct['labels'], i, axis=0)
@@ -97,6 +99,17 @@ class DatasetGenerator(object):
 
     def save_to_disk(self, out_path, filename):
         print('  -> Saving Datasets to disk...')
+
+        if 'train' in self.chips_struct:
+            self.description['train_samples'] = self.chips_struct['train']['chips'].shape[0]
+        if 'test' in self.chips_struct:
+            self.description['test_samples'] = self.chips_struct['train']['chips'].shape[0]
+        if 'valid' in self.chips_struct:
+            self.description['valid_samples'] = self.chips_struct['train']['chips'].shape[0]
+
+        if self.description is not None:
+            utils.save_dict_2_csv(self.description, os.path.join(out_path, 'description.csv'))
+
         fs.mkdir(out_path)
         if 'train' in self.chips_struct:
             suffixes = ['train', 'test']
