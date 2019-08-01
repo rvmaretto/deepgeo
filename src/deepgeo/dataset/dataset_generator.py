@@ -103,9 +103,9 @@ class DatasetGenerator(object):
         if 'train' in self.chips_struct:
             self.description['train_samples'] = self.chips_struct['train']['chips'].shape[0]
         if 'test' in self.chips_struct:
-            self.description['test_samples'] = self.chips_struct['train']['chips'].shape[0]
+            self.description['test_samples'] = self.chips_struct['test']['chips'].shape[0]
         if 'valid' in self.chips_struct:
-            self.description['valid_samples'] = self.chips_struct['train']['chips'].shape[0]
+            self.description['valid_samples'] = self.chips_struct['valid']['chips'].shape[0]
 
         fs.mkdir(out_path)
         if self.description is not None:
