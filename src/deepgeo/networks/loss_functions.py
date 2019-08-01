@@ -54,7 +54,7 @@ def weighted_cross_entropy(params):
         else:
             class_weights = tf.reshape(params['class_weights']['eval'], (1, num_classes))  # params['num_classes']))
 
-        weights = tf.reduce_sum(tf.multiply(params['labels'], class_weights), axis=-1)
+        weights = tf.reduce_sum(tf.multiply(params['labels_1hot'], class_weights), axis=-1)
         loss = tf.nn.softmax_cross_entropy_with_logits(labels=params['labels_1hot'], logits=params['logits'])
         weighted_loss = tf.reduce_mean(tf.multiply(weights, loss))
         return weighted_loss

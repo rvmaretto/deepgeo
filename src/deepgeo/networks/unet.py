@@ -21,6 +21,7 @@ def unet_encoder(samples, params, mode, name_sufix=''):
                                    padding='valid', activation=tf.nn.relu,
                                    kernel_initializer=tf.contrib.layers.xavier_initializer(),
                                    name='time_fusion')
+    # print('SHAPE INPUT: ', samples.shape)
 
     # TODO: review the whole implementation, the number of filters and all the parameters
     conv_1 = layers.conv_pool_layer(bottom=samples, filters=64, params=params, training=training,
@@ -29,6 +30,7 @@ def unet_encoder(samples, params, mode, name_sufix=''):
                                    name='1_2' + name_sufix, pad='valid')
 
     # print('SHAPE Conv_1: ', conv_1.shape)
+    # print('SHAPE Conv_1_2: ', conv_1_2.shape)
     # print('SHAPE Pool_1: ', pool1.shape)
 
     conv_2 = layers.conv_pool_layer(bottom=pool1, filters=128, params=params, training=training,
@@ -36,7 +38,8 @@ def unet_encoder(samples, params, mode, name_sufix=''):
     conv_2_1, pool2 = layers.conv_pool_layer(bottom=conv_2, filters=128, params=params, training=training,
                                    name='2_2' + name_sufix, pad='valid')
 
-    # print('SHAPE Conv_2: ', conv_2.shape)
+    # print('SHAPE Conv_2: ', conv_2.shape)  
+    # print('SHAPE Conv_2_1: ', conv_2_1.shape)
     # print('SHAPE Pool_2: ', pool2.shape)
 
     conv_3 = layers.conv_pool_layer(bottom=pool2, filters=256, params=params, training=training,
@@ -45,6 +48,7 @@ def unet_encoder(samples, params, mode, name_sufix=''):
                                    name='3_2' + name_sufix, pad='valid')
 
     # print('SHAPE Conv_3: ', conv_3.shape)
+    # print('SHAPE Conv_3_1: ', conv_3_1.shape)
     # print('SHAPE Pool_3: ', pool3.shape)
 
     conv_4 = layers.conv_pool_layer(bottom=pool3, filters=512, params=params, training=training,
@@ -53,6 +57,7 @@ def unet_encoder(samples, params, mode, name_sufix=''):
                                    name='4_2' + name_sufix, pad='valid')
 
     # print('SHAPE Conv_4: ', conv_4.shape)
+    # print('SHAPE Conv_4_1: ', conv_4_1.shape)
     # print('SHAPE Pool_4: ', pool4.shape)
 
     conv_5_1 = layers.conv_pool_layer(bottom=pool4, filters=1024, params=params, training=training,
@@ -61,6 +66,7 @@ def unet_encoder(samples, params, mode, name_sufix=''):
                                       name='5_2' + name_sufix, pool=False, pad='valid')
 
     # print('SHAPE Conv_5: ', conv_5_1.shape)
+    # print('SHAPE Conv_5_1: ', conv_5_1.shape)
     # print('SHAPE Pool_5: ', conv_5_2.shape)
 
     return {'conv_1': conv_1_2,
