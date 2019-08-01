@@ -203,9 +203,9 @@ class ModelBuilder(object):
         if not os.path.exists(output_dir):
             fs.mkdir(output_dir)
             
-        with open(os.path.join(output_dir, "parameters.csv"), "w") as f:
+        with open(os.path.join(output_dir, 'parameters.csv'), 'w') as f:
             w = csv.writer(f, delimiter=';')
-            #w.writerow(["network", self.network])
+            # w.writerow(["network", self.network])
             w.writerow(['dataset', train_dataset])
             # for key, value in self.params.items():
             for key in sorted(self.params):
