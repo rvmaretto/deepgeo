@@ -207,8 +207,9 @@ class ModelBuilder(object):
             w = csv.writer(f, delimiter=';')
             #w.writerow(["network", self.network])
             w.writerow(['dataset', train_dataset])
-            for key, value in self.params.items():
-                w.writerow([key, value])
+            # for key, value in self.params.items():
+            for key in sorted(self.params):
+                w.writerow([key, self.params[key]])
 
         self.params['shape'] = [self.params['chip_size'], self.params['chip_size'], self.params['bands']]
         train_loader = dsloader.DatasetLoader(train_dataset, self.params)

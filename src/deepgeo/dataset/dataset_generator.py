@@ -107,10 +107,10 @@ class DatasetGenerator(object):
         if 'valid' in self.chips_struct:
             self.description['valid_samples'] = self.chips_struct['train']['chips'].shape[0]
 
+        fs.mkdir(out_path)
         if self.description is not None:
             utils.save_dict_2_csv(self.description, os.path.join(out_path, 'description.csv'))
 
-        fs.mkdir(out_path)
         if 'train' in self.chips_struct:
             suffixes = ['train', 'test']
         else:
@@ -143,6 +143,7 @@ class DatasetGenerator(object):
         np.savez(out_file_path,
                  chips=self.chips_struct['valid']['chips'],
                  labels=self.chips_struct['valid']['labels'])
+        print('  -> DONE!')
 
     def save_samples_PNG(self, path, color_map=None, r_g_b=[1, 2, 3]):
         for pos in range(len(self.samples_img)):
