@@ -47,11 +47,12 @@ def avg_generalized_dice(params):
 
 # def weighted_cross_entropy(logits, labels, class_weights, num_classes, training):
 def weighted_cross_entropy(params):
+    num_classes = tf.shape(params['labels_1hot'])[-1]
     with tf.name_scope('cost'):
         if params['training']:
-            class_weights = tf.reshape(params['class_weights']['train'], (1, params['num_classes']))
+            class_weights = tf.reshape(params['class_weights']['train'], (1, num_classes))  # params['num_classes']))
         else:
-            class_weights = tf.reshape(params['class_weights']['eval'], (1, params['num_classes']))
+            class_weights = tf.reshape(params['class_weights']['eval'], (1, num_classes))  # params['num_classes']))
 
         weights = tf.reduce_sum(tf.multiply(params['labels'], class_weights), axis=-1)
         loss = tf.nn.softmax_cross_entropy_with_logits(labels=params['labels_1hot'], logits=params['logits'])
