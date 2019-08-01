@@ -121,7 +121,7 @@ def normalize_range(raster_array, params=None):
     norm_raster_array = None
     for band in range(nbands):
         band_norm = raster_array[:, :, band]
-        band_norm = (((band_norm - min) * (new_max - new_min)) / (max - min)) + new_min
+        band_norm = (new_max - new_min) * ((band_norm - min) / (max - min)) + new_min
         if norm_raster_array is None:
             norm_raster_array = band_norm
         else:

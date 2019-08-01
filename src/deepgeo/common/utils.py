@@ -49,6 +49,6 @@ def read_csv_2_dict(csv_path, keys_exclude=[]):
 def save_dict_2_csv(dict_2_save, out_path, delimiter=';'):
     with open(out_path, 'w') as f:
         w = csv.writer(f, delimiter=delimiter)
-        for key, value in dict_2_save.items():
-            w.writerow([key, value])
+        for key in sorted(dict_2_save):
+            w.writerow([key, dict_2_save[key]])
 
