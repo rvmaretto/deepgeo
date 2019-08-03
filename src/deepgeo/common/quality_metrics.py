@@ -38,7 +38,8 @@ def compute_quality_metrics(labels, predictions, params, probabilities=None, cla
         metrics['recall'] = sklearn.metrics.recall_score(labels, predictions, average=None)
         metrics['accuracy'] = sklearn.metrics.accuracy_score(labels, predictions)
         metrics['classification_report'] = sklearn.metrics.classification_report(labels, predictions,
-                                                                                 target_names=class_names)
+                                                                                 target_names=class_names,
+                                                                                 digits=4)
 
         metrics['prec_rec_curve'] = {}
         for clazz in class_names:
