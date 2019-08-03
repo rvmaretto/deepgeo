@@ -209,7 +209,7 @@ def plot_confusion_matrix(confusion_matrix, params, classes_remove=[0], fig_path
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
              rotation_mode="anchor")
     # Loop over data dimensions and create text annotations.
-    fmt = '.2f'
+    fmt = '.4f'
     thresh = confusion_matrix.max() / 2.
     for i in range(confusion_matrix.shape[0]):
         for j in range(confusion_matrix.shape[1]):
@@ -243,14 +243,14 @@ def plot_roc_curve(roc, fig_path=None, show_plot=True):
         roc_auc = sklearn.metrics.auc(fpr, tpr)
         aucs.append(roc_auc)
 
-        ax.plot(fpr, tpr, label='ROC %s (AUC = %0.2f)' % (clazz, roc_auc), lw=2, alpha=.8)
+        ax.plot(fpr, tpr, label='ROC %s (AUC = %0.4f)' % (clazz, roc_auc), lw=2, alpha=.8)
 
     ax.plot([0, 1], [0, 1], linestyle='--', color='r', lw=2, label='Chance', alpha=.8)
     mean_tpr = np.mean(tprs, axis=0)
     mean_tpr[-1] = 1.0
     mean_auc = sklearn.metrics.auc(mean_fpr, mean_tpr)
     std_auc = np.std(aucs)
-    ax.plot(mean_fpr, mean_tpr, label='Mean ROC (AUC = %0.2f $\pm$ %0.2f)' % (mean_auc, std_auc),
+    ax.plot(mean_fpr, mean_tpr, label='Mean ROC (AUC = %0.4f $\pm$ %0.4f)' % (mean_auc, std_auc),
             lw=2, alpha=.8)
 
     ax.set_xlabel('False Positive Rate')

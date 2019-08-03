@@ -12,13 +12,13 @@ import deepgeo.networks.loss_functions as lossf
 # # Load input Dataset
 
 network = 'unet'
-fusion = 'early'
+fusion = 'none'
 DATA_DIR = '/home/raian/doutorado/Dados/generated'
 
 # class_names = ['no_data', 'not_deforestation', 'old_deforestation', 'deforestation_year', 'clouds']
 class_names = ['no_data', 'not_deforestation', 'deforestation', 'clouds']
 
-DATASET = os.path.join(DATA_DIR, 'dataset_286x286_def_one_cl_rm_nd_timestack_SR-2014-2017')
+DATASET = os.path.join(DATA_DIR, 'dataset_286x286_def_one_cl_rm_nd_SR-2013-2017')
 train_tfrecord = os.path.join(DATASET, 'dataset_train.tfrecord')
 test_tfrecord = os.path.join(DATASET, 'dataset_test.tfrecord')
 val_dataset = os.path.join(DATASET, 'dataset_valid.npz')
@@ -36,7 +36,7 @@ params = {
     'epochs': 100,
     'batch_size': 20,
     'chip_size': 286,
-    'bands': 10,
+    'bands': 5,
     # 'filter_reduction': 0.5,
     'learning_rate': 0.1,
     'learning_rate_decay': True,
@@ -53,9 +53,9 @@ params = {
     'class_weights': {'train': weights_train, 'eval': weights_eval},
     'num_classes': len(class_names),
     'class_names': class_names,
-    'num_compositions': 2,
-    'bands_plot': [[1, 2, 3], [6, 7, 8]],
-    'notes': 'Testing dataset with no data removed with weighted cross-entropy without remove no data label from training.'
+    'num_compositions': 1,
+    'bands_plot': [[1, 2, 3]], #, [6, 7, 8]],
+    'notes': 'Fixing issue on weighted cross entropy. Testing dataset with no data removed with weighted cross-entropy without remove no data label from training.'
 }
 
 
