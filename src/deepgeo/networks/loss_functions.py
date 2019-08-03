@@ -19,9 +19,9 @@ def twoclass_cost(params):  # TODO: Try to set here the positive class and compu
 def avg_soft_dice(params):
     with tf.name_scope('cost'):
         epsilon = tf.constant(1e-6, dtype=tf.float32)
-        intersection = tf.reduce_sum(tf.multiply(params['logits'], params['labels_1hot']), axis=[1, 2])
+        intersection = tf.reduce_sum(tf.multiply(params['predictions'], params['labels_1hot']), axis=[1, 2])
         numerator = tf.multiply(tf.constant(2., dtype=tf.float32), intersection)
-        denominator = tf.reduce_sum(tf.add(tf.square(params['logits']), tf.square(params['labels_1hot'])), axis=[1, 2])
+        denominator = tf.reduce_sum(tf.add(tf.square(params['predictions']), tf.square(params['labels_1hot'])), axis=[1, 2])
         dice_mean = tf.reduce_mean(tf.divide(numerator, tf.add(denominator, epsilon)))
         loss = tf.subtract(tf.constant(1., dtype=tf.float32), dice_mean, name='loss')
         return loss
@@ -35,10 +35,10 @@ def avg_generalized_dice(params):
             class_weights = tf.reshape(params['class_weights']['eval'], (1, params['num_classes']))
 
         epsilon = tf.constant(1e-6, dtype=tf.float32)
-        intersection = tf.reduce_sum(tf.multiply(params['logits'], params['labels_1hot']), axis=[1, 2])
+        intersection = tf.reduce_sum(tf.multiply(params['predictions'], params['labels_1hot']), axis=[1, 2])
         weighted_intersection = tf.multiply(intersection, class_weights)
         numerator = tf.multiply(tf.constant(2., dtype=tf.float32), weighted_intersection)
-        denominator = tf.reduce_sum(tf.add(params['logits'], params['labels_1hot']), axis=[1, 2])
+        denominator = tf.reduce_sum(tf.add(params['predictions'], params['labels_1hot']), axis=[1, 2])
         denominator = tf.multiply(denominator, class_weights)
         dice_mean = tf.reduce_mean(tf.divide(numerator, tf.add(denominator, epsilon)))
         loss = tf.subtract(tf.constant(1., dtype=tf.float32), dice_mean, name='loss')
