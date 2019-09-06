@@ -17,7 +17,7 @@ import networks.fcn4s as fcn4s
 import networks.fcn8s as fcn8s
 import networks.fcn32s as fcn32s
 import networks.unet as unet
-import networks.laterfusion.unet_lf as unet_lf
+import networks.latefusion.unet_lf as unet_lf
 import networks.loss_functions as lossf
 import networks.tb_metrics as tbm
 import networks.layers as layers

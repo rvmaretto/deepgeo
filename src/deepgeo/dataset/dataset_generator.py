@@ -71,11 +71,11 @@ class DatasetGenerator(object):
     def get_samples(self):
         return self.chips_struct
 
-    def remove_no_data(self, percent=.99):
+    def remove_no_data(self, tolerance=.99):
         print('  -> Removing no data chips...')
         coords_remove = []
         for i in range(0, len(self.chips_struct['chips'])):
-            if np.count_nonzero(self.chips_struct['labels'][i] == 0) > ((self.chip_size * self.chip_size) * percent):
+            if np.count_nonzero(self.chips_struct['labels'][i] == 0) > ((self.chip_size * self.chip_size) * tolerance):
                 coords_remove.append(i)
                 np.delete(self.chips_struct['chips'], i, axis=0)
                 np.delete(self.chips_struct['labels'], i, axis=0)
@@ -100,15 +100,15 @@ class DatasetGenerator(object):
     def save_to_disk(self, out_path, filename):
         print('  -> Saving Datasets to disk...')
 
-        if 'train' in self.chips_struct:
-            self.description['train_samples'] = self.chips_struct['train']['chips'].shape[0]
-        if 'test' in self.chips_struct:
-            self.description['test_samples'] = self.chips_struct['test']['chips'].shape[0]
-        if 'valid' in self.chips_struct:
-            self.description['valid_samples'] = self.chips_struct['valid']['chips'].shape[0]
-
         fs.mkdir(out_path)
         if self.description is not None:
+            if 'train' in self.chips_struct:
+                self.description['train_samples'] = self.chips_struct['train']['chips'].shape[0]
+            if 'test' in self.chips_struct:
+                self.description['test_samples'] = self.chips_struct['test']['chips'].shape[0]
+            if 'valid' in self.chips_struct:
+                self.description['valid_samples'] = self.chips_struct['valid']['chips'].shape[0]
+
             utils.save_dict_2_csv(self.description, os.path.join(out_path, 'description.csv'))
 
         if 'train' in self.chips_struct:
