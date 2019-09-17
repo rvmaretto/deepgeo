@@ -28,4 +28,4 @@ Functionalities to Deep Learning based classification of Remote Sensing Images
 
 ## Code Status
 
-Output of the Daily tests: ![Test Result](https://travis-ci.com/rvmaretto/DeepLeEO.svg?token=hzZBUnY2fxA36rz9qeM9&branch=master)
+Output of the Daily tests: [![Tests](https://travis-ci.com/rvmaretto/deepgeo.svg?token=hzZBUnY2fxA36rz9qeM9&branch=master)](https://travis-ci.com/rvmaretto/deepgeo)
