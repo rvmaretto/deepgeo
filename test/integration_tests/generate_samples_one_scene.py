@@ -94,5 +94,3 @@ chpGen.save_samples_NPZ(output_npz)
 
 vis.plot_vector_file(output_shp)
 
-fs.delete_dir(output_path)
-

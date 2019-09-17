@@ -98,5 +98,3 @@ params = {
 
 model = mb.ModelBuilder(network)
 model.train(train_images, test_images, train_labels, test_labels, params, model_dir)
-
-fs.delete_dir(model_dir)
