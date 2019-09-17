@@ -28,4 +28,5 @@ install:
   - pip install pillow
   - pip install scipy
   - pip install sklearn
+  - pip install fiona
 script: nosetests -vv
