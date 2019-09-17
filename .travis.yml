@@ -33,4 +33,4 @@ install:
   - pip install descartes
   - pip install shapely
   - pip install palettable
-script: nosetests -vv tests/unit_tests
+script: nosetests test/unit_tests
