@@ -17,9 +17,10 @@ Functionalities to Deep Learning based classification of Remote Sensing Images
 ## Citations
 
 ```latex
-@Manual{DeepGeo,
-    title = {{DeepGeo} Deep Learning for Geospatial Data Toolbox},
+@inproceedings{DeepGeo,
+    title = {An extensible and easy-to-use Toolbox for Deep Learning based analysis of Remote Sensing Images.},
     author = {Maretto, Raian Vargas and K\"orting, Thales Sehn and Fonseca, Leila Maria Garcia},
+    booktitle = {The IEEE International Geoscience and Remote Sensing Symposium - IGARSS 2019},
     year = {2019},
     url = {https://github.com/rvmaretto/deepgeo},
 }
