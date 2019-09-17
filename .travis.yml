@@ -21,7 +21,7 @@ install:
   # Replace dep1 dep2 ... with your dependencies
   - conda create -q -n test-environment python=3.5 anaconda
   - source activate test-environment
-  - pip install tensorflow==1.13
+  - pip install tensorflow==1.13.2
   - conda install gdal
   - pip install nose
   - pip install matplotlib
