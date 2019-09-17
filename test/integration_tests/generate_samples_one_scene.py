@@ -8,6 +8,7 @@ import deepgeo.dataset.rasterizer as rstzr
 import deepgeo.dataset.preprocessor as prep
 import deepgeo.dataset.chipsGenerator as cg
 import deepgeo.utils.visualization as vis
+import deepgeo.utils.filesystem as fs
 
 reload(dtaug)
 reload(rstzr)
@@ -16,9 +17,9 @@ reload(cg)
 
 
 # Input Files
-DATA_DIR = os.path.join(os.path.abspath(os.path.dirname("__file__")), '..', '..', 'data_real')
-shape_file = os.path.join(DATA_DIR, 'PRODES2016_225-64_REP.shp')
-raster_file = os.path.join(DATA_DIR, "Landsat8_225064_17072016_R6G5B4_clip.tif")
+DATA_DIR = os.path.join(os.path.abspath(os.path.dirname("__file__")), '..', '..', 'data')
+shape_file = os.path.join(DATA_DIR, 'prodes_shp_crop.shp')
+raster_file = os.path.join(DATA_DIR, "raster_R6G5B4.tif")
 #class_column = "agregClass"
 class_column = "bin_class"
 
@@ -92,4 +93,6 @@ chpGen.save_samples_NPZ(output_npz)
 
 
 vis.plot_vector_file(output_shp)
+
+fs.delete_dir(output_path)
 

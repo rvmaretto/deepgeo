@@ -18,7 +18,7 @@ reload(mb)
 reload(gf)
 
 current_path = os.path.abspath(os.path.dirname('__file__'))
-DATA_DIR = os.path.join(current_path, '..', '..', 'data_real', 'generated')
+DATA_DIR = os.path.join(current_path, '..', '..', 'data', 'generated')
 network = 'fcn8s'
 DATASET_FILE = os.path.join(DATA_DIR, 'samples_dataset_bin.npz')
 
@@ -98,3 +98,5 @@ params = {
 
 model = mb.ModelBuilder(network)
 model.train(train_images, test_images, train_labels, test_labels, params, model_dir)
+
+fs.delete_dir(model_dir)

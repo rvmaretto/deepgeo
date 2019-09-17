@@ -4,8 +4,16 @@ import errno
 from shutil import rmtree
 
 
-# Create a directory if it does not exists
 def mkdir(path_dir):
+	""" Create a directory if it does not exists.
+
+	This function creates a directory when it does not exists. If the directory already exists, nothing changes.
+
+	Parameters
+	----------
+	path_dir : str
+		Path to the directory to be created.
+	"""
 	try:
 		os.makedirs(path_dir)
 	except OSError as exc:
@@ -16,6 +24,15 @@ def mkdir(path_dir):
 
 
 def delete_dir(path_dir):
+	""" Deletes a directory and its contents.
+
+	This function deletes a directory and its contents.
+
+	Parameters
+	----------
+	path_dir : str
+		Path to the directory to be deleted.
+	"""
 	try:
 		# os.rmdir(path_dir)
 		rmtree(path_dir)

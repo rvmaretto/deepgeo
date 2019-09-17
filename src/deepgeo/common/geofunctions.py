@@ -12,6 +12,22 @@ import dataset.image_utils as iutils
 
 
 def load_image(filepath, no_data=None):
+    """ Loads a Georreferenced image as a Numpy Array.
+
+    This function loads a Georreferenced image, returning it as a Numpy array.
+
+    Parameters
+    ----------
+    filepath : str
+        Path to the image to be loaded.
+
+    no_data : number (optional)
+        Value corresponding to "no data" in the file
+
+    Returns
+    -------
+        A Numpy array containing the loaded raster.
+    """
     img_ds = gdal.Open(filepath)
 
     if (no_data is None):
