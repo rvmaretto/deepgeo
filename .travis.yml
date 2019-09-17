@@ -31,4 +31,5 @@ install:
   - pip install fiona
   - pip install rasterio
   - pip install descartes
+  - pip install shapely
 script: nosetests -vv
