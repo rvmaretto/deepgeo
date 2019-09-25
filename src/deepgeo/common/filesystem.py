@@ -9,10 +9,8 @@ def mkdir(path_dir):
 
 	This function creates a directory when it does not exists. If the directory already exists, nothing changes.
 
-	Parameters
-	----------
-	path_dir : str
-		Path to the directory to be created.
+	Args:
+		path_dir (str): Path to the directory to be created.
 	"""
 	try:
 		os.makedirs(path_dir)
@@ -28,10 +26,8 @@ def delete_dir(path_dir):
 
 	This function deletes a directory and its contents.
 
-	Parameters
-	----------
-	path_dir : str
-		Path to the directory to be deleted.
+	Args:
+		path_dir (str): Path to the directory to be deleted.
 	"""
 	try:
 		# os.rmdir(path_dir)

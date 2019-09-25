@@ -11,27 +11,20 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../'))
 import dataset.image_utils as iutils
 
 
-def load_image(filepath, no_data=None):
+def load_image(filepath, no_data=0):
     """ Loads a Georreferenced image as a Numpy Array.
 
     This function loads a Georreferenced image, returning it as a Numpy array.
 
-    Parameters
-    ----------
-    filepath : str
-        Path to the image to be loaded.
+    Args:
+        filepath (str): Path to the image to be loaded.
 
-    no_data : number (optional)
-        Value corresponding to "no data" in the file
+        no_data (number): Optional parameter. Value corresponding to "no data" in the file. Default value is 0
 
-    Returns
-    -------
+    Returns:
         A Numpy array containing the loaded raster.
     """
     img_ds = gdal.Open(filepath)
-
-    if (no_data is None):
-        no_data = 0
 
     img = None
     for i in range(1, img_ds.RasterCount + 1):
@@ -39,63 +32,12 @@ def load_image(filepath, no_data=None):
         band_arr = band.ReadAsArray()
         # band_arr[band_arr == no_data] = 0
         band_arr = np.ma.masked_array(band_arr, band_arr == no_data) # TODO: Vefify how to remove this. How to deal with no_data
-        if (img is None):
+        if img is None:
             img = band_arr
         else:
             img = np.ma.dstack((img, band_arr))
 
     return img
-
-
-def generate_multi_raster_structure(path_images, band_names=None, no_data=None):
-    if not isinstance(path_images, list):
-        path_images = [path_images]
-
-    multi_raster_struct = {
-        "file_paths": [],
-        "band_names": [],
-        "raster_arrays": []
-    }
-
-    for img_path in path_images:
-        multi_raster_struct["file_paths"].append(img_path)
-
-        if no_data is None:
-            no_data = 0
-
-        img_ds = gdal.Open(img_path)
-
-        if band_names is None:
-            band_names = []
-            for i in range(1, img_ds.RasterCount + 1):
-                band_name = img_ds.GetRasterBand(i).GetDescription()
-                if band_name == '':
-                    band_name = "Band_" + str(i)
-                band_names.append(band_name)
-
-        img = None
-        for i in range(1, img_ds.RasterCount + 1):
-            band = img_ds.GetRasterBand(i)
-            band_arr = band.ReadAsArray()
-            band_arr[band_arr == no_data] = 0  # TODO: REmove this and put no_data in the line bellow
-                                               # TODO: Include a parameter "mask_no_data", only mask if true
-            band_arr = np.ma.masked_array(band_arr,
-                                          band_arr == 0)  # TODO: Vefify how to remove this. How to deal with no_data
-            if img is None:
-                img = band_arr
-            else:
-                img = np.ma.dstack((img, band_arr))
-
-        multi_raster_struct["raster_arrays"].append(img)
-        multi_raster_struct["band_names"] = band_names
-
-    return multi_raster_struct
-
-
-def load_vector_layer(filename):
-    vector_ds = ogr.Open(filename)
-    layer = vector_ds.GetLayer()
-    return layer
 
 
 #TODO: Extend this method to other file formats
