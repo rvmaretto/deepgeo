@@ -9,8 +9,8 @@ import requests
 
 class EspaDownloader(object):
     def __init__(self):
-        self.ls_grid = 'https://prd-wret.s3-us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/atoms/files/WRS2_descending_0.zip'
-        self.espa_catalog = 'https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_8_C1.csv.gz'
+        self.ls_grid = gpd.GeoDataFrame.from_file('https://prd-wret.s3-us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/atoms/files/WRS2_descending_0.zip')
+        self.espa_catalog_file = 'https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_8_C1.csv.gz'
 
     def espa_api(self, endpoint, verb='get', body=None, uauth=None):
         """ Suggested simple way to interact with the ESPA JSON REST API """
