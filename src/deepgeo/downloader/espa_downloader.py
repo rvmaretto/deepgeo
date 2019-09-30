@@ -1,6 +1,8 @@
+import folium
 import getpass
 import geopandas as gpd
 import json
+import numpy as np
 import pandas as pd
 import requests
 
@@ -42,6 +44,35 @@ class EspaDownloader(object):
 
     def get_intersections(self, roi):
         self.roi = gpd.read_file(roi)
-        wrs_intersection = self.ls_grid[self.ls_grid.intersects(self.roi.geometry[0])]
-        paths, rows = wrs_intersection['PATH'].values, wrs_intersection['ROW'].values
-        return paths, rows
+        self.wrs_intersection = self.ls_grid[self.ls_grid.intersects(self.roi.geometry[0])]
+        self.paths, self.rows = self.wrs_intersection['PATH'].values, self.wrs_intersection['ROW'].values
+
+    def plot_intersections(self):
+        # Get the center of the map
+        xy = np.asarray(self.roi.centroid[0].xy).squeeze()
+        center = list(xy[::-1])
+
+        # Select a zoomsurface arc mouse
+        zoom = 6
+
+        # Create the most basic OSM folium map
+        m = folium.Map(location=center, zoom_start=zoom, control_scale=True)
+
+        # Add the bounds GeoDataFrame in red
+        m.add_child(folium.GeoJson(self.roi.__geo_interface__, name='Area of Study',
+                                   style_function=lambda x: {'color': 'red', 'alpha': 0}))
+
+        # Iterate through each Polygon of paths and rows intersecting the area
+        for i, row in self.wrs_intersection.iterrows():
+            # Create a string for the name containing the path and row of this Polygon
+            name = 'path: %03d, row: %03d' % (row.PATH, row.ROW)
+            # Create the folium geometry of this Polygon
+            g = folium.GeoJson(row.geometry.__geo_interface__, name=name)
+            # Add a folium Popup object with the name string
+            g.add_child(folium.Popup(name))
+            # Add the object to the map
+            g.add_to(m)
+
+        folium.LayerControl().add_to(m)
+        # m.save('./images/10/wrs.html')
+        m  # TODO: Check this
