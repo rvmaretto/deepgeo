@@ -110,8 +110,8 @@ class EspaDownloader(object):
                 end_date = start_date
 
             if isinstance(start_date, dict):
-                st_date = start_date['%03d_%03d'.format(path, row)]
-                ed_date = end_date['%03d_%03d'.format(path, row)]
+                st_date = start_date['%03d_%03d' % (path, row)]
+                ed_date = end_date['%03d_%03d' % (path, row)]
             else:
                 st_date = start_date
                 ed_date = end_date
