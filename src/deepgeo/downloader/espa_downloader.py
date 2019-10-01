@@ -5,6 +5,7 @@ import json
 import numpy as np
 import pandas as pd
 import requests
+from datetime import datetime
 
 
 class EspaDownloader(object):
@@ -98,8 +99,8 @@ class EspaDownloader(object):
     def consult_dates(self, start_date, end_date=None, min_cloud_cover=99, strategy='min_cloud_cover'):
         # Empty list to add the images
         bulk_list = []
-        ids_list = []
-        not_found_list = []
+        self.ids_list = []
+        self.not_found_list = []
 
         # Iterate through paths and rows
         for path, row in zip(self.paths, self.rows):
@@ -121,11 +122,15 @@ class EspaDownloader(object):
             if len(st_date[0]) < 4:
                 st_date = st_date.reverse()
             st_date = '-'.join(st_date)
+            #st_date = datetime.strptime(st_date, '%Y-%m-%d').date()
 
             ed_date = ed_date.split('-')
             if len(ed_date[0]) < 4:
                 ed_date = ed_date.reverse()
             ed_date = '-'.join(ed_date)
+            #ed_date = datetime.strptime(ed_date, '%Y-%m-%d').date()
+
+            print(st_date, ed_date)
 
             # Filter the Landsat ESPA table for images matching path, row, cloudcover, processing state, and dates.
             scenes = self.espa_scenes[(self.espa_scenes.path == path) & (self.espa_scenes.row == row) &
@@ -143,15 +148,16 @@ class EspaDownloader(object):
 
                     # Add the selected scene to the bulk download list.
                     bulk_list.append(scene)
-                    ids_list.append(scene.LANDSAT_PRODUCT_ID)
+                    self.ids_list.append(scene.LANDSAT_PRODUCT_ID)
                 elif strategy == 'all':
                     for scene in scenes.itertuples():
                         bulk_list.append(scene)
-                        ids_list.append(scene.LANDSAT_PRODUCT_ID)
+                        self.ids_list.append(scene.LANDSAT_PRODUCT_ID)
             else:
-                not_found_list.append('%03d/%03d' % (path, row))
+                self.not_found_list.append('%03d/%03d' % (path, row))
+            self.bulk_list = pd.DataFrame(bulk_list)
 
-        return pd.DataFrame(bulk_list), ids_list, not_found_list
+        return self.bulk_list, self.ids_list, self.not_found_list
 
     def get_available_projections(self):
         print('Getting projections from /api/v1/projections')

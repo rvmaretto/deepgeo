@@ -17,7 +17,7 @@ DATA_DIR = '/home/raian/doutorado/Dados/generated'
 
 class_names = ['no_data', 'not_deforestation', 'deforestation', 'clouds']
 
-DATASET = os.path.join(DATA_DIR, 'dataset_316x316_labels_one_def_cl_timestack_SR-2014-2017')
+DATASET = os.path.join(DATA_DIR, 'dataset_316x316_def_one_cl_rm_nd_timestack_SR-2014-2017')
 train_tfrecord = os.path.join(DATASET, 'dataset_train.tfrecord')
 test_tfrecord = os.path.join(DATASET, 'dataset_test.tfrecord')
 val_dataset = os.path.join(DATASET, 'dataset_valid.npz')
@@ -46,7 +46,7 @@ params = {
     'chips_tensorboard': 2,
     # 'dropout_rate': 0.5,  # TODO: Put a bool parameter to apply or not Dropout
     'fusion': fusion,
-    'loss_func': 'weighted_cross_entropy',
+    'loss_func': 'avg_soft_dice',
     'data_aug_ops': ['rot90', 'rot180', 'rot270', 'flip_left_right',
                      'flip_up_down', 'flip_transpose'],
     'data_aug_per_chip': 4,
@@ -55,7 +55,7 @@ params = {
     'class_names': class_names,
     'num_compositions': 2,
     'bands_plot': [[1, 2, 3], [6, 7, 8]],
-    'notes': 'Testing bigger chip size. Testing dataset with no data removed.'
+    'notes': 'Testing bigger chip size and avg soft dice as loss. Testing dataset with all no data removed.'
 }
 
 
