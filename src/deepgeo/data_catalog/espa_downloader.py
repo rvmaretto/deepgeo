@@ -163,9 +163,6 @@ class EspaDownloader(object):
         return self.projs
 
     def generate_order(self, products, projection=None, verbose=False):
-        if projection is not None:
-            projection = self.projs['lonlat']
-
         print('GET /api/v1/available-products')
         self.order = self.__call_espa_api('available-products', body=dict(inputs=self.ids_list))
         if verbose:
@@ -178,7 +175,8 @@ class EspaDownloader(object):
                     self.order[sensor]['products'] = products
 
         # Add in the rest of the order information
-        # order['projection'] = projection
+        if projection is not None:
+            self.order['projection'] = projection
         self.order['format'] = 'gtiff'
         self.order['resampling_method'] = 'cc'
         self.order['note'] = 'DeepGeo Download!!'
