@@ -112,20 +112,20 @@ class EspaDownloader(object):
             if isinstance(start_date, dict):
                 st_date = start_date['%03d_%03d' % (path, row)]
                 ed_date = end_date['%03d_%03d' % (path, row)]
-            else:
-                st_date = start_date
-                ed_date = end_date
+            # else:
+            #     st_date = start_date
+            #     ed_date = end_date
 
-            if isinstance(st_date, str):
-                st_date = start_date.split('-')
-                if len(st_date[0]) < 4:
-                    st_date = st_date.reverse()
-                st_date = '-'.join(st_date)
+            # if isinstance(st_date, str):
+            st_date = st_date.split('-')
+            if len(st_date[0]) < 4:
+                st_date = st_date.reverse()
+            st_date = '-'.join(st_date)
 
-                ed_date = start_date.split('-')
-                if len(ed_date[0]) < 4:
-                    ed_date = ed_date.reverse()
-                ed_date = '-'.join(ed_date)
+            ed_date = ed_date.split('-')
+            if len(ed_date[0]) < 4:
+                ed_date = ed_date.reverse()
+            ed_date = '-'.join(ed_date)
 
             # Filter the Landsat ESPA table for images matching path, row, cloudcover, processing state, and dates.
             scenes = self.espa_scenes[(self.espa_scenes.path == path) & (self.espa_scenes.row == row) &
