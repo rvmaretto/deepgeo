@@ -105,8 +105,6 @@ class EspaDownloader(object):
         # Iterate through paths and rows
         for path, row in zip(self.paths, self.rows):
 
-            print('Path:', path, 'Row:', row)
-
             if end_date is None:
                 end_date = start_date
 
@@ -122,15 +120,13 @@ class EspaDownloader(object):
             if len(st_date[0]) < 4:
                 st_date = st_date.reverse()
             st_date = '-'.join(st_date)
-            #st_date = datetime.strptime(st_date, '%Y-%m-%d').date()
 
             ed_date = ed_date.split('-')
             if len(ed_date[0]) < 4:
                 ed_date = ed_date.reverse()
             ed_date = '-'.join(ed_date)
-            #ed_date = datetime.strptime(ed_date, '%Y-%m-%d').date()
 
-            print(st_date, ed_date)
+            print('Path:', path, '- Row:', row, '- Start date: ', st_date, '- End date: ', ed_date)
 
             # Filter the Landsat ESPA table for images matching path, row, cloudcover, processing state, and dates.
             scenes = self.espa_scenes[(self.espa_scenes.path == path) & (self.espa_scenes.row == row) &
@@ -161,6 +157,38 @@ class EspaDownloader(object):
 
     def get_available_projections(self):
         print('Getting projections from /api/v1/projections')
-        projs = self.__call_espa_api('projections')
+        self.projs = self.__call_espa_api('projections')
         # print(json.dumps(projs.keys()))
-        print(projs.keys())
+        print(self.projs.keys())
+        return self.projs
+
+    def generate_order(self, products, projection=None, verbose=False):
+        if projection is not None:
+            projection = self.projs['lonlat']
+
+        print('GET /api/v1/available-products')
+        self.order = self.__call_espa_api('available-products', body=dict(inputs=self.ids_list))
+        if verbose:
+            print(json.dumps(self.order, indent=4))
+
+        # Replace the available products that was returned with what we want
+        for sensor in self.order.keys():
+            if isinstance(self.order[sensor], dict) and self.order[sensor].get('inputs'):
+                if set(self.ids_list) & set(self.order[sensor]['inputs']):
+                    self.order[sensor]['products'] = products
+
+        # Add in the rest of the order information
+        # order['projection'] = projection
+        self.order['format'] = 'gtiff'
+        self.order['resampling_method'] = 'cc'
+        self.order['note'] = 'DeepGeo Download!!'
+
+        # Notice how it has changed from the original call available-products
+        if verbose:
+            print(json.dumps(self.order, indent=4))
+
+    def place_order(self):
+        # Place the order
+        print('POST /api/v1/order')
+        resp = self.__call_espa_api('order', verb='post', body=self.order)
+        print(json.dumps(resp, indent=4))
