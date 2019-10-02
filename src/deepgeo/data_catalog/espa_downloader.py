@@ -2,11 +2,16 @@ import folium
 import getpass
 import geopandas as gpd
 import json
+import os
+import requests
+import sys
+import wget
 import numpy as np
 import pandas as pd
-import requests
 from datetime import datetime
 
+sys.path.insert(0, '../src')
+import deepgeo.common.filesystem as fs
 
 class EspaDownloader(object):
     catalog_files = {'Landsat_8_OLI': 'https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_8_C1.csv.gz',
@@ -16,6 +21,8 @@ class EspaDownloader(object):
 
     wrs_files = {'wrs_2': 'https://prd-wret.s3-us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/atoms/files/WRS2_descending_0.zip',
                  'wrs_1': 'https://prd-wret.s3-us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/atoms/files/WRS1_descending_0.zip'}
+
+    projections = {'lonlat': {'lonlat': None}}
 
     def __init__(self, sensor='Landsat_8_OLI'):
         if sensor in ['Landsat_8_OLI', 'Landsat_7_ETM+', 'Landsat_4_5_TM']:
@@ -176,7 +183,10 @@ class EspaDownloader(object):
 
         # Add in the rest of the order information
         if projection is not None:
-            self.order['projection'] = projection
+            if isinstance(projection, str):
+                self.order['projection'] = self.projections[projection]
+            else:
+                self.order['projection'] = projection
         self.order['format'] = 'gtiff'
         self.order['resampling_method'] = 'cc'
         self.order['note'] = 'DeepGeo Download!!'
@@ -190,3 +200,39 @@ class EspaDownloader(object):
         print('POST /api/v1/order')
         resp = self.__call_espa_api('order', verb='post', body=self.order)
         print(json.dumps(resp, indent=4))
+
+    def list_orders(self):
+        print('GET /api/v1/list-orders')
+        filters = {"status": ["complete", "ordered"]}  # Here, we ignore any purged orders
+        self.orders_list = self.__call_espa_api('list-orders', body=filters)
+        print(json.dumps(self.orders_list, indent=4))
+        return self.orders_list
+
+    def check_order_status(self, orderid=None):
+        if orderid is not None:
+            if isinstance(orderid, list):
+                orderid = orderid
+            else:
+                orderid = [orderid]
+        else:
+            orderid = self.orders_list
+
+        for id in orderid:
+            print('GET /api/v1/order-status/{}'.format(id))
+            resp = self.__call_espa_api('order-status/{}'.format(id))
+            print(json.dumps(resp, indent=4))
+
+    def download_order(self, orderid, output_dir):
+        fs.mkdir(output_dir)
+
+        print('GET /api/v1/item-status/{0}'.format(orderid))
+        resp = self.__call_espa_api('item-status/{0}'.format(orderid), body={'status': 'complete'})
+        print(json.dumps(resp[orderid], indent=4))
+
+        # Once the order is completed or partially completed, can get the download url's
+        for item in resp[orderid]:
+            url = item.get('product_dload_url')
+            print("Downloading URL: {0}".format(url))
+            filename = os.path.basename(url)
+            output_file = os.path.join(output_dir, filename)
+            wget.download(item.get('product_dload_url'), out=output_file)
