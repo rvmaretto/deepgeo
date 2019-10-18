@@ -123,7 +123,7 @@ def mosaic_images(files, output_file, band_names=None):
     for file_name in files:
         print(" >", file_name)
 
-    arguments = ['gdal_merge.py', '-o', output_file, '-co','COMPRESS=LZW', '-q', '-v']
+    arguments = ['gdal_merge.py', '-o', output_file, '-co','COMPRESS=LZW', '-co', 'BIGTIFF=YES', '-q', '-v']
 
     for file_name in files:
         arguments.append(file_name)

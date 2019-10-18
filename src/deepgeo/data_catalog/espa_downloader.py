@@ -227,7 +227,7 @@ class EspaDownloader(object):
 
         print('GET /api/v1/item-status/{0}'.format(orderid))
         resp = self.__call_espa_api('item-status/{0}'.format(orderid), body={'status': 'complete'})
-        print(json.dumps(resp[orderid], indent=4))
+        #print(json.dumps(resp[orderid], indent=4))
 
         # Once the order is completed or partially completed, can get the download url's
         for item in resp[orderid]:
