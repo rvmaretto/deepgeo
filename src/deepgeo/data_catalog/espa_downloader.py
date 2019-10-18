@@ -103,7 +103,7 @@ class EspaDownloader(object):
             m.save('path_html')
         return m
 
-    def consult_dates(self, start_date, end_date=None, min_cloud_cover=99, strategy='min_cloud_cover'):
+    def consult_dates(self, start_date, end_date=None, max_cloud_cover=99, strategy='min_cloud_cover'):
         # Empty list to add the images
         bulk_list = []
         self.ids_list = []
@@ -137,7 +137,7 @@ class EspaDownloader(object):
 
             # Filter the Landsat ESPA table for images matching path, row, cloudcover, processing state, and dates.
             scenes = self.espa_scenes[(self.espa_scenes.path == path) & (self.espa_scenes.row == row) &
-                                      (self.espa_scenes.cloudCover <= min_cloud_cover) &
+                                      (self.espa_scenes.cloudCover <= max_cloud_cover) &
                                       (self.espa_scenes.acquisitionDate >= st_date) &
                                       (self.espa_scenes.acquisitionDate <= ed_date) &
                                       (~self.espa_scenes.LANDSAT_PRODUCT_ID.str.contains('_RT'))]
@@ -161,6 +161,11 @@ class EspaDownloader(object):
             self.bulk_list = pd.DataFrame(bulk_list)
 
         return self.bulk_list, self.ids_list, self.not_found_list
+
+    def get_available_products(self, ids_list):
+        print('Getting available products from /api/v1/available-products')
+        order = self.__call_espa_api('available-products', body=dict(inputs=ids_list))
+        print(json.dumps(order, indent=4))
 
     def get_available_projections(self):
         print('Getting projections from /api/v1/projections')
