@@ -6,6 +6,7 @@ import subprocess
 import fiona
 import rasterio
 import rasterio.mask
+import shapely
 import shutil
 
 
@@ -233,3 +234,36 @@ def compute_cloud_mask(img_array, qa_pos=0):
         cl_mask[band_qa == cval] = 1
 
     return cl_mask
+
+def clip_by_polygon(in_raster_path, geoms, output_path, band_names=None, no_data=None):
+    if band_names is None:
+        band_names = []
+        ds = gdal.Open(in_raster_path)
+        for i in range(1, ds.RasterCount):
+            name = ds.GetRasterBand(i).GetDescription()
+            if name == '':
+                name = "band_" + str(i - 1)
+            band_names.append(name)
+
+    if no_data is None:
+        ds = gdal.Open(in_raster_path)
+        no_data = ds.GetRasterBand(1).GetNoDataValue()
+
+    geoms = [shapely.geometry.mapping(x) for x in geoms.values.tolist()]
+
+    with rasterio.open(in_raster_path) as src:
+        out_image, out_transform = rasterio.mask.mask(src, geoms, crop=True, nodata=no_data)
+        out_meta = src.meta.copy()
+
+    out_meta.update({"driver": "GTiff",
+                     "height": out_image.shape[1],
+                     "width": out_image.shape[2],
+                     "transform": out_transform})
+
+    if os.path.exists(output_path):
+        os.remove(output_path)
+
+    with rasterio.open(output_path, "w", **out_meta) as dest:
+        for id, name in enumerate(band_names):
+            dest.set_band_description(id + 1, name)
+        dest.write(out_image)

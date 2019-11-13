@@ -31,7 +31,7 @@ class EspaDownloader(object):
             self.ls_grid = gpd.GeoDataFrame.from_file(self.wrs_files['wrs_1'])
 
         self.espa_catalog_file = self.catalog_files[sensor]
-        self.espa_scenes = pd.read_csv(self.espa_catalog_file)
+        self.espa_scenes = pd.read_csv(self.espa_catalog_file, compression='gzip', parse_dates=['acquisitionDate'])
 
     def __call_espa_api(self, endpoint, verb='get', body=None, uauth=None):
         """ Suggested simple way to interact with the ESPA JSON REST API """
@@ -67,10 +67,18 @@ class EspaDownloader(object):
         self.__call_espa_api('user', uauth=(self.username, self.password))
 
     def get_intersections(self, roi):
-        self.roi = gpd.read_file(roi)
+        if isinstance(roi, str):
+            self.roi = gpd.read_file(roi)
+        else:
+            self.roi = roi
+
         self.wrs_intersection = self.ls_grid[self.ls_grid.intersects(self.roi.geometry[0])]
         self.paths, self.rows = self.wrs_intersection['PATH'].values, self.wrs_intersection['ROW'].values
         return self.paths, self.rows
+
+    def set_paths_rows(self, paths, rows):
+        self.paths = paths
+        self.rows = rows
 
     def plot_intersections(self, path_html=None):
         # Get the center of the map
@@ -103,7 +111,7 @@ class EspaDownloader(object):
             m.save('path_html')
         return m
 
-    def consult_dates(self, start_date, end_date=None, max_cloud_cover=99, strategy='min_cloud_cover'):
+    def consult_dates(self, start_date, end_date=None, max_cloud_cover=100, strategy='min_cloud_cover'):
         # Empty list to add the images
         bulk_list = []
         self.ids_list = []
@@ -118,20 +126,22 @@ class EspaDownloader(object):
             if isinstance(start_date, dict):
                 st_date = start_date['%03d_%03d' % (path, row)]
                 ed_date = end_date['%03d_%03d' % (path, row)]
-            # else:
-            #     st_date = start_date
-            #     ed_date = end_date
+            else:
+                st_date = start_date
+                ed_date = end_date
 
             # if isinstance(st_date, str):
             st_date = st_date.split('-')
             if len(st_date[0]) < 4:
                 st_date = st_date.reverse()
             st_date = '-'.join(st_date)
+            st_date = datetime.strptime(st_date, '%Y-%m-%d')
 
             ed_date = ed_date.split('-')
             if len(ed_date[0]) < 4:
                 ed_date = ed_date.reverse()
             ed_date = '-'.join(ed_date)
+            ed_date = datetime.strptime(ed_date, '%Y-%m-%d')
 
             print('Path:', path, '- Row:', row, '- Start date: ', st_date, '- End date: ', ed_date)
 
@@ -164,8 +174,8 @@ class EspaDownloader(object):
 
     def get_available_products(self, ids_list):
         print('Getting available products from /api/v1/available-products')
-        order = self.__call_espa_api('available-products', body=dict(inputs=ids_list))
-        print(json.dumps(order, indent=4))
+        avail_prods = self.__call_espa_api('available-products', body=dict(inputs=ids_list))
+        print(json.dumps(avail_prods, indent=4))
 
     def get_available_projections(self):
         print('Getting projections from /api/v1/projections')
@@ -174,17 +184,19 @@ class EspaDownloader(object):
         print(self.projs.keys())
         return self.projs
 
-    def generate_order(self, products, projection=None, verbose=False):
+    def generate_order(self, products, file_format='gtiff', projection=None, verbose=False):
         print('GET /api/v1/available-products')
         self.order = self.__call_espa_api('available-products', body=dict(inputs=self.ids_list))
-        if verbose:
-            print(json.dumps(self.order, indent=4))
+        # if verbose:
+            # print(json.dumps(self.order, indent=4))
 
         # Replace the available products that was returned with what we want
         for sensor in self.order.keys():
             if isinstance(self.order[sensor], dict) and self.order[sensor].get('inputs'):
                 if set(self.ids_list) & set(self.order[sensor]['inputs']):
                     self.order[sensor]['products'] = products
+        if 'date_restricted'in self.order:
+            del self.order['date_restricted']
 
         # Add in the rest of the order information
         if projection is not None:
@@ -192,7 +204,7 @@ class EspaDownloader(object):
                 self.order['projection'] = self.projections[projection]
             else:
                 self.order['projection'] = projection
-        self.order['format'] = 'gtiff'
+        self.order['format'] = file_format
         self.order['resampling_method'] = 'cc'
         self.order['note'] = 'DeepGeo Download!!'
 
