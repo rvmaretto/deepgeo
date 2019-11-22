@@ -1,7 +1,10 @@
-import numpy as np
+# import earthpy
 import os
 import subprocess
 import sys
+import geopandas as gpd
+import numpy as np
+# from earthpy import clip as cl
 from osgeo import gdal
 from osgeo import gdal_array
 from osgeo import ogr
@@ -253,3 +256,24 @@ def save_chips_shp(chip_struct, out_path, base_raster_path):
 
     output_ds.Destroy()
     img_ds = None
+
+import subprocess
+def clip_shp_by_agregated_polygons(in_shp, clip_shp, out_shp):
+    callstr = ['ogr2ogr', '-clipsrc', clip_shp, out_shp, in_shp]
+    proc = subprocess.Popen(callstr, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, stderr = proc.communicate()
+    if stdout:
+        print(stdout)
+    if stderr:
+        print(stderr)
+    else:
+        print('DONE!')
+    # in_ds = gpd.read_file(in_shp)
+    # clip_ds = gpd.read_file(clip_shp)
+    #
+    # out_ds = cl.clip_shp(in_ds, clip_ds)
+    # out_ds.to_file(driver = 'ESRI Shapefile', filename=out_shp)
+
+    # fig, ax = plt.subplots(figsize=(12, 8))
+    # in_ds.plot(ax=ax)
+    # plt.show()

@@ -1,13 +1,13 @@
 from osgeo import gdal
 from osgeo import ogr
 import numpy as np
-import os
-import subprocess
 import fiona
+import os
 import rasterio
 import rasterio.mask
 import shapely
 import shutil
+import subprocess
 
 
 def stack_bands(files, output_img, band_names=None):#, no_data=-9999, format="GTiff", dtype=gdal.GDT_Int16):

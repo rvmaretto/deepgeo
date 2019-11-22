@@ -32,7 +32,7 @@ def compute_quality_metrics(labels, predictions, params, probabilities=None, cla
         labels_to_use.append(params['class_names'].index(clazz))
  
     metrics = {}
-    with sklearn.externals.joblib.parallel_backend('multiprocessing'):
+    with sklearn.utils.parallel_backend('multiprocessing'):
         metrics['f1_score'] = sklearn.metrics.f1_score(labels, predictions, labels=labels_to_use, average=None)
         metrics['precision'] = sklearn.metrics.precision_score(labels, predictions, average=None)
         metrics['recall'] = sklearn.metrics.recall_score(labels, predictions, average=None)
