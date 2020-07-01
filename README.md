@@ -13,6 +13,7 @@ Functionalities to Deep Learning based classification of Remote Sensing Images
 * matplotlib
 * rios
 * rsgislib
+* palettable
 
 ## Citations
 
