@@ -72,7 +72,8 @@ class EspaDownloader(object):
         else:
             self.roi = roi
 
-        self.wrs_intersection = self.ls_grid[self.ls_grid.intersects(self.roi.geometry[0])]
+        # TODO: Percorrer todas as geometrias do roi fazendo a interseccao com todas.
+        self.wrs_intersection = self.ls_grid[self.ls_grid.intersects(self.roi.geometry)]
         self.paths, self.rows = self.wrs_intersection['PATH'].values, self.wrs_intersection['ROW'].values
         return self.paths, self.rows
 
@@ -172,7 +173,9 @@ class EspaDownloader(object):
 
         return self.bulk_list, self.ids_list, self.not_found_list
 
-    def get_available_products(self, ids_list):
+    def get_available_products(self, ids_list=None):
+        if ids_list is None:
+            ids_list = self.ids_list
         print('Getting available products from /api/v1/available-products')
         avail_prods = self.__call_espa_api('available-products', body=dict(inputs=ids_list))
         print(json.dumps(avail_prods, indent=4))
@@ -238,6 +241,18 @@ class EspaDownloader(object):
             print('GET /api/v1/order-status/{}'.format(id))
             resp = self.__call_espa_api('order-status/{}'.format(id))
             print(json.dumps(resp, indent=4))
+
+    def is_order_complete(self, orderid=None):
+        if orderid is not None:
+            if isinstance(orderid, list):
+                orderid = orderid
+            else:
+                orderid = [orderid]
+        else:
+            orderid = self.orders_list
+
+        resp = self.__call_espa_api('order-status/{}'.format(orderid[0]))
+        return resp['status'] == 'complete'
 
     def download_order(self, orderid, output_dir):
         fs.mkdir(output_dir)

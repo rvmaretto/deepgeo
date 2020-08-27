@@ -185,7 +185,7 @@ class Preprocessor(object):
     def get_index_band(self, index):
         return self.raster_array[:,:,self.get_position_index_band(index)]
 
-    def get_raster_stacked_raster(self):
+    def get_array_stacked_raster(self):
         return self.raster_array
 
     def register_new_idx_func(self, name, function):

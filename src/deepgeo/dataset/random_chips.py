@@ -8,7 +8,7 @@ import common.utils as utils
 
 
 class RandomChipGenerator(object):
-    mandatory_params = ['raster_array', 'labels_array', 'win_size', 'quantity']
+    mandatory_params = ['raster_array', 'labels_array', 'win_size', 'quantity', 'class_names']
     default_params = {'class_of_interest': None,
                       'remove_no_data': None}
 
@@ -19,6 +19,7 @@ class RandomChipGenerator(object):
         self.win_size = params['win_size']
         self.class_of_interest = params['class_of_interest']
         self.quantity = params['quantity']
+        self.class_names = params['class_names']
 
     def compute_indexes(self):
         """
@@ -26,6 +27,13 @@ class RandomChipGenerator(object):
         """
         if self.class_of_interest is None:
             self.sample_candidates = np.transpose(np.nonzero(~self.labeled_img.mask))
+        elif isinstance(self.class_of_interest, list):
+            self.sample_candidates = []
+            for clazz in self.class_of_interest:
+                label_interest = self.class_names.index(clazz)
+                self.sample_candidates.append(np.transpose(np.nonzero(np.logical_and(~self.labeled_img.mask,
+                                                                                self.labeled_img == label_interest))))
+            self.sample_candidates = np.concatenate(self.sample_candidates, axis=0)
         else:
             label_interest = self.class_names.index(self.class_of_interest)
             self.sample_candidates = np.transpose(np.nonzero(np.logical_and(~self.labeled_img.mask,
@@ -68,7 +76,7 @@ class RandomChipGenerator(object):
         samples_img, samples_label, windows = [np.asarray(a) for a in zip(*map(self.extract_windows, self.ij_samples))]
         return {'chips': samples_img,
                 'labels': samples_label,
-                'win_coords': windows}
+                'coords': windows}
 
     # def extract_windows(self, coord):
     # samples_img = []

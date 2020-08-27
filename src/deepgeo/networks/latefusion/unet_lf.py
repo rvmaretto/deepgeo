@@ -27,6 +27,8 @@ def unet_lf_description(samples, labels, params, mode, config):
 
     height, width, _ = samples[0].shape
 
+    # print(samples.shape)
+
     # out_encoder = []
     # for i in range(timesteps):
     #     name_sufix = "t_" + str(i)
@@ -35,6 +37,7 @@ def unet_lf_description(samples, labels, params, mode, config):
     convs_t2 = unet.unet_encoder(samples_t2, params, mode, "t_2")
 
     encoded_feat = {}
+    # TODO: Encapsulate the following scopes in one for loop
     with tf.name_scope('Fusion_1'):
         encoded_feat['conv_1'] = tf.concat([convs_t1['conv_1'], convs_t2['conv_1']], axis=-1, name='concat_t1')
         encoded_feat['conv_1'] = tf.layers.conv2d(encoded_feat['conv_1'], filters=64, kernel_size=(1,1), strides=1,
@@ -76,7 +79,13 @@ def unet_lf_description(samples, labels, params, mode, config):
     #     for k, feat in out_encoder[i].items():
     #         encoded_feat[k] = tf.concat([encoded_feat[k], feat], axis=-1, name="Fusion_{}".format(k))
 
-    logits = unet.unet_decoder(encoded_feat, params, mode)
+    last_conv = unet.unet_decoder(encoded_feat, params, mode)
+
+    logits = tf.layers.conv2d(last_conv, params['num_classes'], (1, 1), activation=tf.nn.relu, padding='valid',
+                              kernel_initializer=tf.contrib.layers.xavier_initializer(),
+                              name='logits')
+
+    # print(logits.shape)
 
     return logits
 

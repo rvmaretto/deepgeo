@@ -126,13 +126,13 @@ def unet_decoder(features, params, mode):
 
     # dropout = tf.layers.dropout(conv_9_1, rate=params['dropout_rate'], training=training, name='dropout')
 
-    logits = tf.layers.conv2d(conv_9_1, params['num_classes'], (1, 1), activation=tf.nn.relu, padding='valid',
-                              kernel_initializer=tf.contrib.layers.xavier_initializer(),
-                              name='logits')
+    # logits = tf.layers.conv2d(conv_9_1, params['num_classes'], (1, 1), activation=tf.nn.relu, padding='valid',
+    #                           kernel_initializer=tf.contrib.layers.xavier_initializer(),
+    #                           name='logits')
 
     # print('LOGITS SHAPE: ', logits.shape)
 
-    return logits
+    return conv_9_1
 
 
 def unet_description(samples, labels, params, mode, config):
@@ -144,6 +144,10 @@ def unet_description(samples, labels, params, mode, config):
     height, width, _ = samples[0].shape
 
     encoded_feat = unet_encoder(samples, params, mode)
-    logits = unet_decoder(encoded_feat, params, mode)
+    last_conv = unet_decoder(encoded_feat, params, mode)
+
+    logits = tf.layers.conv2d(last_conv, params['num_classes'], (1, 1), activation=tf.nn.relu, padding='valid',
+                              kernel_initializer=tf.contrib.layers.xavier_initializer(),
+                              name='logits')
 
     return logits

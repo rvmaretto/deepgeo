@@ -22,6 +22,7 @@ import networks.loss_functions as lossf
 import networks.tb_metrics as tbm
 import networks.layers as layers
 import networks.dataset_loader as dsloader
+import networks.mask_unet as mask_unet
 
 
 # TODO: Remove this
@@ -63,7 +64,8 @@ class ModelBuilder(object):
         "fcn8s": fcn8s.fcn8s_description,
         "fcn32s": fcn32s.fcn32s_description,
         "unet": unet.unet_description,
-        "unet_lf": unet_lf.unet_lf_description
+        "unet_lf": unet_lf.unet_lf_description,
+        "mask_unet": mask_unet.mask_unet_description
     }
 
     loss_functions = {
@@ -94,6 +96,7 @@ class ModelBuilder(object):
     def register_loss(self, name, loss_func):
         self.loss_functions[name] = loss_func
 
+    #TODO: raise errors if the parameters params, mode and config are None
     def __build_model(self, features, labels, params, mode, config):
         tf.logging.set_verbosity(tf.logging.INFO)
         training = mode == tf.estimator.ModeKeys.TRAIN
@@ -211,11 +214,19 @@ class ModelBuilder(object):
             for key in sorted(self.params):
                 w.writerow([key, self.params[key]])
 
-        self.params['shape'] = [self.params['chip_size'], self.params['chip_size'], self.params['bands']]
+        if not 'num_masks' in self.params:
+            self.params['shape'] = [self.params['chip_size'], self.params['chip_size'], self.params['bands']]
+        else:
+            self.params['shape'] = [self.params['chip_size'], self.params['chip_size'],
+                                    int(self.params['bands'] + self.params['num_masks'])]
+
         train_loader = dsloader.DatasetLoader(train_dataset, self.params)
         test_loader = dsloader.DatasetLoader(test_dataset, self.params)
         number_of_chips = train_loader.get_dataset_size()
         self.params['number_of_chips'] = number_of_chips
+
+        print('------------')
+        print('Training with ', number_of_chips, ' chips...')
 
         multpl_data_aug = 1
         if 'data_aug_per_chip' in self.params:
@@ -263,7 +274,10 @@ class ModelBuilder(object):
         predictions_lst = []
         probabilities_lst = []
         crop_labels = []
-        for predict, label in zip(estimator.predict(input_fn), expect_labels):
+
+        zip_func = zip(estimator.predict(input_fn), expect_labels)
+
+        for predict, label in zip_func:
             predictions_lst.append(predict['classes'])
             probabilities_lst.append(predict['probabilities'])
             size_x, size_y, _ = predict['classes'].shape

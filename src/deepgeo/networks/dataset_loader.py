@@ -75,8 +75,13 @@ class DatasetLoader(object):
 
     def get_dataset_size(self):
         number_of_chips = 0
-        for record in tf.python_io.tf_record_iterator(self.dataset):
-            number_of_chips += 1
+        if isinstance(self.dataset, list):
+            for file in self.dataset:
+                for record in tf.python_io.tf_record_iterator(file):
+                    number_of_chips += 1
+        else:
+            for record in tf.python_io.tf_record_iterator(self.dataset):
+                number_of_chips += 1
         return number_of_chips
 
     def _parse_function(self, serialized):
@@ -98,8 +103,16 @@ class DatasetLoader(object):
         return image, label
 
     def tfrecord_input_fn(self, train=True):
-        dataset = tf.data.TFRecordDataset(self.dataset)
-        train_input = dataset.map(self._parse_function, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+        if isinstance(self.dataset, list):
+            dataset = tf.data.Dataset.from_tensor_slices(self.dataset)
+            dataset = dataset.interleave(lambda x : tf.data.TFRecordDataset(self.dataset),
+                                             cycle_length=1,
+                                             # block_length=16,
+                                             num_parallel_calls=tf.data.experimental.AUTOTUNE)
+            train_input = dataset.map(self._parse_function, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+        else:
+            dataset = tf.data.TFRecordDataset(self.dataset)
+            train_input = dataset.map(self._parse_function, num_parallel_calls=tf.data.experimental.AUTOTUNE)
         if train:
             aug_datasets = []
             if 'data_aug_per_chip' in self.params:

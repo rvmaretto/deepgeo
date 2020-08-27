@@ -42,6 +42,11 @@ class DatasetGenerator(object):
         else:
             raster_arrays = [raster_arrays]
             labels_arrays = [labels_arrays]
+
+        for pos, lbl in enumerate(labels_arrays):
+            if len(lbl.shape) < 3:
+                labels_arrays[pos] = np.expand_dims(lbl.astype(np.int32), -1)
+
         self.raster_arrays = raster_arrays
         self.labels_arrays = labels_arrays
         self.strategy = strategy
@@ -67,6 +72,8 @@ class DatasetGenerator(object):
 
         self.chips_struct['chips'] = np.concatenate(self.chips_struct['chips'], axis=0)
         self.chips_struct['labels'] = np.concatenate(self.chips_struct['labels'], axis=0)
+        if 'overlap' in params:
+            self.chips_struct['overlap'] = params['overlap']
 
     def get_samples(self):
         return self.chips_struct
@@ -77,8 +84,8 @@ class DatasetGenerator(object):
         for i in range(0, len(self.chips_struct['chips'])):
             if np.count_nonzero(self.chips_struct['labels'][i] == 0) > ((self.chip_size * self.chip_size) * tolerance):
                 coords_remove.append(i)
-                np.delete(self.chips_struct['chips'], i, axis=0)
-                np.delete(self.chips_struct['labels'], i, axis=0)
+        self.chips_struct['chips'] = np.delete(self.chips_struct['chips'], coords_remove, axis=0)
+        self.chips_struct['labels'] = np.delete(self.chips_struct['labels'], coords_remove, axis=0)
         
         self.chips_struct['coords'] = [x for i, x in enumerate(self.chips_struct['coords']) if i not in coords_remove]
 

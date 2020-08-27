@@ -17,7 +17,7 @@ class Rasterizer(object):
         self.class_column = class_column
         self.no_data = 0
         self.base_raster = gdal.Open(self.raster_path) #gf.load_image(self.raster_path)
-        if not classes_interest is None:
+        if classes_interest is not None:
             self.classes_interest = [non_class_name] + classes_interest
         else:
             self.classes_interest = None
@@ -91,7 +91,7 @@ class Rasterizer(object):
                     value = self.__get_pixel_value(self.classes_interest, label)
                 else:
                     value = self.__get_pixel_value(self.classes_interest, self.non_class)
-            
+
             vector_layer.SetAttributeFilter("%s='%s'" % (str(self.class_column), str(label)))
             limg = self.rasterize_label(vector_layer)
             self.labeled_raster[limg == 1] = value
