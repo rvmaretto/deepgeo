@@ -190,12 +190,15 @@ def plot_chips(chips, raster_array=None, bands=[1, 2, 3], contrast=False, chipsc
                                   edgecolor=chipscolor, facecolor='none')
         ax.add_patch(rect)
 
+    # plt.savefig('/home/raian/doutorado/PA_chips_small.pdf')  #TODO: Include this in the parameters of the function
+    # plt.show()
+
 
 def plot_confusion_matrix(confusion_matrix, params, classes_remove=[0], fig_path=None, show_plot=True):
     class_names = params['class_names'].copy()
     for value in classes_remove:
         del class_names[value]
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(12, 12))
     img = ax.imshow(confusion_matrix, interpolation='nearest', cmap=plt.cm.Greens)
     ax.figure.colorbar(img, ax=ax)
     ax.set(xticks=np.arange(confusion_matrix.shape[1]),

@@ -15,7 +15,7 @@ class SequentialChipGenerator(object):
     default_params = {'labels_array': None,
                       'overlap': (0, 0),
                       'class_of_interest': None,
-                      'perc_discard_nd': None,  # TODO: Allow here to define the threshold percentage of no_data pixels to remove the chip
+                      'perc_discard_nd': None,
                       'no_data': 0}
 
     def __init__(self, params):

@@ -3,6 +3,7 @@ import os
 import sklearn
 import sys
 import numpy as np
+import sklearn.metrics as metrics
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../'))
 import common.visualization as vis
@@ -16,14 +17,15 @@ def compute_quality_metrics(labels, predictions, params, probabilities=None, cla
         if len(probabilities.shape) < 4:
             probabilities = np.expand_dims(probabilities, axis=0)
         probabilities = probabilities.reshape(-1, probabilities.shape[-1])
-    else:
-        probabilities = predictions
+    # else:
+    #     probabilities = predictions
 
     for value in classes_ignore:
         predictions = np.delete(predictions, np.where(labels == value))
         print('UNIQUE Predictions: ', np.unique(predictions))
         predictions[predictions == 0] = 1  # TODO: Find a better way to solve this problem
-        probabilities = np.delete(probabilities, np.where(labels == value), axis=0)
+        if probabilities is not None:
+            probabilities = np.delete(probabilities, np.where(labels == value), axis=0)
         labels = np.delete(labels, np.where(labels == value))
         del class_names[value]
 
@@ -31,57 +33,60 @@ def compute_quality_metrics(labels, predictions, params, probabilities=None, cla
     for clazz in class_names:
         labels_to_use.append(params['class_names'].index(clazz))
  
-    metrics = {}
+    metrics_dict = {}
     with sklearn.utils.parallel_backend('multiprocessing'):
-        metrics['f1_score'] = sklearn.metrics.f1_score(labels, predictions, labels=labels_to_use, average=None)
-        metrics['precision'] = sklearn.metrics.precision_score(labels, predictions, average=None)
-        metrics['recall'] = sklearn.metrics.recall_score(labels, predictions, average=None)
-        metrics['accuracy'] = sklearn.metrics.accuracy_score(labels, predictions)
-        metrics['classification_report'] = sklearn.metrics.classification_report(labels, predictions,
+    # with sklearn.externals.joblib.parallel_backend('multiprocessing'):
+        metrics_dict['f1_score'] = metrics.f1_score(labels, predictions, labels=labels_to_use, average=None)
+        metrics_dict['precision'] = metrics.precision_score(labels, predictions, average=None)
+        metrics_dict['recall'] = metrics.recall_score(labels, predictions, average=None)
+        metrics_dict['accuracy'] = metrics.accuracy_score(labels, predictions)
+        metrics_dict['classification_report'] = metrics.classification_report(labels, predictions,
                                                                                  target_names=class_names,
                                                                                  digits=4)
 
-        metrics['prec_rec_curve'] = {}
-        for clazz in class_names:
-            cl_index = params['class_names'].index(clazz)
-            metrics['prec_rec_curve'][clazz] = sklearn.metrics.precision_recall_curve(labels,
-                                                                                      probabilities[:, cl_index],
-                                                                                      pos_label=cl_index)
+        if probabilities is not None:
+            metrics_dict['prec_rec_curve'] = {}
+            for clazz in class_names:
+                cl_index = params['class_names'].index(clazz)
+                metrics_dict['prec_rec_curve'][clazz] = metrics.precision_recall_curve(labels,
+                                                                                       probabilities[:, cl_index],
+                                                                                       pos_label=cl_index)
 
-        metrics['roc_curve'] = {}
-        metrics['auc_roc'] = {}
-        for clazz in class_names:
-            cl_index = params['class_names'].index(clazz)
-            metrics['roc_curve'][clazz] = sklearn.metrics.roc_curve(labels,
-                                                                    probabilities[:, cl_index],
-                                                                    pos_label=cl_index)
-            metrics['auc_roc'][clazz] = sklearn.metrics.auc(metrics['roc_curve'][clazz][0], metrics['roc_curve'][clazz][1])
+            metrics_dict['roc_curve'] = {}
+            metrics_dict['auc_roc'] = {}
+            for clazz in class_names:
+                cl_index = params['class_names'].index(clazz)
+                metrics_dict['roc_curve'][clazz] = metrics.roc_curve(labels,
+                                                                     probabilities[:, cl_index],
+                                                                     pos_label=cl_index)
+                metrics_dict['auc_roc'][clazz] = metrics.auc(metrics_dict['roc_curve'][clazz][0], metrics_dict['roc_curve'][clazz][1])
 
-        confusion_matrix = sklearn.metrics.confusion_matrix(labels, predictions, labels=labels_to_use)
-        metrics['confusion_matrix'] = confusion_matrix.astype('float') / confusion_matrix.sum(axis=1)[:, np.newaxis]
+        confusion_matrix = metrics.confusion_matrix(labels, predictions, labels=labels_to_use)
+        metrics_dict['confusion_matrix'] = confusion_matrix.astype('float') / confusion_matrix.sum(axis=1)[:, np.newaxis]
 
     out_str = ''
     out_str += 'F1-Score:' + os.linesep
-    for i in range(0, len(metrics['f1_score'])):
-        out_str += '  - ' + str(class_names[i]) + ': ' + str(metrics['f1_score'][i]) + os.linesep
+    for i in range(0, len(metrics_dict['f1_score'])):
+        out_str += '  - ' + str(class_names[i]) + ': ' + str(metrics_dict['f1_score'][i]) + os.linesep
 
     out_str += 'Precision:' + os.linesep
-    for i in range(0, len(metrics['precision'])):
-        out_str += '  - ' + str(class_names[i]) + ': ' + str(metrics['precision'][i]) + os.linesep
+    for i in range(0, len(metrics_dict['precision'])):
+        out_str += '  - ' + str(class_names[i]) + ': ' + str(metrics_dict['precision'][i]) + os.linesep
 
     out_str += 'Recall:' + os.linesep
-    for i in range(0, len(metrics['recall'])):
-        out_str += '  - ' + str(class_names[i]) + ': ' + str(metrics['recall'][i]) + os.linesep
+    for i in range(0, len(metrics_dict['recall'])):
+        out_str += '  - ' + str(class_names[i]) + ': ' + str(metrics_dict['recall'][i]) + os.linesep
 
-    out_str += 'Accuracy: ' + str(metrics['accuracy']) + os.linesep
+    out_str += 'Accuracy: ' + str(metrics_dict['accuracy']) + os.linesep
 
-    for clazz, val in metrics['auc_roc'].items():
-        out_str += 'AUC-ROC {}: {}'.format(clazz, metrics['auc_roc']) + os.linesep
+    if probabilities is not None:
+        for clazz, val in metrics_dict['auc_roc'].items():
+            out_str += 'AUC-ROC {}: {}'.format(clazz, metrics_dict['auc_roc']) + os.linesep
 
-    out_str += 'Classification Report:' + os.linesep + str(metrics['classification_report']) + os.linesep
-    out_str += 'Confusion Matrix:' + os.linesep + str(metrics['confusion_matrix']) + os.linesep
+    out_str += 'Classification Report:' + os.linesep + str(metrics_dict['classification_report']) + os.linesep
+    out_str += 'Confusion Matrix:' + os.linesep + str(metrics_dict['confusion_matrix']) + os.linesep
 
-    return metrics, out_str
+    return metrics_dict, out_str
 
 
 def evaluate_classification(prediction_path, ground_truth_path, params, prediction_prob=None,
@@ -114,10 +119,10 @@ def evaluate_classification(prediction_path, ground_truth_path, params, predicti
     out_str += '<<------------------------------------------------------------>>' + os.linesep
 
     if prediction_prob is not None:
-        metrics, report_str = compute_quality_metrics(truth_arr, pred_arr, params, prob_arr,
+        metrics_dict, report_str = compute_quality_metrics(truth_arr, pred_arr, params, prob_arr,
                                                       classes_ignore=classes_ignore)
     else:
-        metrics, report_str = compute_quality_metrics(truth_arr, pred_arr, params, classes_ignore=classes_ignore)
+        metrics_dict, report_str = compute_quality_metrics(truth_arr, pred_arr, params, classes_ignore=classes_ignore)
 
     out_str += report_str
 
@@ -130,15 +135,17 @@ def evaluate_classification(prediction_path, ground_truth_path, params, predicti
         out_file.close()
 
         conf_matrix_path = os.path.join(out_dir, ('classification_confusion_matrix' + file_sufix + '.png'))
-        aucroc_curve_path = os.path.join(out_dir, ('auc_roc_curve' + file_sufix + '.png'))
-        prec_rec_path = os.path.join(out_dir, ('prec_rec_curve' + file_sufix + '.png'))
+        if prediction_prob is not None:
+            aucroc_curve_path = os.path.join(out_dir, ('auc_roc_curve' + file_sufix + '.png'))
+            prec_rec_path = os.path.join(out_dir, ('prec_rec_curve' + file_sufix + '.png'))
     else:
         conf_matrix_path = None
         aucroc_curve_path = None
         prec_rec_path = None
 
-    vis.plot_confusion_matrix(metrics['confusion_matrix'], params, classes_remove=classes_ignore,
+    vis.plot_confusion_matrix(metrics_dict['confusion_matrix'], params, classes_remove=classes_ignore,
                               fig_path=conf_matrix_path)
-    vis.plot_roc_curve(metrics['roc_curve'], aucroc_curve_path)
-    vis.plot_precision_recall_curve(metrics['prec_rec_curve'], fig_path=prec_rec_path)
+    if prediction_prob is not None:
+        vis.plot_roc_curve(metrics_dict['roc_curve'], aucroc_curve_path)
+        vis.plot_precision_recall_curve(metrics_dict['prec_rec_curve'], fig_path=prec_rec_path)
 
