@@ -1,16 +1,22 @@
 import sys
 import tensorflow as tf
 from os import path
+import tensorflow_addons as tfa
 
 sys.path.insert(0, path.join(path.dirname(__file__), '../'))
 import networks.layers as layers
+
+def f1_score(labels, predictions):
+    return 2 * (tf.compat.v1.metrics.recall(labels, predictions) *
+                tf.compat.v1.metrics.precision(labels, predictions)) / \
+           (tf.compat.v1.metrics.recall(labels, predictions) + tf.compat.v1.metrics.precision(labels, predictions))
 
 
 def define_quality_metrics(labels_1hot, predictions, logits, labels, output, loss, params):
     metrics = {}
     summaries = {}
     with tf.name_scope('quality_metrics'):
-        metrics['f1_score'] = tf.contrib.metrics.f1_score(labels=labels_1hot, predictions=predictions)
+        metrics['f1_score'] = f1_score(labels=labels_1hot, predictions=predictions)
         summaries['f1_score'] = tf.summary.scalar('f1-score', metrics['f1_score'][1])
 
         metrics['accuracy'] = tf.metrics.accuracy(labels=labels, predictions=output)

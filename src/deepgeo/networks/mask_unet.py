@@ -39,35 +39,35 @@ def mask_unet_description(samples, labels, params, mode, config):
         encoded_feat['conv_1'] = tf.concat([convs_t1['conv_1'], convs_t2['conv_1']], axis=-1, name='concat_t1')
         encoded_feat['conv_1'] = tf.layers.conv2d(encoded_feat['conv_1'], filters=64, kernel_size=(1,1), strides=1,
                                                   padding='valid', activation=tf.nn.relu,
-                                                  kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
+                                                  kernel_initializer=tf.keras.initializers.GlorotUniform(),
                                                   name='conv_fusion_1')
 
     with tf.name_scope('Fusion_2'):
         encoded_feat['conv_2'] = tf.concat([convs_t1['conv_2'], convs_t2['conv_2']], axis=-1, name='concat_t2')
         encoded_feat['conv_2'] = tf.layers.conv2d(encoded_feat['conv_2'], filters=128, kernel_size=(1, 1), strides=1,
                                                   padding='valid', activation=tf.nn.relu,
-                                                  kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
+                                                  kernel_initializer=tf.keras.initializers.GlorotUniform(),
                                                   name='conv_fusion_2')
 
     with tf.name_scope('Fusion_3'):
         encoded_feat['conv_3'] = tf.concat([convs_t1['conv_3'], convs_t2['conv_3']], axis=-1, name='concat_t3')
         encoded_feat['conv_3'] = tf.layers.conv2d(encoded_feat['conv_3'], filters=256, kernel_size=(1, 1), strides=1,
                                                   padding='valid', activation=tf.nn.relu,
-                                                  kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
+                                                  kernel_initializer=tf.keras.initializers.GlorotUniform(),
                                                   name='conv_fusion_3')
 
     with tf.name_scope('Fusion_4'):
         encoded_feat['conv_4'] = tf.concat([convs_t1['conv_4'], convs_t2['conv_4']], axis=-1, name='concat_t4')
         encoded_feat['conv_4'] = tf.layers.conv2d(encoded_feat['conv_4'], filters=512, kernel_size=(1, 1), strides=1,
                                                   padding='valid', activation=tf.nn.relu,
-                                                  kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
+                                                  kernel_initializer=tf.keras.initializers.GlorotUniform(),
                                                   name='conv_fusion_4')
 
     with tf.name_scope('Fusion_5'):
         encoded_feat['conv_5'] = tf.concat([convs_t1['conv_5'], convs_t2['conv_5']], axis=-1, name='concat_t5')
         encoded_feat['conv_5'] = tf.layers.conv2d(encoded_feat['conv_5'], filters=1024, kernel_size=(1, 1), strides=1,
                                                   padding='valid', activation=tf.nn.relu,
-                                                  kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
+                                                  kernel_initializer=tf.keras.initializers.GlorotUniform(),
                                                   name='conv_fusion_5')
 
 
@@ -82,7 +82,7 @@ def mask_unet_description(samples, labels, params, mode, config):
     last_conv = tf.concat([last_conv, cropped_mask], axis=-1, name='concat_mask')
 
     logits = tf.layers.conv2d(last_conv, params['num_classes'], (1, 1), activation=tf.nn.relu, padding='valid',
-                              kernel_initializer=tf.contrib.layers.xavier_initializer(),
+                              kernel_initializer=tf.keras.initializers.GlorotUniform(),
                               name='logits')
 
     return logits

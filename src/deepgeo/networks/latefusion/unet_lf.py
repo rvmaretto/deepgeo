@@ -42,35 +42,35 @@ def unet_lf_description(samples, labels, params, mode, config):
         encoded_feat['conv_1'] = tf.concat([convs_t1['conv_1'], convs_t2['conv_1']], axis=-1, name='concat_t1')
         encoded_feat['conv_1'] = tf.layers.conv2d(encoded_feat['conv_1'], filters=64, kernel_size=(1,1), strides=1,
                                                   padding='valid', activation=tf.nn.relu,
-                                                  kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
+                                                  kernel_initializer=tf.keras.initializers.GlorotUniform(),
                                                   name='conv_fusion_1')
 
     with tf.name_scope('Fusion_2'):
         encoded_feat['conv_2'] = tf.concat([convs_t1['conv_2'], convs_t2['conv_2']], axis=-1, name='concat_t2')
         encoded_feat['conv_2'] = tf.layers.conv2d(encoded_feat['conv_2'], filters=128, kernel_size=(1, 1), strides=1,
                                                   padding='valid', activation=tf.nn.relu,
-                                                  kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
+                                                  kernel_initializer=tf.keras.initializers.GlorotUniform(),
                                                   name='conv_fusion_2')
 
     with tf.name_scope('Fusion_3'):
         encoded_feat['conv_3'] = tf.concat([convs_t1['conv_3'], convs_t2['conv_3']], axis=-1, name='concat_t3')
         encoded_feat['conv_3'] = tf.layers.conv2d(encoded_feat['conv_3'], filters=256, kernel_size=(1, 1), strides=1,
                                                   padding='valid', activation=tf.nn.relu,
-                                                  kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
+                                                  kernel_initializer=tf.keras.initializers.GlorotUniform(),
                                                   name='conv_fusion_3')
 
     with tf.name_scope('Fusion_4'):
         encoded_feat['conv_4'] = tf.concat([convs_t1['conv_4'], convs_t2['conv_4']], axis=-1, name='concat_t4')
         encoded_feat['conv_4'] = tf.layers.conv2d(encoded_feat['conv_4'], filters=512, kernel_size=(1, 1), strides=1,
                                                   padding='valid', activation=tf.nn.relu,
-                                                  kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
+                                                  kernel_initializer=tf.keras.initializers.GlorotUniform(),
                                                   name='conv_fusion_4')
 
     with tf.name_scope('Fusion_5'):
         encoded_feat['conv_5'] = tf.concat([convs_t1['conv_5'], convs_t2['conv_5']], axis=-1, name='concat_t5')
         encoded_feat['conv_5'] = tf.layers.conv2d(encoded_feat['conv_5'], filters=1024, kernel_size=(1, 1), strides=1,
                                                   padding='valid', activation=tf.nn.relu,
-                                                  kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(),
+                                                  kernel_initializer=tf.keras.initializers.GlorotUniform(),
                                                   name='conv_fusion_5')
 
 
@@ -82,49 +82,9 @@ def unet_lf_description(samples, labels, params, mode, config):
     last_conv = unet.unet_decoder(encoded_feat, params, mode)
 
     logits = tf.layers.conv2d(last_conv, params['num_classes'], (1, 1), activation=tf.nn.relu, padding='valid',
-                              kernel_initializer=tf.contrib.layers.xavier_initializer(),
+                              kernel_initializer=tf.keras.initializers.GlorotUniform(),
                               name='logits')
 
     # print(logits.shape)
 
     return logits
-
-    # if mode == tf.estimator.ModeKeys.PREDICT:
-    #     return tf.estimator.EstimatorSpec(mode=mode, predictions=output)
-    #
-    # cropped_labels = tf.cast(layers.crop_features(labels, output.shape[1], name="labels"), tf.float32)
-    #
-    # loss = lossf.twoclass_cost(output, cropped_labels)
-    #
-    # optimizer = tf.contrib.opt.NadamOptimizer(learning_rate, name="Optimizer")
-    # optimizer = tf.contrib.estimator.TowerOptimizer(optimizer)
-    #
-    # tbm.plot_chips_tensorboard(samples_t2, cropped_labels, output, bands_plot=params["bands_plot"],
-    #                            num_chips=params['chips_tensorboard'])
-    #
-    # metrics, summaries = tbm.define_quality_metrics(cropped_labels, output, loss)
-    #
-    # update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-    #
-    # with tf.control_dependencies(update_ops):
-    #     train_op = optimizer.minimize(loss=loss, global_step=tf.train.get_global_step())
-    #
-    # # train_summary_hook = tf.train.SummarySaverHook(save_steps=1,
-    # #                                               output_dir=config.model_dir,
-    # #                                               summary_op=tf.summary.merge_all())
-    #
-    # eval_summary_hook = tf.train.SummarySaverHook(save_steps=1,
-    #                                               output_dir=path.join(config.model_dir, "eval"),
-    #                                               summary_op=tf.summary.merge_all())
-    #
-    # eval_metric_ops = {"eval_metrics/accuracy": metrics["accuracy"],
-    #                    "eval_metrics/f1-score": metrics["f1_score"],
-    #                    "eval_metrics/cross_entropy": metrics["cross_entropy"]}
-    #
-    # return tf.estimator.EstimatorSpec(mode=mode,
-    #                                   predictions=output,
-    #                                   loss=loss,
-    #                                   train_op=train_op,
-    #                                   eval_metric_ops=eval_metric_ops,
-    #                                   evaluation_hooks=[eval_summary_hook])
-    #                                   # training_hooks=[train_summary_hook])

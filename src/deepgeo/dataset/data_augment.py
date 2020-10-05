@@ -1,6 +1,7 @@
 import tensorflow as tf
 import math
 import numpy as np
+import tensorflow_addons as tfa
 
 
 # Methods based on https://medium.com/ymedialabs-innovation/data-augmentation-techniques-in-cnn-using-tensorflow-371ae43d5be9#f8ea
@@ -32,7 +33,7 @@ def rotate_images(images, angles, data_type=np.float32):
     with tf.device('/cpu:0'):  # TODO: Remove this. Try to distribute on the GPUs according to the available mem
         img = tf.placeholder(data_type, shape=tf_shape)
         radian = tf.placeholder(tf.float32, shape=len(images))
-        tf_img = tf.contrib.image.rotate(img, radian)
+        tf_img = tfa.image.rotate(img, radian)
 
         # with tf.Session(config=config) as sess:
         with tf.Session() as sess:

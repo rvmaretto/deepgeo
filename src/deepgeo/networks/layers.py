@@ -12,8 +12,8 @@ def conv_pool_layer(bottom, filters, params, kernel_size=3, training=True, name=
             padding=pad,
             data_format='channels_last',
             activation=None,
-            kernel_regularizer=tf.contrib.layers.l2_regularizer(params['l2_reg_rate']),
-            kernel_initializer=tf.contrib.layers.xavier_initializer(),  # tf.initializers.variance_scaling(scale=params['var_scale_factor'], distribution='uniform'),
+            kernel_regularizer=tf.keras.regularizers.L2(params['l2_reg_rate']),
+            kernel_initializer=tf.keras.initializers.GlorotUniform(),  # tf.initializers.variance_scaling(scale=params['var_scale_factor'], distribution='uniform'),
             name='convolution_{}'.format(name)
         )
         norm = tf.layers.batch_normalization(inputs=conv, training=training, name='batch_norm_{}'.format(name))
@@ -41,8 +41,8 @@ def up_conv_layer(bottom, num_filters, kernel_size, strides, params, batch_norm=
             strides=strides,
             activation=None,
             padding=pad,
-            kernel_regularizer=tf.contrib.layers.l2_regularizer(params['l2_reg_rate']),
-            kernel_initializer=tf.contrib.layers.xavier_initializer(),  # tf.initializers.variance_scaling(scale=params['var_scale_factor'], distribution='uniform'),
+            kernel_regularizer=tf.keras.regularizers.L2(params['l2_reg_rate']),
+            kernel_initializer=tf.keras.initializers.GlorotUniform(),  # tf.initializers.variance_scaling(scale=params['var_scale_factor'], distribution='uniform'),
             name='upconv{}'.format(name)
         )
 
@@ -73,7 +73,7 @@ def up_conv_add_layer(bottom, concat, params, kernel_size=4, num_filters=2, stri
                                       padding=pad,
                                       data_format='channels_last',
                                       activation=None,
-                                      kernel_initializer=tf.contrib.layers.xavier_initializer(),
+                                      kernel_initializer=tf.keras.initializers.GlorotUniform(),
                                       name='score_layer')
 
         upconv = tf.add(upconv, score_pool)

@@ -235,7 +235,7 @@ class ModelBuilder(object):
             multpl_data_aug = len(self.params['data_aug_ops']) + 1
             
         # https://www.tensorflow.org/guide/distribute_strategy
-        strategy = tf.contrib.distribute.MirroredStrategy()
+        strategy = tf.distribute.MirroredStrategy()  # TODO: Allow to select the devices here
         self.params['decay_steps'] = math.ceil((number_of_chips * multpl_data_aug) / (self.params['batch_size'] * strategy.num_replicas_in_sync))
         config = tf.estimator.RunConfig(train_distribute=strategy)  # , eval_distribute=strategy)
 
