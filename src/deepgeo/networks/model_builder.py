@@ -98,7 +98,7 @@ class ModelBuilder(object):
 
     #TODO: raise errors if the parameters params, mode and config are None
     def __build_model(self, features, labels, params, mode, config):
-        tf.logging.set_verbosity(tf.logging.INFO)
+        tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.INFO)
         training = mode == tf.estimator.ModeKeys.TRAIN
         samples = features
 
@@ -148,29 +148,29 @@ class ModelBuilder(object):
         tbm.plot_chips_tensorboard(samples, labels, output, params)
         metrics, summaries = tbm.define_quality_metrics(labels_1hot, predictions, logits, labels, output, loss, params)
 
-        update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+        update_ops = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.UPDATE_OPS)
 
         if params['learning_rate_decay']:
-            params['learning_rate'] = tf.train.exponential_decay(learning_rate=params['learning_rate'],
-                                                                 global_step=tf.train.get_global_step(),
+            params['learning_rate'] = tf.compat.v1.train.exponential_decay(learning_rate=params['learning_rate'],
+                                                                 global_step=tf.compat.v1.train.get_global_step(),
                                                                  decay_rate=params['decay_rate'],
                                                                  decay_steps=params['decay_steps'],
                                                                  name='decrease_lr')
 
-        tf.summary.scalar('learning_rate', params['learning_rate'])
+        tf.compat.v1.summary.scalar('learning_rate', params['learning_rate'])
 
-        optimizer = tf.train.AdamOptimizer(learning_rate=params['learning_rate'], name='Optimizer')
+        optimizer = tf.compat.v1.train.AdamOptimizer(learning_rate=params['learning_rate'], name='Optimizer')
         # optimizer = tf.contrib.opt.NadamOptimizer(params['learning_rate'], name='Optimizer')
 
         if training:
             with tf.control_dependencies(update_ops):
-                train_op = optimizer.minimize(loss=loss, global_step=tf.train.get_global_step())
+                train_op = optimizer.minimize(loss=loss, global_step=tf.compat.v1.train.get_global_step())
         else:
             train_op = None
 
-        train_summary_hook = tf.train.SummarySaverHook(save_steps=100,
+        train_summary_hook = tf.estimator.SummarySaverHook(save_steps=100,
                                                        output_dir=config.model_dir,
-                                                       summary_op=tf.summary.merge_all())
+                                                       summary_op=tf.compat.v1.summary.merge_all())
 
         eval_metric_ops = {'eval_metrics/accuracy': metrics['accuracy'],
                            'eval_metrics/f1-score': metrics['f1_score'],
@@ -178,7 +178,7 @@ class ModelBuilder(object):
                            'eval_metrics/auc_roc': metrics['auc-roc']}  # ,
                            # 'eval_metrics/mean_iou': metrics['mean_iou']}
 
-        logging_hook = tf.train.LoggingTensorHook({'loss': loss,
+        logging_hook = tf.estimator.LoggingTensorHook({'loss': loss,
                                                    'accuracy': metrics['accuracy'][1],
                                                    'f1_score': metrics['f1_score'][1],
                                                    'cross_entropy': metrics['cross_entropy'][1],
@@ -187,9 +187,9 @@ class ModelBuilder(object):
                                                    'auc_roc': metrics['auc-roc'][1]},
                                                   every_n_iter=100)
 
-        eval_summary_hook = tf.train.SummarySaverHook(save_steps=100,
+        eval_summary_hook = tf.estimator.SummarySaverHook(save_steps=100,
                                                       output_dir=config.model_dir + "/eval",
-                                                      summary_op=tf.summary.merge_all())
+                                                      summary_op=tf.compat.v1.summary.merge_all())
 
         return tf.estimator.EstimatorSpec(mode=mode,
                                           predictions=output,
@@ -201,7 +201,7 @@ class ModelBuilder(object):
 
     def train(self, train_dataset, test_dataset, output_dir):
         # tf.set_random_seed(1987)
-        tf.logging.set_verbosity(tf.logging.INFO)
+        tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.INFO)
 
         if not os.path.exists(output_dir):
             fs.mkdir(output_dir)
@@ -259,7 +259,7 @@ class ModelBuilder(object):
 
     def validate(self, images, expect_labels, model_dir, save_results=True, show_plots=True,
                  exclude_classes=[]):
-        tf.logging.set_verbosity(tf.logging.WARN)
+        tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.WARN)
 
         out_dir = os.path.join(model_dir, 'validation')
 
@@ -267,7 +267,7 @@ class ModelBuilder(object):
                                            model_dir=model_dir,
                                            params=self.params)
 
-        input_fn = tf.estimator.inputs.numpy_input_fn(x=images,
+        input_fn = tf.compat.v1.estimator.inputs.numpy_input_fn(x=images,
                                                       batch_size=self.params['batch_size'],
                                                       shuffle=False)
 
@@ -320,14 +320,14 @@ class ModelBuilder(object):
         vis.plot_precision_recall_curve(metrics['prec_rec_curve'], fig_path=prec_rec_path, show_plot=show_plots)
 
     def predict(self, chip_struct, model_dir, return_prob=True):
-        tf.logging.set_verbosity(tf.logging.WARN)
+        tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.WARN)
         images = chip_struct['chips']
 
         estimator = tf.estimator.Estimator(model_fn=self.__build_model,
                                            model_dir=model_dir,
                                            params=self.params)
 
-        input_fn = tf.estimator.inputs.numpy_input_fn(x=images,
+        input_fn = tf.compat.v1.estimator.inputs.numpy_input_fn(x=images,
                                                       batch_size=self.params['batch_size'],
                                                       shuffle=False)
 

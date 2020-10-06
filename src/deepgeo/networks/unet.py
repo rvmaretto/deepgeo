@@ -18,7 +18,7 @@ def unet_encoder(samples, params, mode, name_sufix=''):
             num_channels = round(total_channels / 2)
             #total_channels = tf.shape(samples)[3]
             #num_channels = tf.cast(tf.round(total_channels / 2), tf.int32)
-            samples = tf.layers.conv2d(samples, filters=num_channels, kernel_size=(1, 1), strides=1,
+            samples = tf.compat.v1.layers.conv2d(samples, filters=num_channels, kernel_size=(1, 1), strides=1,
                                        padding='valid', activation=tf.nn.relu,
                                        kernel_initializer=tf.keras.initializers.GlorotUniform(),
                                        name='time_fusion')
@@ -146,7 +146,7 @@ def unet_description(samples, labels, params, mode, config):
     encoded_feat = unet_encoder(samples, params, mode)
     last_conv = unet_decoder(encoded_feat, params, mode)
 
-    logits = tf.layers.conv2d(last_conv, params['num_classes'], (1, 1), activation=tf.nn.relu, padding='valid',
+    logits = tf.compat.v1.layers.conv2d(last_conv, params['num_classes'], (1, 1), activation=tf.nn.relu, padding='valid',
                               kernel_initializer=tf.keras.initializers.GlorotUniform(),
                               name='logits')
 

@@ -101,9 +101,9 @@ def standardize_mean_std(raster_array):
 
 
 def standardize_tf(raster_array):
-    img = tf.placeholder(shape=raster_array.shape, dtype=tf.float32)
+    img = tf.compat.v1.placeholder(shape=raster_array.shape, dtype=tf.float32)
     tf_img = tf.image.per_image_standardization(img)
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
         stand_img = sess.run(tf_img, feed_dict={img: raster_array})
         return np.array(stand_img, dtype=np.float32)
 

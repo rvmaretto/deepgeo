@@ -11,7 +11,7 @@ reload(layers)
 reload(lossf)
 
 def deeplab_description(features, labels, params, mode, config):
-    tf.logging.set_verbosity(tf.logging.INFO)
+    tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.INFO)
     training = mode == tf.estimator.ModeKeys.TRAIN
     evaluating = mode == tf.estimator.ModeKeys.EVAL
 

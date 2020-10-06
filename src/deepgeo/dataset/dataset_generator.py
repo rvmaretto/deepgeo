@@ -125,7 +125,7 @@ class DatasetGenerator(object):
         for suf in suffixes:
             chips = self.chips_struct[suf]
             out_file_path = os.path.join(out_path, filename + '_' + suf + '.tfrecord')
-            with tf.python_io.TFRecordWriter(out_file_path) as writer:
+            with tf.io.TFRecordWriter(out_file_path) as writer:
                 for pos in range(chips['chips'].shape[0]):
                     img = chips['chips'][pos, :, :, :]
                     lbl = chips['labels'][pos, :, :, :]
