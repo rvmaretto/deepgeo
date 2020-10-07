@@ -65,18 +65,18 @@ def fcn32s_description(samples, labels, params, mode, config):
     fconv6 = layers.conv_pool_layer(bottom=pool5, filters=4096, kernel_size=7, params=params, training=training,
                                     pool=False, name="fc6")
     if(training):
-        fconv6 = tf.layers.dropout(inputs=fconv6, rate=params['dropout_rate'], name="drop_6")
+        fconv6 = tf.compat.v1.layers.dropout(inputs=fconv6, rate=params['dropout_rate'], name="drop_6")
 
     # print("SHAPE FConv_6: ", fconv6.shape)
 
     fconv7 = layers.conv_pool_layer(bottom=fconv6, filters=4096, kernel_size=1, params=params, training=training,
                                     pool=False, name="fc7")
     if(training):
-        fconv7 = tf.layers.dropout(inputs=fconv7, rate=params['dropout_rate'], name="drop_7")
+        fconv7 = tf.compat.v1.layers.dropout(inputs=fconv7, rate=params['dropout_rate'], name="drop_7")
 
     # print("SHAPE FConv_7: ", fconv7.shape)
 
-    score_layer = tf.layers.conv2d(inputs=fconv7, filters=num_classes, kernel_size=1, padding="same",
+    score_layer = tf.compat.v1.layers.conv2d(inputs=fconv7, filters=num_classes, kernel_size=1, padding="same",
                                    data_format="channels_last", activation=None, name="score_layer")
 
     # print("SHAPE Score Layer: ", score_layer.shape)

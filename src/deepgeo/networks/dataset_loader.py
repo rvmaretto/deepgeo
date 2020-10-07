@@ -33,8 +33,8 @@ def _flip_up_down(image, label):
 
 
 def _flip_transpose(image, label):
-    image = tf.image.transpose_image(image)
-    label = tf.image.transpose_image(label)
+    image = tf.image.transpose(image)
+    label = tf.image.transpose(label)
     return image, label
 
 
@@ -46,11 +46,11 @@ class DatasetLoader(object):
                            'flip_up_down': _flip_up_down,
                            'flip_transpose': _flip_transpose}
 
-    features = {'image': tf.FixedLenFeature([], tf.string, default_value=''),
-                'channels': tf.FixedLenFeature([], tf.int64, default_value=0),
-                'label': tf.FixedLenFeature([], tf.string, default_value=''),
-                'height': tf.FixedLenFeature([], tf.int64, default_value=0),
-                'width': tf.FixedLenFeature([], tf.int64, default_value=0)}
+    features = {'image': tf.io.FixedLenFeature([], tf.string, default_value=''),
+                'channels': tf.io.FixedLenFeature([], tf.int64, default_value=0),
+                'label': tf.io.FixedLenFeature([], tf.string, default_value=''),
+                'height': tf.io.FixedLenFeature([], tf.int64, default_value=0),
+                'width': tf.io.FixedLenFeature([], tf.int64, default_value=0)}
 
     def __init__(self, train_dataset, params):
         self.dataset = train_dataset
@@ -63,8 +63,8 @@ class DatasetLoader(object):
         return self.features
 
     def get_image_shape(self):
-        for record in tf.python_io.tf_record_iterator(self.dataset):
-            rec = tf.parse_single_example(serialized=record, features=self.features)
+        for record in tf.compat.v1.python_io.tf_record_iterator(self.dataset):
+            rec = tf.io.parse_single_example(serialized=record, features=self.features)
             num_bands = int(rec['channels'].int_64_list.value[0])
             height = int(rec['height'].int_64_list.value[0])
             width = int(rec['width'].int_64_list.value[0])
@@ -77,15 +77,15 @@ class DatasetLoader(object):
         number_of_chips = 0
         if isinstance(self.dataset, list):
             for file in self.dataset:
-                for record in tf.python_io.tf_record_iterator(file):
+                for record in tf.compat.v1.python_io.tf_record_iterator(file):
                     number_of_chips += 1
         else:
-            for record in tf.python_io.tf_record_iterator(self.dataset):
+            for record in tf.compat.v1.python_io.tf_record_iterator(self.dataset):
                 number_of_chips += 1
         return number_of_chips
 
     def _parse_function(self, serialized):
-        parsed_features = tf.parse_single_example(serialized=serialized, features=self.features)
+        parsed_features = tf.io.parse_single_example(serialized=serialized, features=self.features)
         # num_bands = parsed_features['channels']
         # height = parsed_features['height']
         # width = parsed_features['width']
@@ -95,10 +95,10 @@ class DatasetLoader(object):
         shape_img = self.params['shape']  #TODO: Try here to decode the shape using tf.py_function.
         shape_lbl = [shape_img[0], shape_img[1], 1]
 
-        image = tf.decode_raw(parsed_features['image'], tf.float32)
+        image = tf.io.decode_raw(parsed_features['image'], tf.float32)
         image = tf.reshape(image, shape_img)
 
-        label = tf.decode_raw(parsed_features['label'], tf.int32)
+        label = tf.io.decode_raw(parsed_features['label'], tf.int32)
         label = tf.reshape(label, shape_lbl)
         return image, label
 

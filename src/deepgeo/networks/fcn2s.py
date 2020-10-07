@@ -69,24 +69,24 @@ def fcn2s_description(samples, labels, params, mode, config):
     fconv6 = layers.conv_pool_layer(bottom=pool5, filters=4096, kernel_size=7, params=params,
                                     training=training, name='fc6', pool=False)
     if(training):
-        fconv6 = tf.layers.dropout(inputs=fconv6, rate=params['dropout_rate'], name='drop_6')
+        fconv6 = tf.compat.v1.layers.dropout(inputs=fconv6, rate=params['dropout_rate'], name='drop_6')
 
     # print('SHAPE FConv_6: ', fconv6.shape)
     fconv7 = layers.conv_pool_layer(bottom=fconv6, filters=4096, kernel_size=1, params=params,
                                     training=training, name='fc7', pool=False)
     if(training):
-        fconv7 = tf.layers.dropout(inputs=fconv7, rate=params['dropout_rate'], name='drop_7')
+        fconv7 = tf.compat.v1.layers.dropout(inputs=fconv7, rate=params['dropout_rate'], name='drop_7')
 
     # print('SHAPE FConv_7: ', fconv7.shape)
 
     # fconv8 = tf.layers.conv2d(inputs=fconv7, filters=1000, kernel_size=1, padding='same',
     #                             data_format='channels_last', activation=None, name='fc8')
 
-    score_layer = tf.layers.conv2d(inputs=fconv7, filters=num_classes, kernel_size=1, padding='valid',
+    score_layer = tf.compat.v1.layers.conv2d(inputs=fconv7, filters=num_classes, kernel_size=1, padding='valid',
                                    data_format='channels_last', activation=None, name='Score_Layer_FC_2')
 
     if (training):
-        score_layer = tf.layers.dropout(inputs=score_layer, rate=params['dropout_rate'], name='drop_8')
+        score_layer = tf.compat.v1.layers.dropout(inputs=score_layer, rate=params['dropout_rate'], name='drop_8')
 
 
     up_score_1 = layers.up_conv_add_layer(score_layer, pool4, params=params, kernel_size=4,
@@ -108,7 +108,7 @@ def fcn2s_description(samples, labels, params, mode, config):
 
     # print('SHAPE Up Score Final: ', up_final.shape)
 
-    output = tf.layers.conv2d(logits, 1, (1, 1), name='output', activation=tf.nn.sigmoid, padding='same',
-                             kernel_initializer=tf.initializers.variance_scaling(scale=0.001, distribution='uniform'))
+    output = tf.compat.v1.layers.conv2d(logits, 1, (1, 1), name='output', activation=tf.nn.sigmoid, padding='same',
+                             kernel_initializer=tf.compat.v1.initializers.variance_scaling(scale=0.001, distribution='uniform'))
 
     return logits
