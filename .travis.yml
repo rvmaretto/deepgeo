@@ -33,4 +33,5 @@ install:
   - pip install descartes
   - pip install shapely
   - pip install palettable
+  - pip install geopandas
 script: nosetests test/unit_tests
