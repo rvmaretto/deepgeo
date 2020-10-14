@@ -2,6 +2,11 @@
 
 Functionalities to Deep Learning based classification of Remote Sensing Images
 
+### Installation
+```code
+pip install https://github.com/rvmaretto/deepgeo/releases/download/v0.1.0-alpha/deepgeo-0.1.0-py3-none-any.whl
+```
+
 ### Dependencies
 * numpy
 * gdal
