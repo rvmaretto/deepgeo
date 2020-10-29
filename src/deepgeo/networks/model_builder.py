@@ -173,14 +173,14 @@ class ModelBuilder(object):
                                                        summary_op=tf.compat.v1.summary.merge_all())
 
         eval_metric_ops = {'eval_metrics/accuracy': metrics['accuracy'],
-                           'eval_metrics/f1-score': metrics['f1_score'],
+                           #'eval_metrics/f1-score': metrics['f1_score'],
                            'eval_metrics/cross_entropy': metrics['cross_entropy'],
                            'eval_metrics/auc_roc': metrics['auc-roc']}  # ,
                            # 'eval_metrics/mean_iou': metrics['mean_iou']}
 
         logging_hook = tf.estimator.LoggingTensorHook({'loss': loss,
                                                    'accuracy': metrics['accuracy'][1],
-                                                   'f1_score': metrics['f1_score'][1],
+                                                   #'f1_score': metrics['f1_score'][1],
                                                    'cross_entropy': metrics['cross_entropy'][1],
                                                    # 'mean_iou': metrics['mean_iou'][0],
                                                    'learning_rate': params['learning_rate'],

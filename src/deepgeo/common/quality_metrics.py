@@ -36,7 +36,7 @@ def compute_quality_metrics(labels, predictions, params, probabilities=None, cla
     metrics_dict = {}
     with sklearn.utils.parallel_backend('multiprocessing'):
     # with sklearn.externals.joblib.parallel_backend('multiprocessing'):
-        metrics_dict['f1_score'] = metrics.f1_score(labels, predictions, labels=labels_to_use, average=None)
+        #metrics_dict['f1_score'] = metrics.f1_score(labels, predictions, labels=labels_to_use, average=None)
         metrics_dict['precision'] = metrics.precision_score(labels, predictions, average=None)
         metrics_dict['recall'] = metrics.recall_score(labels, predictions, average=None)
         metrics_dict['accuracy'] = metrics.accuracy_score(labels, predictions)
