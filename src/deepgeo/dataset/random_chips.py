@@ -40,6 +40,7 @@ class RandomChipGenerator(object):
                                                                             self.labeled_img == label_interest)))
         indices = np.random.choice(np.arange(len(self.sample_candidates)), self.quantity, replace=False)
         self.ij_samples = self.sample_candidates[indices]
+        print(self.ij_samples, type(self.ij_samples))
 
     def compute_window_coords(self, coord):
         window_coords = {}
