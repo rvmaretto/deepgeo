@@ -1,5 +1,8 @@
 #!/bin/sh
-python ../src/setup.py bdist_wheel
+cd ../src
+python setup.py sdist bdist_wheel
 
 mv ./build ../built
 mv ./deepgeo.egg-info ../built
+mv MANIFEST ../built
+cd ../build
