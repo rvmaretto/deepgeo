@@ -3,6 +3,8 @@ import gdal
 import sys
 import tensorflow as tf
 from os import path
+from pathlib import Path
+
 
 sys.path.insert(0, path.join(path.dirname(__file__), '..'))
 import common.geofunctions as gf
@@ -165,7 +167,8 @@ class Preprocessor(object):
         self.raster_path = raster_path
         # self.vector_path = vector_path
         self.raster_dummy = no_data
-        self.raster_array = gf.load_image(raster_path, no_data)
+        if not isinstance(raster_path, np.ndarray):
+            self.raster_array = gf.load_image(raster_path, no_data)
         self.img_dataset = gdal.Open(raster_path)
         # self.raster_array = self.img_dataset.ReadAsArray()
         # self.raster_array = np.rollaxis(self.raster_array, 0, start=3)
@@ -194,6 +197,7 @@ class Preprocessor(object):
     def standardize_image(self, strategy='reduce_sr', params=None):
         if params is None:
             self.raster_array = self.standardize_functions[strategy](self.raster_array)
+            
         else:
             self.raster_array = self.standardize_functions[strategy](self.raster_array, params)
         return self.raster_array

@@ -14,6 +14,7 @@ import common.utils as utils
 import common.filesystem as fs
 import dataset.sequential_chips as seqchips
 import dataset.random_chips as rdmchips
+import dataset.fileset_chips as fset
 import dataset.utils as dsutils
 
 
@@ -32,7 +33,8 @@ def wrap_int64(value):
 class DatasetGenerator(object):
     strategies = {
         'sequential': seqchips.SequentialChipGenerator,
-        'random': rdmchips.RandomChipGenerator
+        'random': rdmchips.RandomChipGenerator,
+        'fileset': fset.FilesetChipGenerator
     }
 
     def __init__(self, raster_arrays, labels_arrays, strategy='sequential', description=None):
@@ -68,10 +70,16 @@ class DatasetGenerator(object):
 
             self.chips_struct['chips'].append(chips_struct['chips'])
             self.chips_struct['labels'].append(chips_struct['labels'])
-            self.chips_struct['coords'] = self.chips_struct['coords'] + list(chips_struct['coords'])
+            if chips_struct['coords'] is not None:
+                self.chips_struct['coords'] = self.chips_struct['coords'] + list(chips_struct['coords'])
 
+        #WARNING: the below lines will lead to bug when chips_struct is a list with one element 
+        self.chips_struct['chips'] = np.expand_dims(self.chips_struct['chips'], axis=0)        
         self.chips_struct['chips'] = np.concatenate(self.chips_struct['chips'], axis=0)
+        
+        self.chips_struct['labels'] = np.expand_dims(self.chips_struct['labels'], axis=0)
         self.chips_struct['labels'] = np.concatenate(self.chips_struct['labels'], axis=0)
+        
         if 'overlap' in params:
             self.chips_struct['overlap'] = params['overlap']
 

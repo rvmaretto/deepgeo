@@ -10,11 +10,13 @@ from osgeo import gdal_array
 from osgeo import ogr
 from osgeo import osr
 
+from pathlib import Path
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../'))
 import dataset.image_utils as iutils
 
 
-def load_image(filepath, no_data=0):
+def load_image(path, no_data=0, astype=np.float32):
     """ Loads a Georreferenced image as a Numpy Array.
 
     This function loads a Georreferenced image, returning it as a Numpy array.
@@ -27,21 +29,29 @@ def load_image(filepath, no_data=0):
     Returns:
         A Numpy array containing the loaded raster.
     """
-    img_ds = gdal.Open(filepath)
-
-    img = None
-    for i in range(1, img_ds.RasterCount + 1):
-        band = img_ds.GetRasterBand(i)
-        band_arr = band.ReadAsArray()
-        # band_arr[band_arr == no_data] = 0
-        band_arr = np.ma.masked_array(band_arr, band_arr == no_data) # TODO: Vefify how to remove this. How to deal with no_data
-        if img is None:
-            img = band_arr
-        else:
-            img = np.ma.dstack((img, band_arr))
-
-    return img
-
+    path = Path(path)    
+    if path.is_file():
+        filepath = path.resolve().as_posix()
+        img_ds = gdal.Open(filepath)
+        img = None
+        for i in range(1, img_ds.RasterCount + 1):
+            band = img_ds.GetRasterBand(i)
+            band_arr = band.ReadAsArray()
+            # band_arr[band_arr == no_data] = 0
+            band_arr = np.ma.masked_array(band_arr, band_arr == no_data) # TODO: Vefify how to remove this. How to deal with no_data
+            if img is None:
+                img = band_arr
+            else:
+                img = np.ma.dstack((img, band_arr))
+        return img
+    else:
+        files = [file for file in sorted(path.glob('*.tif'))]
+        images = []
+        for file in files:    
+            path_img = file.resolve().as_posix()
+            image = load_image(path_img,no_data=no_data).astype(astype)
+            images.append(image)
+        return images
 
 #TODO: Extend this method to other file formats
 def merge_vector_layers(files, output_file):

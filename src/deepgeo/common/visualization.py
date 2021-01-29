@@ -17,27 +17,29 @@ import palettable
 
 
 def plot_rgb_img(raster_array, bands=[1, 2, 3], contrast=False, title="RGB Composition", fig_path=None,
-                 figsize=(10, 10)):
+                 figsize=(10, 10), onlyreturn=False):
     if len(bands) != 3 and len(bands) != 1:
         raise AttributeError("Parameter bands must have size 3 or 1.")
-
-    plt.figure(figsize=figsize)
-    plt.title(title)
+    
     raster_img = skimage.img_as_ubyte(raster_array)
     if contrast:
         for band in bands:
             #TODO: How to keep the array masked here?
             p2, p98 = np.percentile(raster_img[:, :, band], (2, 98))
             raster_img[:, :, band] = exposure.rescale_intensity(raster_img[:, :, band], in_range=(p2, p98))
-
-    if len(bands) == 3:
-        plt.imshow(raster_img[:, :, bands])
-    else:
-        plt.imshow(raster_img[:,:,bands[0]])
-    plt.axis('off')
-    if fig_path is not None:
-        plt.savefig(fig_path)
-    plt.show()
+    if onlyreturn:
+        return raster_img[:, :, bands]
+    else:    
+        plt.figure(figsize=figsize)
+        plt.title(title)
+        plt.axis('off')
+        if len(bands) == 3:
+            plt.imshow(raster_img[:, :, bands])
+        else:
+            plt.imshow(raster_img[:,:,bands[0]])
+        if fig_path is not None:
+            plt.savefig(fig_path)
+        plt.show()
 
 
 def plot_labels(labels_array, class_names, colors=None, title="Labels", fig_path=None, figsize=(10, 10)):

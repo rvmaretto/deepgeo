@@ -16,8 +16,8 @@ def define_quality_metrics(labels_1hot, predictions, logits, labels, output, los
     metrics = {}
     summaries = {}
     with tf.compat.v1.name_scope('quality_metrics'):
-        metrics['f1_score'] = f1_score(labels=labels_1hot, predictions=predictions)
-        summaries['f1_score'] = tf.compat.v1.summary.scalar('f1-score', metrics['f1_score'][1])
+        #metrics['f1_score'] = f1_score(labels=labels_1hot, predictions=predictions)
+        #summaries['f1_score'] = tf.compat.v1.summary.scalar('f1-score', metrics['f1_score'][1])
 
         metrics['accuracy'] = tf.compat.v1.metrics.accuracy(labels=labels, predictions=output)
         summaries['accuracy'] = tf.compat.v1.summary.scalar('accuracy', metrics['accuracy'][1])

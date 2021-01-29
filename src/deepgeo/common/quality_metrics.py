@@ -27,6 +27,7 @@ def compute_quality_metrics(labels, predictions, params, probabilities=None, cla
         if probabilities is not None:
             probabilities = np.delete(probabilities, np.where(labels == value), axis=0)
         labels = np.delete(labels, np.where(labels == value))
+        
         del class_names[value]
 
     labels_to_use = []
@@ -36,7 +37,7 @@ def compute_quality_metrics(labels, predictions, params, probabilities=None, cla
     metrics_dict = {}
     with sklearn.utils.parallel_backend('multiprocessing'):
     # with sklearn.externals.joblib.parallel_backend('multiprocessing'):
-        metrics_dict['f1_score'] = metrics.f1_score(labels, predictions, labels=labels_to_use, average=None)
+        #metrics_dict['f1_score'] = metrics.f1_score(labels, predictions, labels=labels_to_use, average=None)
         metrics_dict['precision'] = metrics.precision_score(labels, predictions, average=None)
         metrics_dict['recall'] = metrics.recall_score(labels, predictions, average=None)
         metrics_dict['accuracy'] = metrics.accuracy_score(labels, predictions)
@@ -66,8 +67,8 @@ def compute_quality_metrics(labels, predictions, params, probabilities=None, cla
 
     out_str = ''
     out_str += 'F1-Score:' + os.linesep
-    for i in range(0, len(metrics_dict['f1_score'])):
-        out_str += '  - ' + str(class_names[i]) + ': ' + str(metrics_dict['f1_score'][i]) + os.linesep
+    #for i in range(0, len(metrics_dict['f1_score'])):
+    #    out_str += '  - ' + str(class_names[i]) + ': ' + str(metrics_dict['f1_score'][i]) + os.linesep
 
     out_str += 'Precision:' + os.linesep
     for i in range(0, len(metrics_dict['precision'])):
