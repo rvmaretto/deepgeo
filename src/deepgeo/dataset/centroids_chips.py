@@ -26,22 +26,13 @@ class CentroidsChipGenerator(object):
         self.labels_tif = params['labels_tif']
 
     def compute_indexes(self):
-        # opens the shapefile and get points coordinates
-        shp = geopandas.read_file(self.shp_path)
-        coordinates = np.zeros([len(shp),2], dtype=np.float64)
-        coordinates[:,0] = shp['geometry'].x
-        coordinates[:,1] = shp['geometry'].y
-
-        # open labels raster to get its diemnsions and bounding box
+        # opens the shapefile and reprojects it to the same crs as the given raster.
         labels = rasterio.open(self.labels_tif)
-        box = labels.bounds
-        delta_x = box[2]-box[0] 
-        delta_y = box[3]-box[1]
+        shp = geopandas.read_file(self.shp_path).to_crs(labels.crs.to_dict())
 
         # converts the points coordinates to image coordinates
-        samples = np.zeros([len(coordinates), 3], dtype=np.int64)
-        samples[:,0] = (np.asarray((coordinates[:,1]-box[1])*labels.height/delta_y, dtype=np.int64)*-1)+labels.height
-        samples[:,1] = np.asarray((coordinates[:,0]-box[0])*labels.width/delta_x, dtype=np.int64)
+        samples = rasterio.transform.rowcol(transform=labels.transform, xs=shp['geometry'].x, ys=shp['geometry'].y)
+        samples = np.transpose(np.asarray(samples))
         
         # checks if the chips to be created are completely within the images
         check1 = samples[:,1]+(self.win_size/2)>=labels.width
