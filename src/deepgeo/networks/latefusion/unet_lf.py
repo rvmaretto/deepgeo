@@ -14,7 +14,10 @@ def unet_lf_description(samples, labels, params, mode, config):
     # learning_rate = params["learning_rate"]
     # samples = features["data"]
     # timesteps = samples.shape[4]
-    timesteps = 2
+    # num_encoders = 3
+    num_encoders = params['num_encoders']
+    # indexes = [[0,0], [1,3], [4,5]]
+    indexes = params['indexes_bands']
     # samples = []
     # bands_1 = tf.constant([0,1,2,3,4])
     # bands_2 = tf.constant([5,6,7,8,9])
@@ -22,19 +25,22 @@ def unet_lf_description(samples, labels, params, mode, config):
     # samples.append(tf.transpose(tf.nn.embedding_lookup(tf.transpose(features["data"]), bands_2)))
     # samples.append(features["data"][:,:,:,0:5])
     # samples.append(features["data"][:,:,:,5:10])
-    samples_t1 = samples[:,:,:,0:5]
-    samples_t2 = samples[:,:,:,5:10]
+    # samples_t1 = samples[:,:,:,0:5]
+    # samples_t2 = samples[:,:,:,5:10]
 
     height, width, _ = samples[0].shape
 
     # print(samples.shape)
 
-    # out_encoder = []
-    # for i in range(timesteps):
-    #     name_sufix = "t_" + str(i)
-    #     out_encoder.append(unet.unet_encoder(samples[i], params, mode, name_sufix))
-    convs_t1 = unet.unet_encoder(samples_t1, params, mode, "t_1")
-    convs_t2 = unet.unet_encoder(samples_t2, params, mode, "t_2")
+    out_encoder = []
+    for i in range(num_encoders):
+        name_sufix = "t_" + str(i)
+        start = indexes[i[0]]
+        end = indexes[i[1]] + 1
+        samples_t = samples[:,:,:,start:end]
+        out_encoder.append(unet.unet_encoder(samples[i], params, mode, name_sufix))
+    # convs_t1 = unet.unet_encoder(samples_t1, params, mode, "t_1")
+    # convs_t2 = unet.unet_encoder(samples_t2, params, mode, "t_2")
 
     encoded_feat = {}
     # TODO: Encapsulate the following scopes in one for loop

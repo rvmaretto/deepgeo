@@ -1,4 +1,4 @@
-import gdal
+from osgeo import gdal
 import os
 import sklearn
 import sys

@@ -1,7 +1,7 @@
-import gdal
-import math
+# import gdal
+# import math
 import numpy as np
-import osr
+# import osr
 import os
 import sys
 

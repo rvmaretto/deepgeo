@@ -2,7 +2,7 @@
 cd ../src
 python setup.py sdist bdist_wheel
 
-mv ./build ../built
-mv ./deepgeo.egg-info ../built
+mv -R ./build ../built
+mv -R ./deepgeo.egg-info ../built
 mv MANIFEST ../built
 cd ../build

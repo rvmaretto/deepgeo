@@ -1,5 +1,5 @@
 import numpy as np
-import gdal
+from osgeo import gdal
 import sys
 import tensorflow as tf
 from os import path
