@@ -100,9 +100,14 @@ class DatasetLoader(object):
 
         label = tf.io.decode_raw(parsed_features['label'], tf.int32)
         label = tf.reshape(label, shape_lbl)
+
+        label = tf.one_hot(tf.cast(label, tf.uint8), 4)
+        label = tf.squeeze(label)
+
         return image, label
 
     def tfrecord_input_fn(self, train=True):
+    # def _input_fn(self, train=True):
         if isinstance(self.dataset, list):
             dataset = tf.data.Dataset.from_tensor_slices(self.dataset)
             dataset = dataset.interleave(lambda x : tf.data.TFRecordDataset(self.dataset),

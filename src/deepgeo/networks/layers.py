@@ -1,4 +1,5 @@
 import tensorflow as tf
+import tensorflow.keras as keras
 
 
 # TODO: Refactor. Re-implement this method in the following structure:
